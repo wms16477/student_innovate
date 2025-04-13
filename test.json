@@ -1,0 +1,64 @@
+{
+  "@type": "com.ruoyi.common.core.domain.model.LoginUser",
+  "browser": "Chrome 13",
+  "deptId": 103L,
+  "expireTime": 1741849173966,
+  "ipaddr": "127.0.0.1",
+  "loginLocation": "内网IP",
+  "loginTime": 1741847373966,
+  "os": "Windows 10",
+  "token": "72327981-52bf-4129-8878-a9063676ba19",
+  "user": {
+    "admin": true,
+    "createBy": "admin",
+    "createTime": "2025-03-13 09:10:25",
+    "delFlag": "0",
+    "dept": {
+      "ancestors": "0,100,101",
+      "children": [],
+      "deptId": 103L,
+      "deptName": "研发部门",
+      "leader": "若依",
+      "orderNum": 1,
+      "params": {
+        "@type": "java.util.HashMap"
+      },
+      "parentId": 101L,
+      "status": "0"
+    },
+    "deptId": 103L,
+    "email": "ry@163.com",
+    "loginDate": "2025-03-13 14:25:18",
+    "loginIp": "127.0.0.1",
+    "nickName": "若依",
+    "params": {
+      "@type": "java.util.HashMap"
+    },
+    "password": "$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2",
+    "phonenumber": "15888888888",
+    "remark": "管理员",
+    "roles": [
+      {
+        "admin": true,
+        "dataScope": "1",
+        "deptCheckStrictly": false,
+        "flag": false,
+        "menuCheckStrictly": false,
+        "params": {
+          "@type": "java.util.HashMap"
+        },
+        "roleId": 1L,
+        "roleKey": "admin",
+        "roleName": "超级管理员",
+        "roleSort": 1,
+        "status": "0"
+      }
+    ],
+    "sex": "1",
+    "status": "0",
+    "userId": 1L,
+    "userName": "admin"
+  },
+  "userId": 1L,
+  "username": "admin"
+}
