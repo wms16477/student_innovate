@@ -114,7 +114,7 @@
     </el-row>
 
     <el-table v-loading="loading" :data="${businessName}List" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
+##      <el-table-column type="selection" width="55" align="center" />
 #foreach($column in $columns)
 #set($javaField=$column.javaField)
 #set($parentheseIndex=$column.columnComment.indexOf("（"))
@@ -166,11 +166,12 @@
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['${moduleName}:${businessName}:remove']"
+            style="color: #f56c6c"
           >删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -180,8 +181,8 @@
     />
 
     <!-- 添加或修改${functionName}对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+    <el-drawer :title="title" :visible.sync="open" size="420px" append-to-body @close="cancel">
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px" style="padding: 20px">
 #foreach($column in $columns)
 #set($field=$column.javaField)
 #if($column.insert && !$column.pk)
@@ -343,12 +344,14 @@
 #end
         </el-table>
 #end
+        <div class="drawer-footer">
+          <el-form-item label-width="0">
+            <el-button type="primary" @click="submitForm">提 交</el-button>
+            <el-button @click="cancel">取 消</el-button>
+          </el-form-item>
+        </div>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
-    </el-dialog>
+    </el-drawer>
   </div>
 </template>
 
