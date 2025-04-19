@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="generator.mapper.InnoProjectMapper">
+
+    <resultMap id="BaseResultMap" type="generator.domain.InnoProject">
+            <id property="id" column="id" />
+            <result property="projectName" column="project_name" />
+            <result property="projectType" column="project_type" />
+            <result property="projectDesc" column="project_desc" />
+            <result property="teacherId" column="teacher_id" />
+            <result property="teacherName" column="teacher_name" />
+            <result property="submitFileName" column="submit_file_name" />
+            <result property="submitFileUrl" column="submit_file_url" />
+            <result property="midCheckFileName" column="mid_check_file_name" />
+            <result property="midCheckFileUrl" column="mid_check_file_url" />
+            <result property="midCheckDesc" column="mid_check_desc" />
+            <result property="endFileName" column="end_file_name" />
+            <result property="endFileUrl" column="end_file_url" />
+            <result property="endDesc" column="end_desc" />
+            <result property="status" column="status" />
+            <result property="createBy" column="create_by" />
+            <result property="createByName" column="create_by_name" />
+            <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,project_name,project_type,project_desc,teacher_id,teacher_name,
+        submit_file_name,submit_file_url,mid_check_file_name,mid_check_file_url,mid_check_desc,
+        end_file_name,end_file_url,end_desc,status,create_by,
+        create_by_name,create_time
+    </sql>
+</mapper>
