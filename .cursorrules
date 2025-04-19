@@ -1,17 +1,19 @@
 # 项目介绍
-这是一个springboot的后端项目，我们所有的代码都在xinghe-admin模块编写。只写后端的代码！
+这是一个springboot+vue的后端项目，我们所有的后端代码都在xinghe-admin模块编写。前端代码在student_innovate_ui。
+我们现在要做的是一个大学生创新创业管理系统项目，包含学生，老师，专家的用户创建。大创项目申报，大创项目审批，大创项目中期检查，大创项目结项，大创项目费用管理。
 # 模块介绍
 controller层是接收前端请求；service层是处理业务逻辑；mapper层是操作数据库；domain存放的是数据库的实体类；enum包存放的是枚举，通常存储一些状态或类型的字典。
-对于实体类，有些字段需要注意：如果有createBy，createByName，createTime字段，这些字段需要加上@TableField(fill = FieldFill.INSERT)注解；如果有updateBy，updateByName，updateTime字段需要加上@TableField(fill = FieldFill.INSERT_UPDATE)注解，delFlag需要加上 @TableLogic注解
-# 开发规范
-1. 代码要有注释，无论是domain,service,controller,mapper.
-2. controller层不要写逻辑，即便是最简单的列表查询，也要先写在service层里，controller调用service；controller需要继承com.xinghe.common.core.controller.BaseController.分页查询参考ProjectCustomerController的list方法
+对于实体类
+# 后端开发规范
+1. 代码要有注释，无论是domain,service,controller,mapper.对于创建好的domain实体类，不要修改它
+2. controller层不要写逻辑，即便是最简单的列表查询，也要先写在service层里，controller调用service；controller需要继承com.xinghe.common.core.controller.BaseController.分页查询参考StudentController的list方法
 3. 对于异常需要抛出（如校验不通过等），使用com.xinghe.common.exception.ServiceException类进行抛出
 4. 生成service文件名，不需要加I前缀. 单表查询使用lambdaQuery()，单表更新删除使用lambdaUpdate(),而不是自己new一个wrapper.使用mybatisPlus条件查询时，条件是个是字符，判断是否为空要用StringUtils.isNotEmpty，而不是使用!=null
 5. 数据库字段如果是有小数位，那么实体类使用BigDecimal
 6. 如果有字段是必填的，后端不需要进行校验，前端进行校验就行
-7. 枚举创建，对于一般的简单枚举，参考CommonStatusEnum，有code和name,code是Integer类型，name是string类型，要有getByCode和getNameByCode方法
-8. 除非说明让你修改实体类，其他任何情况都不要修改实体类
-9. 涉及到时间操作，使用cn.hutool.core.date.DateUtil工具类。涉及到获取当前登录人工号姓名，使用com.xinghe.supplier.util.ContextUtils
-# 表的设计
+7. 除非说明让你修改实体类，其他任何情况都不要修改实体类
+8. 涉及到时间操作，使用cn.hutool.core.date.DateUtil工具类。涉及到获取当前登录人工号姓名，使用com.xinghe.supplier.util.ContextUtils
+# 前端开发规范
+1. 接入后端的api在src/api目录下。组件在view目录下
+# 表设计规范
 对于建表而言，id(bigint),create_by(varchar(30)),create_by_name(varchar(30)),create_time,del_flag(tinyint不为空，默认0)字段必须有，建完表后实体类生成需要有相应的注释。数据库表只需要编码字段，名称字段不需要有（比如有statusCode,没有statusName）。表中的字段除了id,del_flag,其他都不要设置默认值，也不要设置成不为空

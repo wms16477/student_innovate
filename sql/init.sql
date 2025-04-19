@@ -7,3 +7,5 @@
 -- inno_project DDL
 
 -- project_flow
+
+-- inno_project_member DDL

@@ -19,7 +19,7 @@ import com.xinghe.common.core.controller.BaseController;
 import com.xinghe.common.core.domain.AjaxResult;
 import com.xinghe.common.enums.BusinessType;
 import com.xinghe.web.domain.Student;
-import com.xinghe.web.service.IStudentService;
+import com.xinghe.web.service.StudentService;
 import com.xinghe.common.utils.poi.ExcelUtil;
 import com.xinghe.common.core.page.TableDataInfo;
 
@@ -33,7 +33,7 @@ import com.xinghe.common.core.page.TableDataInfo;
 @RequestMapping("/student/student")
 public class StudentController extends BaseController {
     @Autowired
-    private IStudentService studentService;
+    private StudentService studentService;
 
     /**
      * 查询学生列表

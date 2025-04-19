@@ -1,20 +1,20 @@
 package com.xinghe.web.service.impl;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xinghe.common.core.domain.entity.SysUser;
 import com.xinghe.common.exception.ServiceException;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
-import com.xinghe.system.mapper.SysUserMapper;
 import com.xinghe.system.service.ISysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.xinghe.web.mapper.StudentMapper;
 import com.xinghe.web.domain.Student;
-import com.xinghe.web.service.IStudentService;
+import com.xinghe.web.service.StudentService;
 
 /**
  * 学生Service业务层处理
@@ -23,7 +23,7 @@ import com.xinghe.web.service.IStudentService;
  * @date 2025-04-17
  */
 @Service
-public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> implements IStudentService {
+public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> implements StudentService {
 
 
     @Autowired
@@ -47,8 +47,10 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
 
     @Override
     public void addStudent(Student student) {
-        if (lambdaQuery().eq(Student::getStuNo, student.getStuNo()).count() > 0) {
-            throw new ServiceException("改学号已有学生");
+        List<SysUser> sysUsers = userService.selectUserList(new SysUser());
+        List<SysUser> collect = sysUsers.stream().filter(sysUser -> sysUser.getUserName().equals(student.getStuNo())).collect(Collectors.toList());
+        if (!collect.isEmpty()) {
+            throw new ServiceException("该学号已有学生");
         }
         save(student);
         //添加用户
