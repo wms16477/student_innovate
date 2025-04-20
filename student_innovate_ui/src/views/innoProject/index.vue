@@ -458,7 +458,24 @@
           style="margin-bottom: 20px"
         />
 
+        <!-- 中期评分展示 -->
+        <el-card class="box-card" shadow="hover" style="margin-bottom: 20px">
+          <div slot="header" class="clearfix">
+            <span style="font-weight: bold">中期检查评分 (占总评权重30%)</span>
+          </div>
+          <el-descriptions :column="2" border size="small">
+            <el-descriptions-item label="选题价值分(权重0.2)">{{ midScoreInfo.midScoreXtjz || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="研究基础分(权重0.2)">{{ midScoreInfo.midScoreYjjc || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="内容设计分(权重0.5)">{{ midScoreInfo.midScoreNrsj || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="研究方法分(权重0.1)">{{ midScoreInfo.midScoreYjff || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="中期评分总分" :span="2">
+              <el-tag type="success" size="medium">{{ midTotalScoreInfo }}</el-tag>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-card>
+
         <div class="score-table-container">
+          <div class="score-title">结项评分 (占总评权重70%)</div>
           <table class="score-table">
             <thead>
               <tr>
@@ -562,13 +579,21 @@
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="6" style="text-align: right; font-weight: bold;">总分（加权平均）：</td>
+                <td colspan="6" style="text-align: right; font-weight: bold;">结项评分总分：</td>
                 <td>
                   <el-tag type="success" size="medium">{{ endTotalScore }}</el-tag>
                 </td>
               </tr>
             </tfoot>
           </table>
+        </div>
+
+        <!-- 最终评分展示 -->
+        <div class="final-score">
+          <div class="final-score-title">最终评分（中期30% + 结项70%）</div>
+          <div class="final-score-value">
+            <el-tag type="danger" size="large">{{ finalScore }}</el-tag>
+          </div>
         </div>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -770,7 +795,13 @@ export default {
         ]
       },
       // 结项总分
-      endTotalScore: 0
+      endTotalScore: 0,
+      // 中期评分信息
+      midScoreInfo: {},
+      // 中期总分信息
+      midTotalScoreInfo: 0,
+      // 最终评分
+      finalScore: 0
     };
   },
   created() {
@@ -1039,6 +1070,42 @@ export default {
         }
       });
     },
+    /** 结项评分按钮操作 */
+    handleEndProjectScore(row) {
+      getInnoProject(row.id).then(response => {
+        const data = response.data;
+        
+        // 保存中期评分信息
+        this.midScoreInfo = {
+          midScoreXtjz: data.midScoreXtjz || 0,
+          midScoreYjjc: data.midScoreYjjc || 0,
+          midScoreNrsj: data.midScoreNrsj || 0,
+          midScoreYjff: data.midScoreYjff || 0
+        };
+        
+        // 计算中期总分
+        this.midTotalScoreInfo = (
+          this.midScoreInfo.midScoreXtjz * 0.2 + 
+          this.midScoreInfo.midScoreYjjc * 0.2 + 
+          this.midScoreInfo.midScoreNrsj * 0.5 + 
+          this.midScoreInfo.midScoreYjff * 0.1
+        ).toFixed(2);
+        
+        // 保存结项评分表单
+        this.endScoreForm = {
+          id: data.id,
+          endScoreXtjz: data.endScoreXtjz || 0,
+          endScoreYjjc: data.endScoreYjjc || 0,
+          endScoreNrsj: data.endScoreNrsj || 0,
+          endScoreYjff: data.endScoreYjff || 0
+        };
+        
+        // 计算结项总分和最终评分
+        this.calculateEndScoreTotal();
+        this.endScoreOpen = true;
+      });
+    },
+    
     /** 计算结项总分 */
     calculateEndScoreTotal() {
       const params = {
@@ -1049,19 +1116,14 @@ export default {
       };
       calculateEndScore(params).then(response => {
         this.endTotalScore = response.data;
+        // 计算最终评分
+        this.calculateFinalScore();
       });
     },
-    /** 结项评分按钮操作 */
-    handleEndProjectScore(row) {
-      this.endScoreForm = {
-        id: row.id,
-        endScoreXtjz: row.endScoreXtjz || 0,
-        endScoreYjjc: row.endScoreYjjc || 0,
-        endScoreNrsj: row.endScoreNrsj || 0,
-        endScoreYjff: row.endScoreYjff || 0
-      };
-      this.calculateEndScoreTotal();
-      this.endScoreOpen = true;
+    
+    /** 计算最终评分 */
+    calculateFinalScore() {
+      this.finalScore = (parseFloat(this.midTotalScoreInfo) * 0.3 + parseFloat(this.endTotalScore) * 0.7).toFixed(2);
     },
     /** 提交结项评分 */
     submitEndScore() {
@@ -1150,5 +1212,23 @@ export default {
 /* 自定义Element UI输入框样式 */
 .score-input-wrapper .el-input-number .el-input__inner {
   text-align: center;
+}
+
+.box-card {
+  margin-bottom: 20px;
+}
+
+.final-score {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.final-score-title {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.final-score-value {
+  display: inline-block;
 }
 </style>
