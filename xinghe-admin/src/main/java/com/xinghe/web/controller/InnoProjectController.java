@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -178,5 +180,91 @@ public class InnoProjectController extends BaseController {
         return success();
     }
 
-
+    /**
+     * 提交中期检查
+     */
+    @PostMapping("/midCheck")
+    public AjaxResult midCheck(@RequestBody InnoProject innoProject) {
+        if (innoProject.getId() == null) {
+            return error("项目ID不能为空");
+        }
+        
+        InnoProject project = innoProjectService.getById(innoProject.getId());
+        if (project == null) {
+            return error("项目不存在");
+        }
+        
+        // 只更新中期检查相关字段
+        InnoProject updateProject = new InnoProject();
+        updateProject.setId(innoProject.getId());
+        updateProject.setMidCheckFileName(innoProject.getMidCheckFileName());
+        updateProject.setMidCheckFileUrl(innoProject.getMidCheckFileUrl());
+        updateProject.setMidCheckDesc(innoProject.getMidCheckDesc());
+        
+        innoProjectService.updateById(updateProject);
+        return success();
+    }
+    
+    /**
+     * 提交中期检查评分
+     */
+    @PostMapping("/midCheckScore")
+    public AjaxResult midCheckScore(@RequestBody InnoProject innoProject) {
+        if (innoProject.getId() == null) {
+            return error("项目ID不能为空");
+        }
+        
+        InnoProject project = innoProjectService.getById(innoProject.getId());
+        if (project == null) {
+            return error("项目不存在");
+        }
+        
+        // 检查分数有效性
+        if (innoProject.getMidScoreXtjz() == null || innoProject.getMidScoreXtjz() < 0 || innoProject.getMidScoreXtjz() > 100) {
+            return error("选题价值分必须在0-100之间");
+        }
+        if (innoProject.getMidScoreYjjc() == null || innoProject.getMidScoreYjjc() < 0 || innoProject.getMidScoreYjjc() > 100) {
+            return error("研究基础分必须在0-100之间");
+        }
+        if (innoProject.getMidScoreNrsj() == null || innoProject.getMidScoreNrsj() < 0 || innoProject.getMidScoreNrsj() > 100) {
+            return error("内容设计分必须在0-100之间");
+        }
+        if (innoProject.getMidScoreYjff() == null || innoProject.getMidScoreYjff() < 0 || innoProject.getMidScoreYjff() > 100) {
+            return error("研究方法分必须在0-100之间");
+        }
+        
+        // 只更新中期检查评分相关字段
+        InnoProject updateProject = new InnoProject();
+        updateProject.setId(innoProject.getId());
+        updateProject.setMidScoreXtjz(innoProject.getMidScoreXtjz());
+        updateProject.setMidScoreYjjc(innoProject.getMidScoreYjjc());
+        updateProject.setMidScoreNrsj(innoProject.getMidScoreNrsj());
+        updateProject.setMidScoreYjff(innoProject.getMidScoreYjff());
+        
+        innoProjectService.updateById(updateProject);
+        return success();
+    }
+    
+    /**
+     * 计算中期检查总分
+     */
+    @GetMapping("/calculateMidScore")
+    public AjaxResult calculateMidScore(Integer xtjz, Integer yjjc, Integer nrsj, Integer yjff) {
+        if (xtjz == null || yjjc == null || nrsj == null || yjff == null) {
+            return error("所有分数都必须提供");
+        }
+        
+        // 计算总分（加权平均）
+        // 选题价值分 权重0.2
+        // 研究基础分 权重0.2
+        // 内容设计分 权重0.5
+        // 研究方法分 权重0.1
+        double totalScore = xtjz * 0.2 + yjjc * 0.2 + nrsj * 0.5 + yjff * 0.1;
+        
+        // 保留两位小数
+        BigDecimal bd = new BigDecimal(totalScore);
+        bd = bd.setScale(2, RoundingMode.HALF_UP);
+        
+        return success(bd.doubleValue());
+    }
 }

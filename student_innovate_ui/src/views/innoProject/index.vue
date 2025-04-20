@@ -98,6 +98,20 @@
             @click="handleApprove(scope.row, false)"
           >拒绝
           </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-document-checked"
+            @click="handleMidCheck(scope.row)"
+          >中期检查
+          </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-s-claim"
+            @click="handleMidCheckScore(scope.row)"
+          >中期评分
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -189,6 +203,29 @@
             {{ detail.submitFileUrl ? detail.submitFileUrl.split('/').pop() : null }}
           </el-link>
         </el-descriptions-item>
+
+        <template v-if="detail.midCheckFileUrl">
+          <el-descriptions-item label="中期检查材料" :span="2">
+            <el-link :href="baseUrl + detail.midCheckFileUrl" target="_blank">
+              {{ detail.midCheckFileUrl ? detail.midCheckFileUrl.split('/').pop() : null }}
+            </el-link>
+          </el-descriptions-item>
+          <el-descriptions-item label="中期检查说明" :span="2">
+            {{ detail.midCheckDesc }}
+          </el-descriptions-item>
+        </template>
+
+        <template v-if="detail.midScoreXtjz !== null && detail.midScoreXtjz !== undefined">
+          <el-descriptions-item label="选题价值分(权重0.2)">{{ detail.midScoreXtjz }}</el-descriptions-item>
+          <el-descriptions-item label="研究基础分(权重0.2)">{{ detail.midScoreYjjc }}</el-descriptions-item>
+          <el-descriptions-item label="内容设计分(权重0.5)">{{ detail.midScoreNrsj }}</el-descriptions-item>
+          <el-descriptions-item label="研究方法分(权重0.1)">{{ detail.midScoreYjff }}</el-descriptions-item>
+          <el-descriptions-item label="中期评分总分" :span="2">
+            <el-tag type="success">
+              {{ (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2) }}
+            </el-tag>
+          </el-descriptions-item>
+        </template>
       </el-descriptions>
     </el-dialog>
 
@@ -204,6 +241,93 @@
         <el-button @click="approveOpen = false">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 中期检查对话框 -->
+    <el-dialog title="中期检查" :visible.sync="midCheckOpen" width="500px" append-to-body>
+      <el-form ref="midCheckForm" :model="midCheckForm" :rules="midCheckRules" label-width="80px">
+        <el-form-item label="检查说明" prop="midCheckDesc">
+          <el-input v-model="midCheckForm.midCheckDesc" type="textarea" placeholder="请输入中期检查说明"/>
+        </el-form-item>
+        <el-form-item label="检查材料" prop="midCheckFileUrl">
+          <file-upload
+            v-model="midCheckForm.midCheckFileUrl"
+            :limit="1"
+            :fileType="['doc', 'docx' ,'xls', 'xlsx' ,'ppt', 'pptx','txt', 'pdf', 'zip', 'png','jpg']"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitMidCheck">提 交</el-button>
+        <el-button @click="midCheckOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 中期评分对话框 -->
+    <el-dialog title="中期检查评分" :visible.sync="midScoreOpen" width="700px" append-to-body>
+      <el-form ref="midScoreForm" :model="midScoreForm" :rules="midScoreRules" label-width="180px">
+        <el-alert
+          title="评分须知：所有评分项满分为100分，最终得分为加权平均分。"
+          type="info"
+          :closable="false"
+          style="margin-bottom: 20px"
+        />
+        <el-form-item label="选题价值分 (权重0.2)" prop="midScoreXtjz">
+          <el-row>
+            <el-col :span="8">
+              <el-input-number v-model="midScoreForm.midScoreXtjz" :precision="0" :min="0" :max="100" @change="calculateScore" />
+            </el-col>
+            <el-col :span="16">
+              <div class="score-tips">
+                <i class="el-icon-info" /> 评价选题的价值和意义，创新性和实用性
+              </div>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item label="研究基础分 (权重0.2)" prop="midScoreYjjc">
+          <el-row>
+            <el-col :span="8">
+              <el-input-number v-model="midScoreForm.midScoreYjjc" :precision="0" :min="0" :max="100" @change="calculateScore" />
+            </el-col>
+            <el-col :span="16">
+              <div class="score-tips">
+                <i class="el-icon-info" /> 评价研究的基础条件和资料收集的充分性
+              </div>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item label="内容设计分 (权重0.5)" prop="midScoreNrsj">
+          <el-row>
+            <el-col :span="8">
+              <el-input-number v-model="midScoreForm.midScoreNrsj" :precision="0" :min="0" :max="100" @change="calculateScore" />
+            </el-col>
+            <el-col :span="16">
+              <div class="score-tips">
+                <i class="el-icon-info" /> 评价研究内容的设计合理性和完整性
+              </div>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item label="研究方法分 (权重0.1)" prop="midScoreYjff">
+          <el-row>
+            <el-col :span="8">
+              <el-input-number v-model="midScoreForm.midScoreYjff" :precision="0" :min="0" :max="100" @change="calculateScore" />
+            </el-col>
+            <el-col :span="16">
+              <div class="score-tips">
+                <i class="el-icon-info" /> 评价研究方法的选择和应用的合理性
+              </div>
+            </el-col>
+          </el-row>
+        </el-form-item>
+        <el-form-item label="总分">
+          <el-tag type="success" size="medium">{{ totalScore }}</el-tag>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitMidScore">提 交</el-button>
+        <el-button @click="midScoreOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -214,7 +338,10 @@ import {
   delInnoProject,
   addInnoProject,
   updateInnoProject,
-  approveInnoProject
+  approveInnoProject,
+  submitMidCheck,
+  submitMidCheckScore,
+  calculateMidScore
 } from "@/api/innoProject";
 import {listTeacher} from "@/api/person/teacher";
 import {listProjectType} from "@/api/system/projectType";
@@ -305,6 +432,50 @@ export default {
       },
       // 选中的成员工号
       selectedMemberCodes: [],
+      // 中期检查对话框是否显示
+      midCheckOpen: false,
+      // 中期检查表单参数
+      midCheckForm: {
+        id: undefined,
+        midCheckDesc: undefined,
+        midCheckFileUrl: undefined
+      },
+      // 中期检查表单校验
+      midCheckRules: {
+        midCheckDesc: [
+          {required: true, message: "中期检查说明不能为空", trigger: "blur"}
+        ],
+        midCheckFileUrl: [
+          {required: true, message: "中期检查材料不能为空", trigger: "change"}
+        ]
+      },
+      // 中期评分对话框是否显示
+      midScoreOpen: false,
+      // 中期评分表单参数
+      midScoreForm: {
+        id: undefined,
+        midScoreXtjz: 0,
+        midScoreYjjc: 0,
+        midScoreNrsj: 0,
+        midScoreYjff: 0
+      },
+      // 中期评分表单校验
+      midScoreRules: {
+        midScoreXtjz: [
+          {required: true, message: "选题价值分不能为空", trigger: "blur"}
+        ],
+        midScoreYjjc: [
+          {required: true, message: "研究基础分不能为空", trigger: "blur"}
+        ],
+        midScoreNrsj: [
+          {required: true, message: "内容设计分不能为空", trigger: "blur"}
+        ],
+        midScoreYjff: [
+          {required: true, message: "研究方法分不能为空", trigger: "blur"}
+        ]
+      },
+      // 总分
+      totalScore: 0
     };
   },
   created() {
@@ -492,6 +663,75 @@ export default {
         reportFlag: 0
       }));
     },
+    /** 中期检查按钮操作 */
+    handleMidCheck(row) {
+      this.midCheckForm = {
+        id: row.id,
+        midCheckDesc: row.midCheckDesc,
+        midCheckFileUrl: row.midCheckFileUrl
+      };
+      this.midCheckOpen = true;
+    },
+    /** 提交中期检查 */
+    submitMidCheck() {
+      this.$refs["midCheckForm"].validate(valid => {
+        if (valid) {
+          submitMidCheck(this.midCheckForm).then(response => {
+            this.$modal.msgSuccess("中期检查提交成功");
+            this.midCheckOpen = false;
+            this.getList();
+          });
+        }
+      });
+    },
+    /** 中期评分按钮操作 */
+    handleMidCheckScore(row) {
+      getInnoProject(row.id).then(response => {
+        const data = response.data;
+        this.midScoreForm = {
+          id: data.id,
+          midScoreXtjz: data.midScoreXtjz || 0,
+          midScoreYjjc: data.midScoreYjjc || 0,
+          midScoreNrsj: data.midScoreNrsj || 0,
+          midScoreYjff: data.midScoreYjff || 0
+        };
+        this.calculateScore();
+        this.midScoreOpen = true;
+      });
+    },
+    /** 计算总分 */
+    calculateScore() {
+      const params = {
+        xtjz: this.midScoreForm.midScoreXtjz,
+        yjjc: this.midScoreForm.midScoreYjjc,
+        nrsj: this.midScoreForm.midScoreNrsj,
+        yjff: this.midScoreForm.midScoreYjff
+      };
+      calculateMidScore(params).then(response => {
+        this.totalScore = response.data;
+      });
+    },
+    /** 提交中期评分 */
+    submitMidScore() {
+      this.$refs["midScoreForm"].validate(valid => {
+        if (valid) {
+          submitMidCheckScore(this.midScoreForm).then(response => {
+            this.$modal.msgSuccess("中期评分提交成功");
+            this.midScoreOpen = false;
+            this.getList();
+          });
+        }
+      });
+    }
   }
 };
 </script>
+
+<style scoped>
+.score-tips {
+  color: #606266;
+  font-size: 12px;
+  line-height: 32px;
+  padding-left: 10px;
+}
+</style>

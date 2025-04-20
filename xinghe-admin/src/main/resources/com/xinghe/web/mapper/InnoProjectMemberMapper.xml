@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xinghe.web.mapper.InnoProjectMemberMapper">
+
+    <resultMap id="BaseResultMap" type="com.xinghe.web.domain.InnoProjectMember">
+            <id property="id" column="id" />
+            <result property="projectId" column="project_id" />
+            <result property="memberUserCode" column="member_user_code" />
+            <result property="memberUserName" column="member_user_name" />
+            <result property="reportFlag" column="report_flag" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,project_id,member_user_code,member_user_name,report_flag
+    </sql>
+</mapper>

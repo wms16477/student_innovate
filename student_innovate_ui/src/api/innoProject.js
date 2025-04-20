@@ -66,3 +66,30 @@ export function approveInnoProject(agree, data) {
   })
 }
 
+// 提交中期检查
+export function submitMidCheck(data) {
+  return request({
+    url: '/web/innoProject/midCheck',
+    method: 'post',
+    data: data
+  })
+}
+
+// 提交中期检查评分
+export function submitMidCheckScore(data) {
+  return request({
+    url: '/web/innoProject/midCheckScore',
+    method: 'post',
+    data: data
+  })
+}
+
+// 计算中期检查总分
+export function calculateMidScore(params) {
+  return request({
+    url: '/web/innoProject/calculateMidScore',
+    method: 'get',
+    params: params
+  })
+}
+
