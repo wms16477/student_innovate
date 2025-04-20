@@ -244,9 +244,10 @@
           </el-descriptions>
         </el-tab-pane>
 
-        <el-tab-pane label="中期评分" name="midScore" v-if="detail.midScoreXtjz !== null && detail.midScoreXtjz !== undefined">
+        <el-tab-pane label="项目评分" name="projectScore" v-if="detail.midScoreXtjz !== null && detail.midScoreXtjz !== undefined">
+          <!-- 中期评分展示 -->
           <div class="score-table-container">
-            <div class="score-title">中期评分表</div>
+            <div class="score-title">中期评分表 (占总评权重30%)</div>
             <table class="score-table">
               <thead>
                 <tr>
@@ -328,29 +329,10 @@
               </tfoot>
             </table>
           </div>
-        </el-tab-pane>
 
-        <el-tab-pane label="结项评分" name="endScore" v-if="detail.endScoreXtjz !== null && detail.endScoreXtjz !== undefined">
-          <!-- 中期评分展示 -->
-          <el-card class="box-card" shadow="hover" style="margin-bottom: 20px">
-            <div slot="header" class="clearfix">
-              <span style="font-weight: bold">中期检查评分 (占总评权重30%)</span>
-            </div>
-            <el-descriptions :column="2" border size="small">
-              <el-descriptions-item label="选题价值分(权重0.2)">{{ detail.midScoreXtjz || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="研究基础分(权重0.2)">{{ detail.midScoreYjjc || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="内容设计分(权重0.5)">{{ detail.midScoreNrsj || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="研究方法分(权重0.1)">{{ detail.midScoreYjff || 0 }}</el-descriptions-item>
-              <el-descriptions-item label="中期评分总分" :span="2">
-                <el-tag type="success" size="medium">
-                  {{ (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2) }}
-                </el-tag>
-              </el-descriptions-item>
-            </el-descriptions>
-          </el-card>
-
-          <div class="score-table-container">
-            <div class="score-title">结项评分 (占总评权重70%)</div>
+          <!-- 结项评分展示 -->
+          <div class="score-table-container" v-if="detail.endScoreXtjz !== null && detail.endScoreXtjz !== undefined">
+            <div class="score-title">结项评分表 (占总评权重70%)</div>
             <table class="score-table">
               <thead>
                 <tr>
@@ -434,7 +416,7 @@
           </div>
 
           <!-- 最终评分展示 -->
-          <div class="final-score">
+          <div class="final-score" v-if="detail.endScoreXtjz !== null && detail.endScoreXtjz !== undefined">
             <div class="final-score-title">最终评分（中期30% + 结项70%）</div>
             <div class="final-score-value">
               <el-tag type="danger" size="large">{{ finalScore }}</el-tag>
@@ -681,15 +663,7 @@
                 <td>基本属于重复性工作。</td>
                 <td>
                   <div class="score-input-wrapper">
-                    <el-input-number
-                      v-model="endScoreForm.endScoreXtjz"
-                      :precision="0"
-                      :min="0"
-                      :max="100"
-                      size="small"
-                      @change="calculateEndScoreTotal"
-                      controls-position="right"
-                    />
+                    <el-tag type="info">{{ detail.endScoreXtjz }}</el-tag>
                   </div>
                 </td>
               </tr>
@@ -702,15 +676,7 @@
                 <td>不了解研究现状，所列参考文献没有代表性。</td>
                 <td>
                   <div class="score-input-wrapper">
-                    <el-input-number
-                      v-model="endScoreForm.endScoreYjjc"
-                      :precision="0"
-                      :min="0"
-                      :max="100"
-                      size="small"
-                      @change="calculateEndScoreTotal"
-                      controls-position="right"
-                    />
+                    <el-tag type="info">{{ detail.endScoreYjjc }}</el-tag>
                   </div>
                 </td>
               </tr>
@@ -723,15 +689,7 @@
                 <td>目标不够明确，内容空泛，思路模糊。</td>
                 <td>
                   <div class="score-input-wrapper">
-                    <el-input-number
-                      v-model="endScoreForm.endScoreNrsj"
-                      :precision="0"
-                      :min="0"
-                      :max="100"
-                      size="small"
-                      @change="calculateEndScoreTotal"
-                      controls-position="right"
-                    />
+                    <el-tag type="info">{{ detail.endScoreNrsj }}</el-tag>
                   </div>
                 </td>
               </tr>
@@ -744,15 +702,7 @@
                 <td>方法手段不当</td>
                 <td>
                   <div class="score-input-wrapper">
-                    <el-input-number
-                      v-model="endScoreForm.endScoreYjff"
-                      :precision="0"
-                      :min="0"
-                      :max="100"
-                      size="small"
-                      @change="calculateEndScoreTotal"
-                      controls-position="right"
-                    />
+                    <el-tag type="info">{{ detail.endScoreYjff }}</el-tag>
                   </div>
                 </td>
               </tr>
@@ -1125,7 +1075,7 @@ export default {
     handleDetail(row) {
       getInnoProject(row.id).then(response => {
         this.detail = response.data;
-        console.log("详情数据:", this.detail); // 添加调试日志
+        console.log("详情数据:", this.detail); // 调试日志
 
         // 计算中期总分
         if (this.detail.midScoreXtjz !== null && this.detail.midScoreXtjz !== undefined) {
@@ -1151,6 +1101,8 @@ export default {
           this.finalScore = (parseFloat(this.midTotalScoreInfo) * 0.3 + parseFloat(this.endTotalScore) * 0.7).toFixed(2);
         }
 
+        // 设置默认显示基础信息标签
+        this.activeName = 'basic';
         this.detailOpen = true;
       });
     },

@@ -38,7 +38,6 @@ public class StudentController extends BaseController {
     /**
      * 查询学生列表
      */
-    @PreAuthorize("@ss.hasPermi('student:student:list')")
     @GetMapping("/list")
     public TableDataInfo list(Student student) {
         startPage();
@@ -49,7 +48,6 @@ public class StudentController extends BaseController {
     /**
      * 查询学生列表
      */
-    @PreAuthorize("@ss.hasPermi('student:student:list')")
     @GetMapping("/options")
     public AjaxResult options(Student student) {
         List<Student> list = studentService.selectList(student, true);
@@ -70,7 +68,6 @@ public class StudentController extends BaseController {
     /**
      * 导出学生列表
      */
-    @PreAuthorize("@ss.hasPermi('student:student:export')")
     @Log(title = "学生", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, Student student) {
@@ -82,7 +79,6 @@ public class StudentController extends BaseController {
     /**
      * 获取学生详细信息
      */
-    @PreAuthorize("@ss.hasPermi('student:student:query')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
         return success(studentService.getById(id));
@@ -91,7 +87,6 @@ public class StudentController extends BaseController {
     /**
      * 新增学生
      */
-    @PreAuthorize("@ss.hasPermi('student:student:add')")
     @Log(title = "学生", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Student student) {
@@ -102,8 +97,6 @@ public class StudentController extends BaseController {
     /**
      * 修改学生
      */
-    @PreAuthorize("@ss.hasPermi('student:student:edit')")
-    @Log(title = "学生", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody Student student) {
         return toAjax(studentService.updateById(student));
@@ -112,8 +105,6 @@ public class StudentController extends BaseController {
     /**
      * 删除学生
      */
-    @PreAuthorize("@ss.hasPermi('student:student:remove')")
-    @Log(title = "学生", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
         return toAjax(studentService.removeByIds(Arrays.asList(ids)));

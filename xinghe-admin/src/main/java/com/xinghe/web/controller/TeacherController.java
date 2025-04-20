@@ -40,7 +40,6 @@ public class TeacherController extends BaseController {
     /**
      * 查询老师列表
      */
-    @PreAuthorize("@ss.hasPermi('person:teacher:list')")
     @GetMapping("/list")
     public TableDataInfo list(Teacher teacher) {
         startPage();
@@ -51,8 +50,6 @@ public class TeacherController extends BaseController {
     /**
      * 导出老师列表
      */
-    @PreAuthorize("@ss.hasPermi('person:teacher:export')")
-    @Log(title = "老师", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, Teacher teacher) {
         List<Teacher> list = teacherService.selectList(teacher);
@@ -63,7 +60,6 @@ public class TeacherController extends BaseController {
     /**
      * 获取老师详细信息
      */
-    @PreAuthorize("@ss.hasPermi('person:teacher:query')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
         return success(teacherService.getById(id));
@@ -72,8 +68,6 @@ public class TeacherController extends BaseController {
     /**
      * 新增老师
      */
-    @PreAuthorize("@ss.hasPermi('person:teacher:add')")
-    @Log(title = "老师", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody Teacher teacher) {
         teacherService.addTeacher(teacher);
@@ -83,8 +77,6 @@ public class TeacherController extends BaseController {
     /**
      * 修改老师
      */
-    @PreAuthorize("@ss.hasPermi('person:teacher:edit')")
-    @Log(title = "老师", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody Teacher teacher) {
         return toAjax(teacherService.updateById(teacher));
@@ -93,8 +85,6 @@ public class TeacherController extends BaseController {
     /**
      * 删除老师
      */
-    @PreAuthorize("@ss.hasPermi('person:teacher:remove')")
-    @Log(title = "老师", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids) {
         return toAjax(teacherService.removeByIds(Arrays.asList(ids)));

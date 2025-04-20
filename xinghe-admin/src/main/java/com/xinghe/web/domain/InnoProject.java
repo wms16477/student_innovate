@@ -1,10 +1,8 @@
 package com.xinghe.web.domain;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -146,16 +144,19 @@ public class InnoProject {
     /**
      * 申报人
      */
+    @TableField(fill = FieldFill.INSERT)
     private String createBy;
 
     /**
      * 申报人
      */
+    @TableField(fill = FieldFill.INSERT)
     private String createByName;
 
     /**
      * 创建时间
      */
+    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
     /**
@@ -163,4 +164,9 @@ public class InnoProject {
      */
     @TableField(exist = false)
     private List<InnoProjectMember> memberList;
+
+    @TableField(exist = false)
+    private List<String> buttonList = new ArrayList<>();
+
+
 }

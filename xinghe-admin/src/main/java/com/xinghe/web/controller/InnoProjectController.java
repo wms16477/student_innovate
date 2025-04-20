@@ -7,15 +7,20 @@ import com.xinghe.common.core.domain.AjaxResult;
 import com.xinghe.common.core.page.TableDataInfo;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
+import com.xinghe.system.domain.SysUserRole;
+import com.xinghe.system.mapper.SysUserMapper;
+import com.xinghe.system.mapper.SysUserRoleMapper;
+import com.xinghe.system.service.impl.SysUserServiceImpl;
+import com.xinghe.web.constants.Constants;
 import com.xinghe.web.domain.InnoProject;
 import com.xinghe.web.domain.InnoProjectMember;
+import com.xinghe.web.domain.Professional;
 import com.xinghe.web.domain.Student;
-import com.xinghe.web.service.InnoProjectMemberService;
-import com.xinghe.web.service.InnoProjectService;
+import com.xinghe.web.dto.InnoProjectDTO;
+import com.xinghe.web.mapper.InnoProjectMapper;
+import com.xinghe.web.service.*;
 import com.xinghe.web.enums.StatusEnum;
 import com.xinghe.web.enums.ProjectType;
-import com.xinghe.web.service.StudentService;
-import com.xinghe.web.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
@@ -45,6 +50,15 @@ public class InnoProjectController extends BaseController {
     @Autowired
     private InnoProjectMemberService innoProjectMemberService;
 
+    @Autowired
+    private InnoProjectMapper innoProjectMapper;
+
+    @Autowired
+    private SysUserRoleMapper sysUserRoleMapper;
+
+    @Autowired
+    private ProfessionalService professionalService;
+
     /**
      * 查询项目类型列表
      */
@@ -60,14 +74,49 @@ public class InnoProjectController extends BaseController {
      * 查询大创项目列表
      */
     @GetMapping("/list")
-    public TableDataInfo list(InnoProject innoProject, Date startTime, Date endTime) {
+    public TableDataInfo list(InnoProjectDTO dto) {
         startPage();
-        LambdaQueryWrapper<InnoProject> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.like(StringUtils.isNotEmpty(innoProject.getProjectName()), InnoProject::getProjectName, innoProject.getProjectName())
-                .ge(startTime != null, InnoProject::getCreateTime, startTime)
-                .le(endTime != null, InnoProject::getCreateTime, endTime)
-                .orderByDesc(InnoProject::getCreateTime);
-        return getDataTable(innoProjectService.list(queryWrapper));
+        //获取当前登录用户
+        Long userId = getUserId();
+        //获取当前登录账号
+        String username = SecurityUtils.getLoginUser().getUsername();
+        //获取当前角色
+        List<SysUserRole> roleList = sysUserRoleMapper.selectUserRoleByUserId(userId);
+        Integer userType = null;
+        String projectType = null;
+        for (SysUserRole sysUserRole : roleList) {
+            if (Objects.equals(sysUserRole.getRoleId(), Constants.STU_ROLE_ID)) {
+                //学生
+                userType = 1;
+                break;
+            } else if (Objects.equals(sysUserRole.getRoleId(), Constants.TEA_ROLE_ID)) {
+                //教师
+                userType = 2;
+                break;
+            } else if (Objects.equals(sysUserRole.getRoleId(), Constants.PRO_ROLE_ID)) {
+                //专家
+                userType = 3;
+                Professional professional = professionalService.lambdaQuery().eq(Professional::getAccount, username)
+                        .one();
+                projectType = professional.getArea();
+                break;
+            }
+        }
+        //按钮 查看
+        List<InnoProject> list = innoProjectMapper.getTableList(dto, userId, username, userType, projectType);
+        for (InnoProject innoProject : list) {
+            if (userType == 1) {
+                //学生
+                if(StatusEnum.DRAFT.name.equals(innoProject.getStatus())){
+
+                }
+            } else if (userType == 2) {
+
+            } else if (userType == 3) {
+
+            }
+        }
+        return getDataTable(list);
     }
 
     /**
@@ -188,23 +237,23 @@ public class InnoProjectController extends BaseController {
         if (innoProject.getId() == null) {
             return error("项目ID不能为空");
         }
-        
+
         InnoProject project = innoProjectService.getById(innoProject.getId());
         if (project == null) {
             return error("项目不存在");
         }
-        
+
         // 只更新中期检查相关字段
         InnoProject updateProject = new InnoProject();
         updateProject.setId(innoProject.getId());
         updateProject.setMidCheckFileName(innoProject.getMidCheckFileName());
         updateProject.setMidCheckFileUrl(innoProject.getMidCheckFileUrl());
         updateProject.setMidCheckDesc(innoProject.getMidCheckDesc());
-        
+
         innoProjectService.updateById(updateProject);
         return success();
     }
-    
+
     /**
      * 提交中期检查评分
      */
@@ -213,12 +262,12 @@ public class InnoProjectController extends BaseController {
         if (innoProject.getId() == null) {
             return error("项目ID不能为空");
         }
-        
+
         InnoProject project = innoProjectService.getById(innoProject.getId());
         if (project == null) {
             return error("项目不存在");
         }
-        
+
         // 检查分数有效性
         if (innoProject.getMidScoreXtjz() == null || innoProject.getMidScoreXtjz() < 0 || innoProject.getMidScoreXtjz() > 100) {
             return error("选题价值分必须在0-100之间");
@@ -232,7 +281,7 @@ public class InnoProjectController extends BaseController {
         if (innoProject.getMidScoreYjff() == null || innoProject.getMidScoreYjff() < 0 || innoProject.getMidScoreYjff() > 100) {
             return error("研究方法分必须在0-100之间");
         }
-        
+
         // 只更新中期检查评分相关字段
         InnoProject updateProject = new InnoProject();
         updateProject.setId(innoProject.getId());
@@ -240,11 +289,11 @@ public class InnoProjectController extends BaseController {
         updateProject.setMidScoreYjjc(innoProject.getMidScoreYjjc());
         updateProject.setMidScoreNrsj(innoProject.getMidScoreNrsj());
         updateProject.setMidScoreYjff(innoProject.getMidScoreYjff());
-        
+
         innoProjectService.updateById(updateProject);
         return success();
     }
-    
+
     /**
      * 计算中期检查总分
      */
@@ -253,18 +302,18 @@ public class InnoProjectController extends BaseController {
         if (xtjz == null || yjjc == null || nrsj == null || yjff == null) {
             return error("所有分数都必须提供");
         }
-        
+
         // 计算总分（加权平均）
         // 选题价值分 权重0.2
         // 研究基础分 权重0.2
         // 内容设计分 权重0.5
         // 研究方法分 权重0.1
         double totalScore = xtjz * 0.2 + yjjc * 0.2 + nrsj * 0.5 + yjff * 0.1;
-        
+
         // 保留两位小数
         BigDecimal bd = new BigDecimal(totalScore);
         bd = bd.setScale(2, RoundingMode.HALF_UP);
-        
+
         return success(bd.doubleValue());
     }
 
@@ -276,23 +325,23 @@ public class InnoProjectController extends BaseController {
         if (innoProject.getId() == null) {
             return error("项目ID不能为空");
         }
-        
+
         InnoProject project = innoProjectService.getById(innoProject.getId());
         if (project == null) {
             return error("项目不存在");
         }
-        
+
         // 只更新结项相关字段
         InnoProject updateProject = new InnoProject();
         updateProject.setId(innoProject.getId());
         updateProject.setEndFileName(innoProject.getEndFileName());
         updateProject.setEndFileUrl(innoProject.getEndFileUrl());
         updateProject.setEndDesc(innoProject.getEndDesc());
-        
+
         innoProjectService.updateById(updateProject);
         return success();
     }
-    
+
     /**
      * 提交结项评分
      */
@@ -301,12 +350,12 @@ public class InnoProjectController extends BaseController {
         if (innoProject.getId() == null) {
             return error("项目ID不能为空");
         }
-        
+
         InnoProject project = innoProjectService.getById(innoProject.getId());
         if (project == null) {
             return error("项目不存在");
         }
-        
+
         // 检查分数有效性
         if (innoProject.getEndScoreXtjz() == null || innoProject.getEndScoreXtjz() < 0 || innoProject.getEndScoreXtjz() > 100) {
             return error("选题价值分必须在0-100之间");
@@ -320,7 +369,7 @@ public class InnoProjectController extends BaseController {
         if (innoProject.getEndScoreYjff() == null || innoProject.getEndScoreYjff() < 0 || innoProject.getEndScoreYjff() > 100) {
             return error("研究方法分必须在0-100之间");
         }
-        
+
         // 只更新结项评分相关字段
         InnoProject updateProject = new InnoProject();
         updateProject.setId(innoProject.getId());
@@ -328,11 +377,11 @@ public class InnoProjectController extends BaseController {
         updateProject.setEndScoreYjjc(innoProject.getEndScoreYjjc());
         updateProject.setEndScoreNrsj(innoProject.getEndScoreNrsj());
         updateProject.setEndScoreYjff(innoProject.getEndScoreYjff());
-        
+
         innoProjectService.updateById(updateProject);
         return success();
     }
-    
+
     /**
      * 计算结项总分
      */
@@ -341,18 +390,18 @@ public class InnoProjectController extends BaseController {
         if (xtjz == null || yjjc == null || nrsj == null || yjff == null) {
             return error("所有分数都必须提供");
         }
-        
+
         // 计算总分（加权平均）
         // 选题价值分 权重0.2
         // 研究基础分 权重0.2
         // 内容设计分 权重0.5
         // 研究方法分 权重0.1
         double totalScore = xtjz * 0.2 + yjjc * 0.2 + nrsj * 0.5 + yjff * 0.1;
-        
+
         // 保留两位小数
         BigDecimal bd = new BigDecimal(totalScore);
         bd = bd.setScale(2, RoundingMode.HALF_UP);
-        
+
         return success(bd.doubleValue());
     }
 }
