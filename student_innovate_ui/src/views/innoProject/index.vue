@@ -200,70 +200,248 @@
     </el-dialog>
 
     <!-- 项目详情对话框 -->
-    <el-dialog title="项目详情" :visible.sync="detailOpen" width="700px" append-to-body>
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="项目名称">{{ detail.projectName }}</el-descriptions-item>
-        <el-descriptions-item label="项目类型">
-          <dict-tag :options="projectTypeList" :value="detail.projectType"/>
-        </el-descriptions-item>
-        <el-descriptions-item label="项目简介">{{ detail.projectDesc }}</el-descriptions-item>
-        <el-descriptions-item label="导师">{{ detail.teacherName }}</el-descriptions-item>
-        <el-descriptions-item label="状态">
-          <dict-tag :options="statusOptions" :value="detail.status"/>
-        </el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ parseTime(detail.createTime) }}</el-descriptions-item>
-        <el-descriptions-item label="申报材料" :span="2">
-          <el-link :href="baseUrl + detail.submitFileUrl" target="_blank">
-            {{ detail.submitFileUrl ? detail.submitFileUrl.split('/').pop() : null }}
-          </el-link>
-        </el-descriptions-item>
+    <el-dialog title="项目详情" :visible.sync="detailOpen" width="900px" append-to-body>
+      <el-tabs type="border-card" v-model="activeName">
+        <el-tab-pane label="基础信息" name="basic">
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="项目名称">{{ detail.projectName }}</el-descriptions-item>
+            <el-descriptions-item label="项目类型">
+              <dict-tag :options="projectTypeList" :value="detail.projectType"/>
+            </el-descriptions-item>
+            <el-descriptions-item label="项目简介">{{ detail.projectDesc }}</el-descriptions-item>
+            <el-descriptions-item label="导师">{{ detail.teacherName }}</el-descriptions-item>
+            <el-descriptions-item label="状态">
+              <dict-tag :options="statusOptions" :value="detail.status"/>
+            </el-descriptions-item>
+            <el-descriptions-item label="创建时间">{{ parseTime(detail.createTime) }}</el-descriptions-item>
+            <el-descriptions-item label="申报材料" :span="2">
+              <el-link :href="baseUrl + detail.submitFileUrl" target="_blank">
+                {{ detail.submitFileUrl ? detail.submitFileUrl.split('/').pop() : null }}
+              </el-link>
+            </el-descriptions-item>
 
-        <template v-if="detail.midCheckFileUrl">
-          <el-descriptions-item label="中期检查材料" :span="2">
-            <el-link :href="baseUrl + detail.midCheckFileUrl" target="_blank">
-              {{ detail.midCheckFileUrl ? detail.midCheckFileUrl.split('/').pop() : null }}
-            </el-link>
-          </el-descriptions-item>
-          <el-descriptions-item label="中期检查说明" :span="2">
-            {{ detail.midCheckDesc }}
-          </el-descriptions-item>
-        </template>
+            <template v-if="detail.midCheckFileUrl">
+              <el-descriptions-item label="中期检查材料" :span="2">
+                <el-link :href="baseUrl + detail.midCheckFileUrl" target="_blank">
+                  {{ detail.midCheckFileUrl ? detail.midCheckFileUrl.split('/').pop() : null }}
+                </el-link>
+              </el-descriptions-item>
+              <el-descriptions-item label="中期检查说明" :span="2">
+                {{ detail.midCheckDesc }}
+              </el-descriptions-item>
+            </template>
 
-        <template v-if="detail.midScoreXtjz !== null && detail.midScoreXtjz !== undefined">
-          <el-descriptions-item label="选题价值分(权重0.2)">{{ detail.midScoreXtjz }}</el-descriptions-item>
-          <el-descriptions-item label="研究基础分(权重0.2)">{{ detail.midScoreYjjc }}</el-descriptions-item>
-          <el-descriptions-item label="内容设计分(权重0.5)">{{ detail.midScoreNrsj }}</el-descriptions-item>
-          <el-descriptions-item label="研究方法分(权重0.1)">{{ detail.midScoreYjff }}</el-descriptions-item>
-          <el-descriptions-item label="中期评分总分" :span="2">
-            <el-tag type="success">
-              {{ (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2) }}
-            </el-tag>
-          </el-descriptions-item>
-        </template>
+            <template v-if="detail.endFileUrl">
+              <el-descriptions-item label="结项材料" :span="2">
+                <el-link :href="baseUrl + detail.endFileUrl" target="_blank">
+                  {{ detail.endFileUrl ? detail.endFileUrl.split('/').pop() : null }}
+                </el-link>
+              </el-descriptions-item>
+              <el-descriptions-item label="结项说明" :span="2">
+                {{ detail.endDesc }}
+              </el-descriptions-item>
+            </template>
+          </el-descriptions>
+        </el-tab-pane>
 
-        <template v-if="detail.endFileUrl">
-          <el-descriptions-item label="结项材料" :span="2">
-            <el-link :href="baseUrl + detail.endFileUrl" target="_blank">
-              {{ detail.endFileUrl ? detail.endFileUrl.split('/').pop() : null }}
-            </el-link>
-          </el-descriptions-item>
-          <el-descriptions-item label="结项说明" :span="2">
-            {{ detail.endDesc }}
-          </el-descriptions-item>
-        </template>
+        <el-tab-pane label="中期评分" name="midScore" v-if="detail.midScoreXtjz !== null && detail.midScoreXtjz !== undefined">
+          <div class="score-table-container">
+            <div class="score-title">中期评分表</div>
+            <table class="score-table">
+              <thead>
+                <tr>
+                  <th rowspan="2" width="80">评审内容</th>
+                  <th rowspan="2" width="60">权重</th>
+                  <th colspan="4">评审标准</th>
+                  <th rowspan="2" width="120">评分<br>(百分制)</th>
+                </tr>
+                <tr>
+                  <th width="150">A级<br>(80-100分)</th>
+                  <th width="150">B级<br>(60-80分)</th>
+                  <th width="150">C级<br>(40-60分)</th>
+                  <th width="150">D级<br>(0-40分)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>选题价值</td>
+                  <td>0.2</td>
+                  <td>有重要创新性或应用性。</td>
+                  <td>有比较重要的创新性或应用性。</td>
+                  <td>创新性或应用性一般。</td>
+                  <td>基本属于重复性工作。</td>
+                  <td>
+                    <div class="score-input-wrapper">
+                      <el-tag type="info">{{ detail.midScoreXtjz }}</el-tag>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>研究基础</td>
+                  <td>0.2</td>
+                  <td>熟悉研究现状，所列参考文献具有代表性。</td>
+                  <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
+                  <td>一般了解研究现状，所列参考文献有一定代表性。</td>
+                  <td>不了解研究现状，所列参考文献没有代表性。</td>
+                  <td>
+                    <div class="score-input-wrapper">
+                      <el-tag type="info">{{ detail.midScoreYjjc }}</el-tag>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>内容设计</td>
+                  <td>0.5</td>
+                  <td>目标明确，内容充实，思路清晰。</td>
+                  <td>目标比较明确，内容比较充实，思路比较清晰。</td>
+                  <td>目标基本明确，内容基本充实，思路基本清晰。</td>
+                  <td>目标不够明确，内容空泛，思路模糊。</td>
+                  <td>
+                    <div class="score-input-wrapper">
+                      <el-tag type="info">{{ detail.midScoreNrsj }}</el-tag>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>研究方法</td>
+                  <td>0.1</td>
+                  <td>方法与手段科学、适切</td>
+                  <td>方法比较科学、适切</td>
+                  <td>方法手段基本科学、适切</td>
+                  <td>方法手段不当</td>
+                  <td>
+                    <div class="score-input-wrapper">
+                      <el-tag type="info">{{ detail.midScoreYjff }}</el-tag>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="6" style="text-align: right; font-weight: bold;">中期评分总分：</td>
+                  <td>
+                    <el-tag type="success" size="medium">
+                      {{ (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2) }}
+                    </el-tag>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </el-tab-pane>
 
-        <template v-if="detail.endScoreXtjz !== null && detail.endScoreXtjz !== undefined">
-          <el-descriptions-item label="结项选题价值分(权重0.2)">{{ detail.endScoreXtjz }}</el-descriptions-item>
-          <el-descriptions-item label="结项研究基础分(权重0.2)">{{ detail.endScoreYjjc }}</el-descriptions-item>
-          <el-descriptions-item label="结项内容设计分(权重0.5)">{{ detail.endScoreNrsj }}</el-descriptions-item>
-          <el-descriptions-item label="结项研究方法分(权重0.1)">{{ detail.endScoreYjff }}</el-descriptions-item>
-          <el-descriptions-item label="结项评分总分" :span="2">
-            <el-tag type="success">
-              {{ (detail.endScoreXtjz * 0.2 + detail.endScoreYjjc * 0.2 + detail.endScoreNrsj * 0.5 + detail.endScoreYjff * 0.1).toFixed(2) }}
-            </el-tag>
-          </el-descriptions-item>
-        </template>
-      </el-descriptions>
+        <el-tab-pane label="结项评分" name="endScore" v-if="detail.endScoreXtjz !== null && detail.endScoreXtjz !== undefined">
+          <!-- 中期评分展示 -->
+          <el-card class="box-card" shadow="hover" style="margin-bottom: 20px">
+            <div slot="header" class="clearfix">
+              <span style="font-weight: bold">中期检查评分 (占总评权重30%)</span>
+            </div>
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="选题价值分(权重0.2)">{{ detail.midScoreXtjz || 0 }}</el-descriptions-item>
+              <el-descriptions-item label="研究基础分(权重0.2)">{{ detail.midScoreYjjc || 0 }}</el-descriptions-item>
+              <el-descriptions-item label="内容设计分(权重0.5)">{{ detail.midScoreNrsj || 0 }}</el-descriptions-item>
+              <el-descriptions-item label="研究方法分(权重0.1)">{{ detail.midScoreYjff || 0 }}</el-descriptions-item>
+              <el-descriptions-item label="中期评分总分" :span="2">
+                <el-tag type="success" size="medium">
+                  {{ (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2) }}
+                </el-tag>
+              </el-descriptions-item>
+            </el-descriptions>
+          </el-card>
+
+          <div class="score-table-container">
+            <div class="score-title">结项评分 (占总评权重70%)</div>
+            <table class="score-table">
+              <thead>
+                <tr>
+                  <th rowspan="2" width="80">评审内容</th>
+                  <th rowspan="2" width="60">权重</th>
+                  <th colspan="4">评审标准</th>
+                  <th rowspan="2" width="120">评分<br>(百分制)</th>
+                </tr>
+                <tr>
+                  <th width="150">A级<br>(80-100分)</th>
+                  <th width="150">B级<br>(60-80分)</th>
+                  <th width="150">C级<br>(40-60分)</th>
+                  <th width="150">D级<br>(0-40分)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>选题价值</td>
+                  <td>0.2</td>
+                  <td>有重要创新性或应用性。</td>
+                  <td>有比较重要的创新性或应用性。</td>
+                  <td>创新性或应用性一般。</td>
+                  <td>基本属于重复性工作。</td>
+                  <td>
+                    <div class="score-input-wrapper">
+                      <el-tag type="info">{{ detail.endScoreXtjz }}</el-tag>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>研究基础</td>
+                  <td>0.2</td>
+                  <td>熟悉研究现状，所列参考文献具有代表性。</td>
+                  <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
+                  <td>一般了解研究现状，所列参考文献有一定代表性。</td>
+                  <td>不了解研究现状，所列参考文献没有代表性。</td>
+                  <td>
+                    <div class="score-input-wrapper">
+                      <el-tag type="info">{{ detail.endScoreYjjc }}</el-tag>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>内容设计</td>
+                  <td>0.5</td>
+                  <td>目标明确，内容充实，思路清晰。</td>
+                  <td>目标比较明确，内容比较充实，思路比较清晰。</td>
+                  <td>目标基本明确，内容基本充实，思路基本清晰。</td>
+                  <td>目标不够明确，内容空泛，思路模糊。</td>
+                  <td>
+                    <div class="score-input-wrapper">
+                      <el-tag type="info">{{ detail.endScoreNrsj }}</el-tag>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>研究方法</td>
+                  <td>0.1</td>
+                  <td>方法与手段科学、适切</td>
+                  <td>方法比较科学、适切</td>
+                  <td>方法手段基本科学、适切</td>
+                  <td>方法手段不当</td>
+                  <td>
+                    <div class="score-input-wrapper">
+                      <el-tag type="info">{{ detail.endScoreYjff }}</el-tag>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="6" style="text-align: right; font-weight: bold;">结项评分总分：</td>
+                  <td>
+                    <el-tag type="success" size="medium">
+                      {{ (detail.endScoreXtjz * 0.2 + detail.endScoreYjjc * 0.2 + detail.endScoreNrsj * 0.5 + detail.endScoreYjff * 0.1).toFixed(2) }}
+                    </el-tag>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- 最终评分展示 -->
+          <div class="final-score">
+            <div class="final-score-title">最终评分（中期30% + 结项70%）</div>
+            <div class="final-score-value">
+              <el-tag type="danger" size="large">{{ finalScore }}</el-tag>
+            </div>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
     </el-dialog>
 
     <!-- 审批对话框 -->
@@ -464,12 +642,14 @@
             <span style="font-weight: bold">中期检查评分 (占总评权重30%)</span>
           </div>
           <el-descriptions :column="2" border size="small">
-            <el-descriptions-item label="选题价值分(权重0.2)">{{ midScoreInfo.midScoreXtjz || 0 }}</el-descriptions-item>
-            <el-descriptions-item label="研究基础分(权重0.2)">{{ midScoreInfo.midScoreYjjc || 0 }}</el-descriptions-item>
-            <el-descriptions-item label="内容设计分(权重0.5)">{{ midScoreInfo.midScoreNrsj || 0 }}</el-descriptions-item>
-            <el-descriptions-item label="研究方法分(权重0.1)">{{ midScoreInfo.midScoreYjff || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="选题价值分(权重0.2)">{{ detail.midScoreXtjz || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="研究基础分(权重0.2)">{{ detail.midScoreYjjc || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="内容设计分(权重0.5)">{{ detail.midScoreNrsj || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="研究方法分(权重0.1)">{{ detail.midScoreYjff || 0 }}</el-descriptions-item>
             <el-descriptions-item label="中期评分总分" :span="2">
-              <el-tag type="success" size="medium">{{ midTotalScoreInfo }}</el-tag>
+              <el-tag type="success" size="medium">
+                {{ (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2) }}
+              </el-tag>
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
@@ -581,7 +761,9 @@
               <tr>
                 <td colspan="6" style="text-align: right; font-weight: bold;">结项评分总分：</td>
                 <td>
-                  <el-tag type="success" size="medium">{{ endTotalScore }}</el-tag>
+                  <el-tag type="success" size="medium">
+                    {{ (detail.endScoreXtjz * 0.2 + detail.endScoreYjjc * 0.2 + detail.endScoreNrsj * 0.5 + detail.endScoreYjff * 0.1).toFixed(2) }}
+                  </el-tag>
                 </td>
               </tr>
             </tfoot>
@@ -627,6 +809,7 @@ export default {
   name: "InnoProject",
   data() {
     return {
+      activeName: 'basic',
       baseUrl: process.env.VUE_APP_BASE_API,
       // 遮罩层
       loading: true,
@@ -942,6 +1125,32 @@ export default {
     handleDetail(row) {
       getInnoProject(row.id).then(response => {
         this.detail = response.data;
+        console.log("详情数据:", this.detail); // 添加调试日志
+
+        // 计算中期总分
+        if (this.detail.midScoreXtjz !== null && this.detail.midScoreXtjz !== undefined) {
+          this.midTotalScoreInfo = (
+            this.detail.midScoreXtjz * 0.2 +
+            this.detail.midScoreYjjc * 0.2 +
+            this.detail.midScoreNrsj * 0.5 +
+            this.detail.midScoreYjff * 0.1
+          ).toFixed(2);
+        }
+
+        // 计算结项总分和最终分数
+        if (this.detail.endScoreXtjz !== null && this.detail.endScoreXtjz !== undefined) {
+          // 计算结项总分
+          this.endTotalScore = (
+            this.detail.endScoreXtjz * 0.2 +
+            this.detail.endScoreYjjc * 0.2 +
+            this.detail.endScoreNrsj * 0.5 +
+            this.detail.endScoreYjff * 0.1
+          ).toFixed(2);
+
+          // 计算最终评分
+          this.finalScore = (parseFloat(this.midTotalScoreInfo) * 0.3 + parseFloat(this.endTotalScore) * 0.7).toFixed(2);
+        }
+
         this.detailOpen = true;
       });
     },
@@ -1074,7 +1283,7 @@ export default {
     handleEndProjectScore(row) {
       getInnoProject(row.id).then(response => {
         const data = response.data;
-        
+
         // 保存中期评分信息
         this.midScoreInfo = {
           midScoreXtjz: data.midScoreXtjz || 0,
@@ -1082,15 +1291,15 @@ export default {
           midScoreNrsj: data.midScoreNrsj || 0,
           midScoreYjff: data.midScoreYjff || 0
         };
-        
+
         // 计算中期总分
         this.midTotalScoreInfo = (
-          this.midScoreInfo.midScoreXtjz * 0.2 + 
-          this.midScoreInfo.midScoreYjjc * 0.2 + 
-          this.midScoreInfo.midScoreNrsj * 0.5 + 
+          this.midScoreInfo.midScoreXtjz * 0.2 +
+          this.midScoreInfo.midScoreYjjc * 0.2 +
+          this.midScoreInfo.midScoreNrsj * 0.5 +
           this.midScoreInfo.midScoreYjff * 0.1
         ).toFixed(2);
-        
+
         // 保存结项评分表单
         this.endScoreForm = {
           id: data.id,
@@ -1099,13 +1308,13 @@ export default {
           endScoreNrsj: data.endScoreNrsj || 0,
           endScoreYjff: data.endScoreYjff || 0
         };
-        
+
         // 计算结项总分和最终评分
         this.calculateEndScoreTotal();
         this.endScoreOpen = true;
       });
     },
-    
+
     /** 计算结项总分 */
     calculateEndScoreTotal() {
       const params = {
@@ -1120,7 +1329,7 @@ export default {
         this.calculateFinalScore();
       });
     },
-    
+
     /** 计算最终评分 */
     calculateFinalScore() {
       this.finalScore = (parseFloat(this.midTotalScoreInfo) * 0.3 + parseFloat(this.endTotalScore) * 0.7).toFixed(2);
@@ -1230,5 +1439,13 @@ export default {
 
 .final-score-value {
   display: inline-block;
+}
+
+.score-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #303133;
+  text-align: center;
 }
 </style>
