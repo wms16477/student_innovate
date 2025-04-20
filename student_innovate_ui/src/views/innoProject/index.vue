@@ -112,6 +112,20 @@
             @click="handleMidCheckScore(scope.row)"
           >中期评分
           </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-circle-check"
+            @click="handleEndProject(scope.row)"
+          >结项
+          </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-s-check"
+            @click="handleEndProjectScore(scope.row)"
+          >结项评分
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -223,6 +237,29 @@
           <el-descriptions-item label="中期评分总分" :span="2">
             <el-tag type="success">
               {{ (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2) }}
+            </el-tag>
+          </el-descriptions-item>
+        </template>
+
+        <template v-if="detail.endFileUrl">
+          <el-descriptions-item label="结项材料" :span="2">
+            <el-link :href="baseUrl + detail.endFileUrl" target="_blank">
+              {{ detail.endFileUrl ? detail.endFileUrl.split('/').pop() : null }}
+            </el-link>
+          </el-descriptions-item>
+          <el-descriptions-item label="结项说明" :span="2">
+            {{ detail.endDesc }}
+          </el-descriptions-item>
+        </template>
+
+        <template v-if="detail.endScoreXtjz !== null && detail.endScoreXtjz !== undefined">
+          <el-descriptions-item label="结项选题价值分(权重0.2)">{{ detail.endScoreXtjz }}</el-descriptions-item>
+          <el-descriptions-item label="结项研究基础分(权重0.2)">{{ detail.endScoreYjjc }}</el-descriptions-item>
+          <el-descriptions-item label="结项内容设计分(权重0.5)">{{ detail.endScoreNrsj }}</el-descriptions-item>
+          <el-descriptions-item label="结项研究方法分(权重0.1)">{{ detail.endScoreYjff }}</el-descriptions-item>
+          <el-descriptions-item label="结项评分总分" :span="2">
+            <el-tag type="success">
+              {{ (detail.endScoreXtjz * 0.2 + detail.endScoreYjjc * 0.2 + detail.endScoreNrsj * 0.5 + detail.endScoreYjff * 0.1).toFixed(2) }}
             </el-tag>
           </el-descriptions-item>
         </template>
@@ -390,6 +427,155 @@
         <el-button @click="midScoreOpen = false">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 结项对话框 -->
+    <el-dialog title="结项" :visible.sync="endProjectOpen" width="500px" append-to-body>
+      <el-form ref="endProjectForm" :model="endProjectForm" :rules="endProjectRules" label-width="80px">
+        <el-form-item label="结项说明" prop="endDesc">
+          <el-input v-model="endProjectForm.endDesc" type="textarea" placeholder="请输入结项说明"/>
+        </el-form-item>
+        <el-form-item label="结项材料" prop="endFileUrl">
+          <file-upload
+            v-model="endProjectForm.endFileUrl"
+            :limit="1"
+            :fileType="['doc', 'docx' ,'xls', 'xlsx' ,'ppt', 'pptx','txt', 'pdf', 'zip', 'png','jpg']"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitEndProject">提 交</el-button>
+        <el-button @click="endProjectOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 结项评分对话框 -->
+    <el-dialog title="结项评分" :visible.sync="endScoreOpen" width="900px" append-to-body>
+      <el-form ref="endScoreForm" :model="endScoreForm" :rules="endScoreRules" label-width="120px">
+        <el-alert
+          title="评分须知：所有评分项满分为100分，最终得分为加权平均分。请参照下表评分标准进行评分。"
+          type="info"
+          :closable="false"
+          style="margin-bottom: 20px"
+        />
+
+        <div class="score-table-container">
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th rowspan="2" width="80">评审内容</th>
+                <th rowspan="2" width="60">权重</th>
+                <th colspan="4">评审标准</th>
+                <th rowspan="2" width="120">评分<br>(百分制)</th>
+              </tr>
+              <tr>
+                <th width="150">A级<br>(80-100分)</th>
+                <th width="150">B级<br>(60-80分)</th>
+                <th width="150">C级<br>(40-60分)</th>
+                <th width="150">D级<br>(0-40分)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>选题价值</td>
+                <td>0.2</td>
+                <td>有重要创新性或应用性。</td>
+                <td>有比较重要的创新性或应用性。</td>
+                <td>创新性或应用性一般。</td>
+                <td>基本属于重复性工作。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-input-number
+                      v-model="endScoreForm.endScoreXtjz"
+                      :precision="0"
+                      :min="0"
+                      :max="100"
+                      size="small"
+                      @change="calculateEndScoreTotal"
+                      controls-position="right"
+                    />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>研究基础</td>
+                <td>0.2</td>
+                <td>熟悉研究现状，所列参考文献具有代表性。</td>
+                <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
+                <td>一般了解研究现状，所列参考文献有一定代表性。</td>
+                <td>不了解研究现状，所列参考文献没有代表性。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-input-number
+                      v-model="endScoreForm.endScoreYjjc"
+                      :precision="0"
+                      :min="0"
+                      :max="100"
+                      size="small"
+                      @change="calculateEndScoreTotal"
+                      controls-position="right"
+                    />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>内容设计</td>
+                <td>0.5</td>
+                <td>目标明确，内容充实，思路清晰。</td>
+                <td>目标比较明确，内容比较充实，思路比较清晰。</td>
+                <td>目标基本明确，内容基本充实，思路基本清晰。</td>
+                <td>目标不够明确，内容空泛，思路模糊。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-input-number
+                      v-model="endScoreForm.endScoreNrsj"
+                      :precision="0"
+                      :min="0"
+                      :max="100"
+                      size="small"
+                      @change="calculateEndScoreTotal"
+                      controls-position="right"
+                    />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>研究方法</td>
+                <td>0.1</td>
+                <td>方法与手段科学、适切</td>
+                <td>方法比较科学、适切</td>
+                <td>方法手段基本科学、适切</td>
+                <td>方法手段不当</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-input-number
+                      v-model="endScoreForm.endScoreYjff"
+                      :precision="0"
+                      :min="0"
+                      :max="100"
+                      size="small"
+                      @change="calculateEndScoreTotal"
+                      controls-position="right"
+                    />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" style="text-align: right; font-weight: bold;">总分（加权平均）：</td>
+                <td>
+                  <el-tag type="success" size="medium">{{ endTotalScore }}</el-tag>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitEndScore">提 交</el-button>
+        <el-button @click="endScoreOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -403,7 +589,10 @@ import {
   approveInnoProject,
   submitMidCheck,
   submitMidCheckScore,
-  calculateMidScore
+  calculateMidScore,
+  submitEndProject,
+  submitEndProjectScore,
+  calculateEndScore
 } from "@/api/innoProject";
 import {listTeacher} from "@/api/person/teacher";
 import {listProjectType} from "@/api/system/projectType";
@@ -537,7 +726,51 @@ export default {
         ]
       },
       // 总分
-      totalScore: 0
+      totalScore: 0,
+      // 结项对话框是否显示
+      endProjectOpen: false,
+      // 结项表单参数
+      endProjectForm: {
+        id: undefined,
+        endDesc: undefined,
+        endFileUrl: undefined
+      },
+      // 结项表单校验
+      endProjectRules: {
+        endDesc: [
+          {required: true, message: "结项说明不能为空", trigger: "blur"}
+        ],
+        endFileUrl: [
+          {required: true, message: "结项材料不能为空", trigger: "change"}
+        ]
+      },
+      // 结项评分对话框是否显示
+      endScoreOpen: false,
+      // 结项评分表单参数
+      endScoreForm: {
+        id: undefined,
+        endScoreXtjz: 0,
+        endScoreYjjc: 0,
+        endScoreNrsj: 0,
+        endScoreYjff: 0
+      },
+      // 结项评分表单校验
+      endScoreRules: {
+        endScoreXtjz: [
+          {required: true, message: "选题价值分不能为空", trigger: "blur"}
+        ],
+        endScoreYjjc: [
+          {required: true, message: "研究基础分不能为空", trigger: "blur"}
+        ],
+        endScoreNrsj: [
+          {required: true, message: "内容设计分不能为空", trigger: "blur"}
+        ],
+        endScoreYjff: [
+          {required: true, message: "研究方法分不能为空", trigger: "blur"}
+        ]
+      },
+      // 结项总分
+      endTotalScore: 0
     };
   },
   created() {
@@ -780,6 +1013,63 @@ export default {
           submitMidCheckScore(this.midScoreForm).then(response => {
             this.$modal.msgSuccess("中期评分提交成功");
             this.midScoreOpen = false;
+            this.getList();
+          });
+        }
+      });
+    },
+    /** 结项按钮操作 */
+    handleEndProject(row) {
+      this.endProjectForm = {
+        id: row.id,
+        endDesc: row.endDesc,
+        endFileUrl: row.endFileUrl
+      };
+      this.endProjectOpen = true;
+    },
+    /** 提交结项 */
+    submitEndProject() {
+      this.$refs["endProjectForm"].validate(valid => {
+        if (valid) {
+          submitEndProject(this.endProjectForm).then(response => {
+            this.$modal.msgSuccess("结项提交成功");
+            this.endProjectOpen = false;
+            this.getList();
+          });
+        }
+      });
+    },
+    /** 计算结项总分 */
+    calculateEndScoreTotal() {
+      const params = {
+        xtjz: this.endScoreForm.endScoreXtjz,
+        yjjc: this.endScoreForm.endScoreYjjc,
+        nrsj: this.endScoreForm.endScoreNrsj,
+        yjff: this.endScoreForm.endScoreYjff
+      };
+      calculateEndScore(params).then(response => {
+        this.endTotalScore = response.data;
+      });
+    },
+    /** 结项评分按钮操作 */
+    handleEndProjectScore(row) {
+      this.endScoreForm = {
+        id: row.id,
+        endScoreXtjz: row.endScoreXtjz || 0,
+        endScoreYjjc: row.endScoreYjjc || 0,
+        endScoreNrsj: row.endScoreNrsj || 0,
+        endScoreYjff: row.endScoreYjff || 0
+      };
+      this.calculateEndScoreTotal();
+      this.endScoreOpen = true;
+    },
+    /** 提交结项评分 */
+    submitEndScore() {
+      this.$refs["endScoreForm"].validate(valid => {
+        if (valid) {
+          submitEndProjectScore(this.endScoreForm).then(response => {
+            this.$modal.msgSuccess("结项评分提交成功");
+            this.endScoreOpen = false;
             this.getList();
           });
         }

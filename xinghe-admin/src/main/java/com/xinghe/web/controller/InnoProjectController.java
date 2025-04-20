@@ -267,4 +267,92 @@ public class InnoProjectController extends BaseController {
         
         return success(bd.doubleValue());
     }
+
+    /**
+     * 提交结项
+     */
+    @PostMapping("/endProject")
+    public AjaxResult endProject(@RequestBody InnoProject innoProject) {
+        if (innoProject.getId() == null) {
+            return error("项目ID不能为空");
+        }
+        
+        InnoProject project = innoProjectService.getById(innoProject.getId());
+        if (project == null) {
+            return error("项目不存在");
+        }
+        
+        // 只更新结项相关字段
+        InnoProject updateProject = new InnoProject();
+        updateProject.setId(innoProject.getId());
+        updateProject.setEndFileName(innoProject.getEndFileName());
+        updateProject.setEndFileUrl(innoProject.getEndFileUrl());
+        updateProject.setEndDesc(innoProject.getEndDesc());
+        
+        innoProjectService.updateById(updateProject);
+        return success();
+    }
+    
+    /**
+     * 提交结项评分
+     */
+    @PostMapping("/endProjectScore")
+    public AjaxResult endProjectScore(@RequestBody InnoProject innoProject) {
+        if (innoProject.getId() == null) {
+            return error("项目ID不能为空");
+        }
+        
+        InnoProject project = innoProjectService.getById(innoProject.getId());
+        if (project == null) {
+            return error("项目不存在");
+        }
+        
+        // 检查分数有效性
+        if (innoProject.getEndScoreXtjz() == null || innoProject.getEndScoreXtjz() < 0 || innoProject.getEndScoreXtjz() > 100) {
+            return error("选题价值分必须在0-100之间");
+        }
+        if (innoProject.getEndScoreYjjc() == null || innoProject.getEndScoreYjjc() < 0 || innoProject.getEndScoreYjjc() > 100) {
+            return error("研究基础分必须在0-100之间");
+        }
+        if (innoProject.getEndScoreNrsj() == null || innoProject.getEndScoreNrsj() < 0 || innoProject.getEndScoreNrsj() > 100) {
+            return error("内容设计分必须在0-100之间");
+        }
+        if (innoProject.getEndScoreYjff() == null || innoProject.getEndScoreYjff() < 0 || innoProject.getEndScoreYjff() > 100) {
+            return error("研究方法分必须在0-100之间");
+        }
+        
+        // 只更新结项评分相关字段
+        InnoProject updateProject = new InnoProject();
+        updateProject.setId(innoProject.getId());
+        updateProject.setEndScoreXtjz(innoProject.getEndScoreXtjz());
+        updateProject.setEndScoreYjjc(innoProject.getEndScoreYjjc());
+        updateProject.setEndScoreNrsj(innoProject.getEndScoreNrsj());
+        updateProject.setEndScoreYjff(innoProject.getEndScoreYjff());
+        
+        innoProjectService.updateById(updateProject);
+        return success();
+    }
+    
+    /**
+     * 计算结项总分
+     */
+    @GetMapping("/calculateEndScore")
+    public AjaxResult calculateEndScore(Integer xtjz, Integer yjjc, Integer nrsj, Integer yjff) {
+        if (xtjz == null || yjjc == null || nrsj == null || yjff == null) {
+            return error("所有分数都必须提供");
+        }
+        
+        // 计算总分（加权平均）
+        // 选题价值分 权重0.2
+        // 研究基础分 权重0.2
+        // 内容设计分 权重0.5
+        // 研究方法分 权重0.1
+        double totalScore = xtjz * 0.2 + yjjc * 0.2 + nrsj * 0.5 + yjff * 0.1;
+        
+        // 保留两位小数
+        BigDecimal bd = new BigDecimal(totalScore);
+        bd = bd.setScale(2, RoundingMode.HALF_UP);
+        
+        return success(bd.doubleValue());
+    }
 }

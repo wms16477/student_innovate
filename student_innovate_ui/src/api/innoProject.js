@@ -93,3 +93,30 @@ export function calculateMidScore(params) {
   })
 }
 
+// 提交结项
+export function submitEndProject(data) {
+  return request({
+    url: '/web/innoProject/endProject',
+    method: 'post',
+    data: data
+  })
+}
+
+// 提交结项评分
+export function submitEndProjectScore(data) {
+  return request({
+    url: '/web/innoProject/endProjectScore',
+    method: 'post',
+    data: data
+  })
+}
+
+// 计算结项总分
+export function calculateEndScore(params) {
+  return request({
+    url: '/web/innoProject/calculateEndScore',
+    method: 'get',
+    params: params
+  })
+}
+
