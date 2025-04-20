@@ -1,0 +1,131 @@
+package com.xinghe.web.controller;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xinghe.common.core.controller.BaseController;
+import com.xinghe.common.core.domain.AjaxResult;
+import com.xinghe.common.core.page.TableDataInfo;
+import com.xinghe.common.utils.StringUtils;
+import com.xinghe.web.domain.InnoProject;
+import com.xinghe.web.service.InnoProjectService;
+import com.xinghe.web.enums.StatusEnum;
+import com.xinghe.web.enums.ProjectType;
+import com.xinghe.web.service.TeacherService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 大创项目Controller
+ */
+@RestController
+@RequestMapping("/web/innoProject")
+public class InnoProjectController extends BaseController {
+
+    @Autowired
+    private InnoProjectService innoProjectService;
+
+    @Autowired
+    private TeacherService teacherService;
+
+    /**
+     * 查询项目类型列表
+     */
+    @GetMapping("/projectType/list")
+    public AjaxResult listProjectType() {
+        List<String> list = Arrays.stream(ProjectType.values())
+                .map(ProjectType::getName)
+                .collect(Collectors.toList());
+        return success(list);
+    }
+
+    /**
+     * 查询大创项目列表
+     */
+    @GetMapping("/list")
+    public TableDataInfo list(InnoProject innoProject, Date startTime, Date endTime) {
+        startPage();
+        LambdaQueryWrapper<InnoProject> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.like(StringUtils.isNotEmpty(innoProject.getProjectName()), InnoProject::getProjectName, innoProject.getProjectName())
+                .ge(startTime != null, InnoProject::getCreateTime, startTime)
+                .le(endTime != null, InnoProject::getCreateTime, endTime)
+                .orderByDesc(InnoProject::getCreateTime);
+        return getDataTable(innoProjectService.list(queryWrapper));
+    }
+
+    /**
+     * 获取大创项目详细信息
+     */
+    @GetMapping(value = "/{id}")
+    public AjaxResult getInfo(@PathVariable("id") Long id) {
+        return success(innoProjectService.getById(id));
+    }
+
+    /**
+     * 新增大创项目
+     */
+    @PostMapping
+    public AjaxResult add(@RequestBody InnoProject innoProject, @RequestParam(value = "submit", required = false, defaultValue = "false") boolean submit) {
+        if (submit) {
+            innoProject.setStatus(StatusEnum.WAIT_APPROVE.name);
+        } else {
+            innoProject.setStatus(StatusEnum.DRAFT.name);
+        }
+        //获取导师姓名
+        innoProject.setTeacherName(teacherService.getById(innoProject.getTeacherId()).getTeacherName());
+        return toAjax(innoProjectService.save(innoProject));
+    }
+
+    /**
+     * 修改大创项目
+     */
+    @PutMapping
+    public AjaxResult edit(@RequestBody InnoProject innoProject, @RequestParam(value = "submit", required = false, defaultValue = "false") boolean submit) {
+        InnoProject project = innoProjectService.getById(innoProject.getId());
+        if (project == null) {
+            return error("项目不存在");
+        }
+        if (submit) {
+            innoProject.setStatus(StatusEnum.WAIT_APPROVE.name());
+        } else {
+            innoProject.setStatus(StatusEnum.DRAFT.name());
+        }
+        return toAjax(innoProjectService.updateById(innoProject));
+    }
+
+    /**
+     * 删除大创项目
+     */
+    @DeleteMapping("/{id}")
+    public AjaxResult remove(@PathVariable Long id) {
+        InnoProject project = innoProjectService.getById(id);
+        if (project == null) {
+            return error("项目不存在");
+        }
+        if (!StatusEnum.DRAFT.name().equals(project.getStatus()) && !StatusEnum.APPROVE_FAIL.name().equals(project.getStatus())) {
+            return error("只有草稿和审批不通过状态的项目可以删除");
+        }
+        return toAjax(innoProjectService.removeById(id));
+    }
+
+//    /**
+//     * 提交项目
+//     */
+//    @PutMapping("/submit/{id}")
+//    public AjaxResult submit(@PathVariable Long id) {
+//        InnoProject project = innoProjectService.getById(id);
+//        if (project == null) {
+//            return error("项目不存在");
+//        }
+//        if (!StatusEnum.DRAFT.name().equals(project.getStatus())) {
+//            return error("只有草稿状态的项目可以提交");
+//        }
+//        project.setStatus(StatusEnum.WAIT_APPROVE.name());
+//        return toAjax(innoProjectService.updateById(project));
+//    }
+}

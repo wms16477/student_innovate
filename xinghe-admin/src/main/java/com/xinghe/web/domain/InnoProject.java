@@ -26,7 +26,7 @@ public class InnoProject {
     /**
      * 项目名
      */
-    private Integer projectName;
+    private String projectName;
 
     /**
      * 项目类型
