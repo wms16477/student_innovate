@@ -84,6 +84,20 @@
             @click="handleSubmit(scope.row)"
           >提交
           </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-check"
+            @click="handleApprove(scope.row, true)"
+          >通过
+          </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-close"
+            @click="handleApprove(scope.row, false)"
+          >拒绝
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -160,6 +174,19 @@
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
+
+    <!-- 审批对话框 -->
+    <el-dialog :title="approveTitle" :visible.sync="approveOpen" width="500px" append-to-body>
+      <el-form ref="approveForm" :model="approveForm" :rules="approveRules" label-width="80px">
+        <el-form-item label="审批原因" prop="approveDesc">
+          <el-input v-model="approveForm.approveDesc" type="textarea" placeholder="请输入审批原因"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitApprove">确 定</el-button>
+        <el-button @click="approveOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -170,7 +197,7 @@ import {
   delInnoProject,
   addInnoProject,
   updateInnoProject,
-  submitInnoProject
+  approveInnoProject
 } from "@/api/innoProject";
 import {listTeacher} from "@/api/person/teacher";
 import {listProjectType} from "@/api/system/projectType";
@@ -232,6 +259,22 @@ export default {
       detail: {},
       // 项目类型列表
       projectTypeList: [],
+      // 审批对话框标题
+      approveTitle: "",
+      // 是否显示审批对话框
+      approveOpen: false,
+      // 审批表单参数
+      approveForm: {
+        id: undefined,
+        approveDesc: undefined,
+        isApprove: undefined
+      },
+      // 审批表单校验
+      approveRules: {
+        approveDesc: [
+          {required: true, message: "审批原因不能为空", trigger: "blur"}
+        ]
+      },
     };
   },
   created() {
@@ -375,7 +418,33 @@ export default {
         this.$modal.msgSuccess("提交成功");
       }).catch(() => {
       });
-    }
+    },
+    /** 审批按钮操作 */
+    handleApprove(row, isApprove) {
+      this.approveForm = {
+        id: row.id,
+        approveDesc: undefined,
+        isApprove: isApprove
+      };
+      this.approveTitle = isApprove ? "审批通过" : "审批拒绝";
+      this.approveOpen = true;
+    },
+    /** 提交审批 */
+    submitApprove() {
+      this.$refs["approveForm"].validate(valid => {
+        if (valid) {
+          const data = {
+            id: this.approveForm.id,
+            approveDesc: this.approveForm.approveDesc
+          };
+          approveInnoProject(this.approveForm.isApprove, data).then(response => {
+            this.$modal.msgSuccess("审批成功");
+            this.approveOpen = false;
+            this.getList();
+          });
+        }
+      });
+    },
   }
 };
 </script>

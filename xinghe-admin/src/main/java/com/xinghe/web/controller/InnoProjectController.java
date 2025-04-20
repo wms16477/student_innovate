@@ -119,9 +119,9 @@ public class InnoProjectController extends BaseController {
     @PostMapping("/approve/{agree}")
     public AjaxResult approve(@PathVariable("agree") boolean agree, @RequestBody InnoProject dto) {
         if (agree) {
-            dto.setStatus(StatusEnum.APPROVED.name());
+            dto.setStatus(StatusEnum.APPROVED.name);
         } else {
-            dto.setStatus(StatusEnum.APPROVE_FAIL.name());
+            dto.setStatus(StatusEnum.APPROVE_FAIL.name);
         }
         innoProjectService.updateById(dto);
         return success();

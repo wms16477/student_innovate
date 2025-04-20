@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xinghe.web.mapper.ProfessionalMapper">
+
+    <resultMap id="BaseResultMap" type="com.xinghe.web.domain.Professional">
+            <id property="id" column="id" />
+            <result property="account" column="account" />
+            <result property="name" column="name" />
+            <result property="area" column="area" />
+            <result property="gender" column="gender" />
+            <result property="company" column="company" />
+            <result property="job" column="job" />
+            <result property="phoneNum" column="phone_num" />
+            <result property="researchDirection" column="research_direction" />
+            <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,account,name,area,gender,company,
+        job,phone_num,research_direction,create_time
+    </sql>
+</mapper>

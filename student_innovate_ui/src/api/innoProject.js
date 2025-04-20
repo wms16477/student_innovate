@@ -56,3 +56,13 @@ export function delInnoProject(id) {
 //     method: 'put'
 //   })
 // }
+
+// 审批大创项目
+export function approveInnoProject(agree, data) {
+  return request({
+    url: '/web/innoProject/approve/' + agree,
+    method: 'post',
+    data: data
+  })
+}
+
