@@ -263,65 +263,127 @@
     </el-dialog>
 
     <!-- 中期评分对话框 -->
-    <el-dialog title="中期检查评分" :visible.sync="midScoreOpen" width="700px" append-to-body>
-      <el-form ref="midScoreForm" :model="midScoreForm" :rules="midScoreRules" label-width="180px">
+    <el-dialog title="中期检查评分" :visible.sync="midScoreOpen" width="900px" append-to-body>
+      <el-form ref="midScoreForm" :model="midScoreForm" :rules="midScoreRules" label-width="120px">
         <el-alert
-          title="评分须知：所有评分项满分为100分，最终得分为加权平均分。"
+          title="评分须知：所有评分项满分为100分，最终得分为加权平均分。请参照下表评分标准进行评分。"
           type="info"
           :closable="false"
           style="margin-bottom: 20px"
         />
-        <el-form-item label="选题价值分 (权重0.2)" prop="midScoreXtjz">
-          <el-row>
-            <el-col :span="8">
-              <el-input-number v-model="midScoreForm.midScoreXtjz" :precision="0" :min="0" :max="100" @change="calculateScore" />
-            </el-col>
-            <el-col :span="16">
-              <div class="score-tips">
-                <i class="el-icon-info" /> 评价选题的价值和意义，创新性和实用性
-              </div>
-            </el-col>
-          </el-row>
-        </el-form-item>
-        <el-form-item label="研究基础分 (权重0.2)" prop="midScoreYjjc">
-          <el-row>
-            <el-col :span="8">
-              <el-input-number v-model="midScoreForm.midScoreYjjc" :precision="0" :min="0" :max="100" @change="calculateScore" />
-            </el-col>
-            <el-col :span="16">
-              <div class="score-tips">
-                <i class="el-icon-info" /> 评价研究的基础条件和资料收集的充分性
-              </div>
-            </el-col>
-          </el-row>
-        </el-form-item>
-        <el-form-item label="内容设计分 (权重0.5)" prop="midScoreNrsj">
-          <el-row>
-            <el-col :span="8">
-              <el-input-number v-model="midScoreForm.midScoreNrsj" :precision="0" :min="0" :max="100" @change="calculateScore" />
-            </el-col>
-            <el-col :span="16">
-              <div class="score-tips">
-                <i class="el-icon-info" /> 评价研究内容的设计合理性和完整性
-              </div>
-            </el-col>
-          </el-row>
-        </el-form-item>
-        <el-form-item label="研究方法分 (权重0.1)" prop="midScoreYjff">
-          <el-row>
-            <el-col :span="8">
-              <el-input-number v-model="midScoreForm.midScoreYjff" :precision="0" :min="0" :max="100" @change="calculateScore" />
-            </el-col>
-            <el-col :span="16">
-              <div class="score-tips">
-                <i class="el-icon-info" /> 评价研究方法的选择和应用的合理性
-              </div>
-            </el-col>
-          </el-row>
-        </el-form-item>
-        <el-form-item label="总分">
-          <el-tag type="success" size="medium">{{ totalScore }}</el-tag>
-        </el-form-item>
+
+        <div class="score-table-container">
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th rowspan="2" width="80">评审内容</th>
+                <th rowspan="2" width="60">权重</th>
+                <th colspan="4">评审标准</th>
+                <th rowspan="2" width="120">评分<br>(百分制)</th>
+              </tr>
+              <tr>
+                <th width="150">A级<br>(80-100分)</th>
+                <th width="150">B级<br>(60-80分)</th>
+                <th width="150">C级<br>(40-60分)</th>
+                <th width="150">D级<br>(0-40分)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>选题价值</td>
+                <td>0.2</td>
+                <td>有重要创新性或应用性。</td>
+                <td>有比较重要的创新性或应用性。</td>
+                <td>创新性或应用性一般。</td>
+                <td>基本属于重复性工作。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-input-number
+                      v-model="midScoreForm.midScoreXtjz"
+                      :precision="0"
+                      :min="0"
+                      :max="100"
+                      size="small"
+                      @change="calculateScore"
+                      controls-position="right"
+                    />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>研究基础</td>
+                <td>0.2</td>
+                <td>熟悉研究现状，所列参考文献具有代表性。</td>
+                <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
+                <td>一般了解研究现状，所列参考文献有一定代表性。</td>
+                <td>不了解研究现状，所列参考文献没有代表性。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-input-number
+                      v-model="midScoreForm.midScoreYjjc"
+                      :precision="0"
+                      :min="0"
+                      :max="100"
+                      size="small"
+                      @change="calculateScore"
+                      controls-position="right"
+                    />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>内容设计</td>
+                <td>0.5</td>
+                <td>目标明确，内容充实，思路清晰。</td>
+                <td>目标比较明确，内容比较充实，思路比较清晰。</td>
+                <td>目标基本明确，内容基本充实，思路基本清晰。</td>
+                <td>目标不够明确，内容空泛，思路模糊。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-input-number
+                      v-model="midScoreForm.midScoreNrsj"
+                      :precision="0"
+                      :min="0"
+                      :max="100"
+                      size="small"
+                      @change="calculateScore"
+                      controls-position="right"
+                    />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>研究方法</td>
+                <td>0.1</td>
+                <td>方法与手段科学、适切</td>
+                <td>方法比较科学、适切</td>
+                <td>方法手段基本科学、适切</td>
+                <td>方法手段不当</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-input-number
+                      v-model="midScoreForm.midScoreYjff"
+                      :precision="0"
+                      :min="0"
+                      :max="100"
+                      size="small"
+                      @change="calculateScore"
+                      controls-position="right"
+                    />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" style="text-align: right; font-weight: bold;">总分（加权平均）：</td>
+                <td>
+                  <el-tag type="success" size="medium">{{ totalScore }}</el-tag>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitMidScore">提 交</el-button>
@@ -733,5 +795,70 @@ export default {
   font-size: 12px;
   line-height: 32px;
   padding-left: 10px;
+}
+
+.score-table-container {
+  max-width: 800px;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #dcdfe6;
+  margin-bottom: 20px;
+}
+
+.score-table th,
+.score-table td {
+  padding: 12px 8px;
+  text-align: center;
+  border: 1px solid #dcdfe6;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.score-table th {
+  background-color: #f5f7fa;
+  font-weight: bold;
+  color: #303133;
+}
+
+.score-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.score-table tbody tr:hover {
+  background-color: #f5f7fa;
+}
+
+.score-table tbody td {
+  color: #606266;
+}
+
+.score-table tfoot td {
+  background-color: #f5f7fa;
+  font-weight: 500;
+}
+
+.score-table .el-input-number {
+  width: 100%;
+}
+
+.score-input-wrapper {
+  width: 120px;
+  margin: 0 auto;
+}
+
+.score-input-wrapper .el-input-number {
+  width: 120px;
+}
+
+/* 自定义Element UI输入框样式 */
+.score-input-wrapper .el-input-number .el-input__inner {
+  text-align: center;
 }
 </style>
