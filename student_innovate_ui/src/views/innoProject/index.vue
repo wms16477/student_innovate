@@ -126,7 +126,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="申报材料" prop="submitFileUrl">
-          <file-upload v-model="form.submitFileUrl"/>
+          <file-upload
+            v-model="form.submitFileUrl"
+            :limit="1"
+            :fileType="['doc', 'docx' ,'xls', 'xlsx' ,'ppt', 'pptx','txt', 'pdf', 'zip', 'png','jpg']"
+          />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -150,8 +154,9 @@
         </el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ parseTime(detail.createTime) }}</el-descriptions-item>
         <el-descriptions-item label="申报材料" :span="2">
-<!--          <file-download :fileUrl="detail.submitFileUrl" :fileName="detail.submitFileName"/>-->
-          <el-link href="https://element.eleme.io" target="_blank">默认链接</el-link>
+          <el-link :href="baseUrl + detail.submitFileUrl" target="_blank">
+            {{ detail.submitFileUrl ? detail.submitFileUrl.split('/').pop() : null }}
+          </el-link>
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
@@ -174,6 +179,7 @@ export default {
   name: "InnoProject",
   data() {
     return {
+      baseUrl: process.env.VUE_APP_BASE_API,
       // 遮罩层
       loading: true,
       // 显示搜索条件

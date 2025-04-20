@@ -113,19 +113,19 @@ public class InnoProjectController extends BaseController {
         return toAjax(innoProjectService.removeById(id));
     }
 
-//    /**
-//     * 提交项目
-//     */
-//    @PutMapping("/submit/{id}")
-//    public AjaxResult submit(@PathVariable Long id) {
-//        InnoProject project = innoProjectService.getById(id);
-//        if (project == null) {
-//            return error("项目不存在");
-//        }
-//        if (!StatusEnum.DRAFT.name().equals(project.getStatus())) {
-//            return error("只有草稿状态的项目可以提交");
-//        }
-//        project.setStatus(StatusEnum.WAIT_APPROVE.name());
-//        return toAjax(innoProjectService.updateById(project));
-//    }
+    /**
+     * 导师审批
+     */
+    @PostMapping("/approve/{agree}")
+    public AjaxResult approve(@PathVariable("agree") boolean agree, @RequestBody InnoProject dto) {
+        if (agree) {
+            dto.setStatus(StatusEnum.APPROVED.name());
+        } else {
+            dto.setStatus(StatusEnum.APPROVE_FAIL.name());
+        }
+        innoProjectService.updateById(dto);
+        return success();
+    }
+
+
 }

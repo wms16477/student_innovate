@@ -94,6 +94,11 @@ public class InnoProject {
     private String status;
 
     /**
+     * 审批描述
+     */
+    private String approveDesc;
+
+    /**
      * 申报人
      */
     private String createBy;
