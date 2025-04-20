@@ -5,19 +5,23 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xinghe.common.core.controller.BaseController;
 import com.xinghe.common.core.domain.AjaxResult;
 import com.xinghe.common.core.page.TableDataInfo;
+import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
 import com.xinghe.web.domain.InnoProject;
+import com.xinghe.web.domain.InnoProjectMember;
+import com.xinghe.web.domain.Student;
+import com.xinghe.web.service.InnoProjectMemberService;
 import com.xinghe.web.service.InnoProjectService;
 import com.xinghe.web.enums.StatusEnum;
 import com.xinghe.web.enums.ProjectType;
+import com.xinghe.web.service.StudentService;
 import com.xinghe.web.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +36,12 @@ public class InnoProjectController extends BaseController {
 
     @Autowired
     private TeacherService teacherService;
+
+    @Autowired
+    private StudentService studentService;
+
+    @Autowired
+    private InnoProjectMemberService innoProjectMemberService;
 
     /**
      * 查询项目类型列表
@@ -78,7 +88,26 @@ public class InnoProjectController extends BaseController {
         }
         //获取导师姓名
         innoProject.setTeacherName(teacherService.getById(innoProject.getTeacherId()).getTeacherName());
-        return toAjax(innoProjectService.save(innoProject));
+        innoProjectService.save(innoProject);
+        //成员列表
+        List<Student> list = studentService.list();
+        Map<String, String> studentMap = list.stream().collect(Collectors.toMap(Student::getStuNo, Student::getStuName));
+        if (CollectionUtils.isEmpty(innoProject.getMemberList())) {
+            innoProject.setMemberList(new ArrayList<>());
+        }
+//        InnoProjectMember self = new InnoProjectMember();
+//        self.setProjectId(innoProject.getId());
+//        String username = SecurityUtils.getLoginUser().getUsername();
+//        String nickName = SecurityUtils.getLoginUser().getUser().getNickName();
+//        self.setMemberUserCode(username);
+//        self.setMemberUserName(nickName);
+//        innoProject.getMemberList().add(self);
+        innoProject.getMemberList().forEach(item -> {
+            item.setProjectId(innoProject.getId());
+            item.setMemberUserName(studentMap.get(item.getMemberUserCode()));
+        });
+        innoProjectMemberService.saveBatch(innoProject.getMemberList());
+        return success();
     }
 
     /**
@@ -95,7 +124,29 @@ public class InnoProjectController extends BaseController {
         } else {
             innoProject.setStatus(StatusEnum.DRAFT.name());
         }
-        return toAjax(innoProjectService.updateById(innoProject));
+        //获取导师姓名
+        innoProject.setTeacherName(teacherService.getById(innoProject.getTeacherId()).getTeacherName());
+        innoProjectService.save(innoProject);
+        innoProjectService.updateById(innoProject);
+        //成员列表
+        List<Student> list = studentService.list();
+        Map<String, String> studentMap = list.stream().collect(Collectors.toMap(Student::getStuNo, Student::getStuName));
+        if (CollectionUtils.isEmpty(innoProject.getMemberList())) {
+            innoProject.setMemberList(new ArrayList<>());
+        }
+//        InnoProjectMember self = new InnoProjectMember();
+//        self.setProjectId(innoProject.getId());
+//        String username = SecurityUtils.getLoginUser().getUsername();
+//        String nickName = SecurityUtils.getLoginUser().getUser().getNickName();
+//        self.setMemberUserCode(username);
+//        self.setMemberUserName(nickName);
+//        innoProject.getMemberList().add(self);
+        innoProject.getMemberList().forEach(item -> {
+            item.setProjectId(innoProject.getId());
+            item.setMemberUserName(studentMap.get(item.getMemberUserCode()));
+        });
+        innoProjectMemberService.saveBatch(innoProject.getMemberList());
+        return success();
     }
 
     /**

@@ -3,7 +3,7 @@ package com.xinghe.web.service;
 import java.util.List;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.xinghe.web.domain .Student;
+import com.xinghe.web.domain.Student;
 import org.springframework.beans.factory.annotation.Value;
 
 /**
@@ -21,7 +21,7 @@ public interface StudentService extends IService<Student> {
      * @param student 学生
      * @return 学生集合
      */
-    List<Student> selectList(Student student);
+    List<Student> selectList(Student student, boolean excludeSelf);
 
     void addStudent(Student student);
 }

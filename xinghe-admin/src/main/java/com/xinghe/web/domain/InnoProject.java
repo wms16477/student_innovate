@@ -6,7 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.util.Date;
+import java.util.List;
 
+import io.swagger.models.auth.In;
 import lombok.Data;
 
 /**
@@ -73,6 +75,40 @@ public class InnoProject {
      */
     private String midCheckDesc;
 
+
+    /**
+     * 中期检查-选题价值分
+     */
+    private Integer midScoreXtjz;
+
+
+    /**
+     * 中期检查-研究基础分
+     */
+    private Integer midScoreYjjc;
+
+    /**
+     * 中期检查-内容设计分
+     */
+    private Integer midScoreNrsj;
+
+    /**
+     * 中期检查-研究方法分
+     */
+    private Integer midScoreYjff;
+
+//    alter table inno_project
+//    add mid_score_xtjz int null comment '中期检查-选题价值分' after mid_check_desc;
+//
+//    alter table inno_project
+//    add mid_score_yjjc int null comment '中期检查-研究基础分' after mid_score_xtjz;
+//
+//    alter table inno_project
+//    add mid_score_nrsj int null comment '中期检查-内容设计分' after mid_score_yjjc;
+//
+//    alter table inno_project
+//    add mid_score_yjff int null comment '中期检查-研究方法分' after mid_score_nrsj;
+
     /**
      * 结项成果
      */
@@ -112,4 +148,10 @@ public class InnoProject {
      * 创建时间
      */
     private Date createTime;
+
+    /**
+     * 成员列表
+     */
+    @TableField(exist = false)
+    private List<InnoProjectMember> memberList;
 }

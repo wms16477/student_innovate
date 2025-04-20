@@ -9,6 +9,15 @@ export function listStudent(query) {
   })
 }
 
+// 查询学生选项列表
+export function listStudentOptions(query) {
+  return request({
+    url: '/student/student/options',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询学生详细
 export function getStudent(id) {
   return request({

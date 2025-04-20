@@ -37,11 +37,12 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
      * @return 学生
      */
     @Override
-    public List<Student> selectList(Student student) {
+    public List<Student> selectList(Student student, boolean excludeSelf) {
         return lambdaQuery()
                 .like(StringUtils.isNotEmpty(student.getStuNo()), Student::getStuNo, student.getStuNo())
                 .like(StringUtils.isNotEmpty(student.getStuName()), Student::getStuName, student.getStuName())
                 .eq(student.getSpeciality() != null, Student::getSpeciality, student.getSpeciality())
+                .ne(excludeSelf, Student::getStuNo, SecurityUtils.getUsername())
                 .list();
     }
 

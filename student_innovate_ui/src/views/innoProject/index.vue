@@ -139,6 +139,23 @@
             ></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="项目成员" prop="memberList">
+          <el-select
+            v-model="selectedMemberCodes"
+            multiple
+            filterable
+            placeholder="请选择项目成员"
+            style="width: 100%"
+            @change="handleMemberChange"
+          >
+            <el-option
+              v-for="student in studentOptions"
+              :key="student.stuNo"
+              :label="student.stuName"
+              :value="student.stuNo"
+            ></el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="申报材料" prop="submitFileUrl">
           <file-upload
             v-model="form.submitFileUrl"
@@ -201,6 +218,7 @@ import {
 } from "@/api/innoProject";
 import {listTeacher} from "@/api/person/teacher";
 import {listProjectType} from "@/api/system/projectType";
+import {listStudentOptions} from "@/api/person/student";
 
 export default {
   name: "InnoProject",
@@ -230,7 +248,15 @@ export default {
         projectName: undefined
       },
       // 表单参数
-      form: {},
+      form: {
+        id: undefined,
+        projectName: undefined,
+        projectType: undefined,
+        projectDesc: undefined,
+        teacherId: undefined,
+        submitFileUrl: undefined,
+        memberList: []
+      },
       // 表单校验
       rules: {
         projectName: [
@@ -255,6 +281,8 @@ export default {
       statusOptions: [],
       // 导师选项
       teacherOptions: [],
+      // 学生选项
+      studentOptions: [],
       // 详情数据
       detail: {},
       // 项目类型列表
@@ -275,6 +303,8 @@ export default {
           {required: true, message: "审批原因不能为空", trigger: "blur"}
         ]
       },
+      // 选中的成员工号
+      selectedMemberCodes: [],
     };
   },
   created() {
@@ -284,6 +314,7 @@ export default {
       this.statusOptions = response.data;
     });
     this.getTeacherList();
+    this.getStudentList();
   },
   methods: {
     /** 查询大创项目列表 */
@@ -307,6 +338,12 @@ export default {
         this.teacherOptions = response.rows;
       });
     },
+    /** 查询学生列表 */
+    getStudentList() {
+      listStudentOptions().then(response => {
+        this.studentOptions = response.data;
+      });
+    },
     /** 取消按钮 */
     cancel() {
       this.open = false;
@@ -320,8 +357,10 @@ export default {
         projectType: undefined,
         projectDesc: undefined,
         teacherId: undefined,
-        submitFileUrl: undefined
+        submitFileUrl: undefined,
+        memberList: []
       };
+      this.selectedMemberCodes = [];
       this.resetForm("form");
     },
     /** 搜索按钮操作 */
@@ -444,6 +483,14 @@ export default {
           });
         }
       });
+    },
+    /** 成员选择变更 */
+    handleMemberChange(value) {
+      this.form.memberList = value.map(code => ({
+        memberUserCode: code,
+        memberUserName: this.studentOptions.find(s => s.stuNo === code)?.stuName || '',
+        reportFlag: 0
+      }));
     },
   }
 };

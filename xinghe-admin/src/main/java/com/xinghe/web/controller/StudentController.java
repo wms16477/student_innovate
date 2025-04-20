@@ -42,9 +42,30 @@ public class StudentController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo list(Student student) {
         startPage();
-        List<Student> list = studentService.selectList(student);
+        List<Student> list = studentService.selectList(student, false);
         return getDataTable(list);
     }
+
+    /**
+     * 查询学生列表
+     */
+    @PreAuthorize("@ss.hasPermi('student:student:list')")
+    @GetMapping("/options")
+    public AjaxResult options(Student student) {
+        List<Student> list = studentService.selectList(student, true);
+        return success(list);
+    }
+
+
+//    /**
+//     * 查询学生map
+//     */
+//    @PreAuthorize("@ss.hasPermi('student:student:list')")
+//    @GetMapping("/map")
+//    public TableDataInfo map(Student student) {
+//        List<Student> list = studentService.selectList(student);
+//        return getDataTable(list);
+//    }
 
     /**
      * 导出学生列表
@@ -53,7 +74,7 @@ public class StudentController extends BaseController {
     @Log(title = "学生", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, Student student) {
-        List<Student> list = studentService.selectList(student);
+        List<Student> list = studentService.selectList(student, false);
         ExcelUtil<Student> util = new ExcelUtil<Student>(Student.class);
         util.exportExcel(response, list, "学生数据");
     }
