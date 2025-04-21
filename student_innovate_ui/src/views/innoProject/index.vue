@@ -247,6 +247,13 @@
                 {{ detail.endDesc }}
               </el-descriptions-item>
             </template>
+
+            <!-- 添加成员列表显示 -->
+            <el-descriptions-item label="项目成员" :span="2" v-if="detail.memberList && detail.memberList.length > 0">
+              <el-tag v-for="member in detail.memberList" :key="member.memberUserCode" style="margin-right: 5px; margin-bottom: 5px;">
+                {{ member.memberUserName }}({{ member.memberUserCode }})
+              </el-tag>
+            </el-descriptions-item>
           </el-descriptions>
         </el-tab-pane>
 
@@ -1061,6 +1068,10 @@ export default {
       const id = row.id || this.ids;
       getInnoProject(id).then(response => {
         this.form = response.data;
+        // 处理成员列表回显
+        if (this.form.memberList && this.form.memberList.length > 0) {
+          this.selectedMemberCodes = this.form.memberList.map(member => member.memberUserCode);
+        }
         this.open = true;
         this.title = "修改大创项目";
       });
