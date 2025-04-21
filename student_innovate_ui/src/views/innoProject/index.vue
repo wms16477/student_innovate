@@ -61,15 +61,14 @@
           >详情
           </el-button>
           <el-button
-            v-if="scope.row.status === 'DRAFT' || scope.row.status === 'APPROVE_FAIL'"
             size="mini"
             type="text"
             icon="el-icon-edit"
+            v-if="scope.row.buttonList.indexOf('修改') !== -1"
             @click="handleUpdate(scope.row)"
           >修改
           </el-button>
           <el-button
-            v-if="scope.row.status === 'DRAFT' || scope.row.status === 'APPROVE_FAIL'"
             size="mini"
             type="text"
             icon="el-icon-delete"
@@ -244,88 +243,91 @@
           </el-descriptions>
         </el-tab-pane>
 
-        <el-tab-pane label="项目评分" name="projectScore" v-if="detail.midScoreXtjz !== null && detail.midScoreXtjz !== undefined">
+        <el-tab-pane label="项目评分" name="projectScore"
+                     v-if="detail.midScoreXtjz !== null && detail.midScoreXtjz !== undefined">
           <!-- 中期评分展示 -->
           <div class="score-table-container">
             <div class="score-title">中期评分表 (占总评权重30%)</div>
             <table class="score-table">
               <thead>
-                <tr>
-                  <th rowspan="2" width="80">评审内容</th>
-                  <th rowspan="2" width="60">权重</th>
-                  <th colspan="4">评审标准</th>
-                  <th rowspan="2" width="120">评分<br>(百分制)</th>
-                </tr>
-                <tr>
-                  <th width="150">A级<br>(80-100分)</th>
-                  <th width="150">B级<br>(60-80分)</th>
-                  <th width="150">C级<br>(40-60分)</th>
-                  <th width="150">D级<br>(0-40分)</th>
-                </tr>
+              <tr>
+                <th rowspan="2" width="80">评审内容</th>
+                <th rowspan="2" width="60">权重</th>
+                <th colspan="4">评审标准</th>
+                <th rowspan="2" width="120">评分<br>(百分制)</th>
+              </tr>
+              <tr>
+                <th width="150">A级<br>(80-100分)</th>
+                <th width="150">B级<br>(60-80分)</th>
+                <th width="150">C级<br>(40-60分)</th>
+                <th width="150">D级<br>(0-40分)</th>
+              </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>选题价值</td>
-                  <td>0.2</td>
-                  <td>有重要创新性或应用性。</td>
-                  <td>有比较重要的创新性或应用性。</td>
-                  <td>创新性或应用性一般。</td>
-                  <td>基本属于重复性工作。</td>
-                  <td>
-                    <div class="score-input-wrapper">
-                      <el-tag type="info">{{ detail.midScoreXtjz }}</el-tag>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>研究基础</td>
-                  <td>0.2</td>
-                  <td>熟悉研究现状，所列参考文献具有代表性。</td>
-                  <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
-                  <td>一般了解研究现状，所列参考文献有一定代表性。</td>
-                  <td>不了解研究现状，所列参考文献没有代表性。</td>
-                  <td>
-                    <div class="score-input-wrapper">
-                      <el-tag type="info">{{ detail.midScoreYjjc }}</el-tag>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>内容设计</td>
-                  <td>0.5</td>
-                  <td>目标明确，内容充实，思路清晰。</td>
-                  <td>目标比较明确，内容比较充实，思路比较清晰。</td>
-                  <td>目标基本明确，内容基本充实，思路基本清晰。</td>
-                  <td>目标不够明确，内容空泛，思路模糊。</td>
-                  <td>
-                    <div class="score-input-wrapper">
-                      <el-tag type="info">{{ detail.midScoreNrsj }}</el-tag>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>研究方法</td>
-                  <td>0.1</td>
-                  <td>方法与手段科学、适切</td>
-                  <td>方法比较科学、适切</td>
-                  <td>方法手段基本科学、适切</td>
-                  <td>方法手段不当</td>
-                  <td>
-                    <div class="score-input-wrapper">
-                      <el-tag type="info">{{ detail.midScoreYjff }}</el-tag>
-                    </div>
-                  </td>
-                </tr>
+              <tr>
+                <td>选题价值</td>
+                <td>0.2</td>
+                <td>有重要创新性或应用性。</td>
+                <td>有比较重要的创新性或应用性。</td>
+                <td>创新性或应用性一般。</td>
+                <td>基本属于重复性工作。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-tag type="info">{{ detail.midScoreXtjz }}</el-tag>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>研究基础</td>
+                <td>0.2</td>
+                <td>熟悉研究现状，所列参考文献具有代表性。</td>
+                <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
+                <td>一般了解研究现状，所列参考文献有一定代表性。</td>
+                <td>不了解研究现状，所列参考文献没有代表性。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-tag type="info">{{ detail.midScoreYjjc }}</el-tag>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>内容设计</td>
+                <td>0.5</td>
+                <td>目标明确，内容充实，思路清晰。</td>
+                <td>目标比较明确，内容比较充实，思路比较清晰。</td>
+                <td>目标基本明确，内容基本充实，思路基本清晰。</td>
+                <td>目标不够明确，内容空泛，思路模糊。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-tag type="info">{{ detail.midScoreNrsj }}</el-tag>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>研究方法</td>
+                <td>0.1</td>
+                <td>方法与手段科学、适切</td>
+                <td>方法比较科学、适切</td>
+                <td>方法手段基本科学、适切</td>
+                <td>方法手段不当</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-tag type="info">{{ detail.midScoreYjff }}</el-tag>
+                  </div>
+                </td>
+              </tr>
               </tbody>
               <tfoot>
-                <tr>
-                  <td colspan="6" style="text-align: right; font-weight: bold;">中期评分总分：</td>
-                  <td>
-                    <el-tag type="success" size="medium">
-                      {{ (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2) }}
-                    </el-tag>
-                  </td>
-                </tr>
+              <tr>
+                <td colspan="6" style="text-align: right; font-weight: bold;">中期评分总分：</td>
+                <td>
+                  <el-tag type="success" size="medium">
+                    {{
+                      (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2)
+                    }}
+                  </el-tag>
+                </td>
+              </tr>
               </tfoot>
             </table>
           </div>
@@ -335,82 +337,84 @@
             <div class="score-title">结项评分表 (占总评权重70%)</div>
             <table class="score-table">
               <thead>
-                <tr>
-                  <th rowspan="2" width="80">评审内容</th>
-                  <th rowspan="2" width="60">权重</th>
-                  <th colspan="4">评审标准</th>
-                  <th rowspan="2" width="120">评分<br>(百分制)</th>
-                </tr>
-                <tr>
-                  <th width="150">A级<br>(80-100分)</th>
-                  <th width="150">B级<br>(60-80分)</th>
-                  <th width="150">C级<br>(40-60分)</th>
-                  <th width="150">D级<br>(0-40分)</th>
-                </tr>
+              <tr>
+                <th rowspan="2" width="80">评审内容</th>
+                <th rowspan="2" width="60">权重</th>
+                <th colspan="4">评审标准</th>
+                <th rowspan="2" width="120">评分<br>(百分制)</th>
+              </tr>
+              <tr>
+                <th width="150">A级<br>(80-100分)</th>
+                <th width="150">B级<br>(60-80分)</th>
+                <th width="150">C级<br>(40-60分)</th>
+                <th width="150">D级<br>(0-40分)</th>
+              </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>选题价值</td>
-                  <td>0.2</td>
-                  <td>有重要创新性或应用性。</td>
-                  <td>有比较重要的创新性或应用性。</td>
-                  <td>创新性或应用性一般。</td>
-                  <td>基本属于重复性工作。</td>
-                  <td>
-                    <div class="score-input-wrapper">
-                      <el-tag type="info">{{ detail.endScoreXtjz }}</el-tag>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>研究基础</td>
-                  <td>0.2</td>
-                  <td>熟悉研究现状，所列参考文献具有代表性。</td>
-                  <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
-                  <td>一般了解研究现状，所列参考文献有一定代表性。</td>
-                  <td>不了解研究现状，所列参考文献没有代表性。</td>
-                  <td>
-                    <div class="score-input-wrapper">
-                      <el-tag type="info">{{ detail.endScoreYjjc }}</el-tag>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>内容设计</td>
-                  <td>0.5</td>
-                  <td>目标明确，内容充实，思路清晰。</td>
-                  <td>目标比较明确，内容比较充实，思路比较清晰。</td>
-                  <td>目标基本明确，内容基本充实，思路基本清晰。</td>
-                  <td>目标不够明确，内容空泛，思路模糊。</td>
-                  <td>
-                    <div class="score-input-wrapper">
-                      <el-tag type="info">{{ detail.endScoreNrsj }}</el-tag>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>研究方法</td>
-                  <td>0.1</td>
-                  <td>方法与手段科学、适切</td>
-                  <td>方法比较科学、适切</td>
-                  <td>方法手段基本科学、适切</td>
-                  <td>方法手段不当</td>
-                  <td>
-                    <div class="score-input-wrapper">
-                      <el-tag type="info">{{ detail.endScoreYjff }}</el-tag>
-                    </div>
-                  </td>
-                </tr>
+              <tr>
+                <td>选题价值</td>
+                <td>0.2</td>
+                <td>有重要创新性或应用性。</td>
+                <td>有比较重要的创新性或应用性。</td>
+                <td>创新性或应用性一般。</td>
+                <td>基本属于重复性工作。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-tag type="info">{{ detail.endScoreXtjz }}</el-tag>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>研究基础</td>
+                <td>0.2</td>
+                <td>熟悉研究现状，所列参考文献具有代表性。</td>
+                <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
+                <td>一般了解研究现状，所列参考文献有一定代表性。</td>
+                <td>不了解研究现状，所列参考文献没有代表性。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-tag type="info">{{ detail.endScoreYjjc }}</el-tag>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>内容设计</td>
+                <td>0.5</td>
+                <td>目标明确，内容充实，思路清晰。</td>
+                <td>目标比较明确，内容比较充实，思路比较清晰。</td>
+                <td>目标基本明确，内容基本充实，思路基本清晰。</td>
+                <td>目标不够明确，内容空泛，思路模糊。</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-tag type="info">{{ detail.endScoreNrsj }}</el-tag>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>研究方法</td>
+                <td>0.1</td>
+                <td>方法与手段科学、适切</td>
+                <td>方法比较科学、适切</td>
+                <td>方法手段基本科学、适切</td>
+                <td>方法手段不当</td>
+                <td>
+                  <div class="score-input-wrapper">
+                    <el-tag type="info">{{ detail.endScoreYjff }}</el-tag>
+                  </div>
+                </td>
+              </tr>
               </tbody>
               <tfoot>
-                <tr>
-                  <td colspan="6" style="text-align: right; font-weight: bold;">结项评分总分：</td>
-                  <td>
-                    <el-tag type="success" size="medium">
-                      {{ (detail.endScoreXtjz * 0.2 + detail.endScoreYjjc * 0.2 + detail.endScoreNrsj * 0.5 + detail.endScoreYjff * 0.1).toFixed(2) }}
-                    </el-tag>
-                  </td>
-                </tr>
+              <tr>
+                <td colspan="6" style="text-align: right; font-weight: bold;">结项评分总分：</td>
+                <td>
+                  <el-tag type="success" size="medium">
+                    {{
+                      (detail.endScoreXtjz * 0.2 + detail.endScoreYjjc * 0.2 + detail.endScoreNrsj * 0.5 + detail.endScoreYjff * 0.1).toFixed(2)
+                    }}
+                  </el-tag>
+                </td>
+              </tr>
               </tfoot>
             </table>
           </div>
@@ -472,112 +476,112 @@
         <div class="score-table-container">
           <table class="score-table">
             <thead>
-              <tr>
-                <th rowspan="2" width="80">评审内容</th>
-                <th rowspan="2" width="60">权重</th>
-                <th colspan="4">评审标准</th>
-                <th rowspan="2" width="120">评分<br>(百分制)</th>
-              </tr>
-              <tr>
-                <th width="150">A级<br>(80-100分)</th>
-                <th width="150">B级<br>(60-80分)</th>
-                <th width="150">C级<br>(40-60分)</th>
-                <th width="150">D级<br>(0-40分)</th>
-              </tr>
+            <tr>
+              <th rowspan="2" width="80">评审内容</th>
+              <th rowspan="2" width="60">权重</th>
+              <th colspan="4">评审标准</th>
+              <th rowspan="2" width="120">评分<br>(百分制)</th>
+            </tr>
+            <tr>
+              <th width="150">A级<br>(80-100分)</th>
+              <th width="150">B级<br>(60-80分)</th>
+              <th width="150">C级<br>(40-60分)</th>
+              <th width="150">D级<br>(0-40分)</th>
+            </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>选题价值</td>
-                <td>0.2</td>
-                <td>有重要创新性或应用性。</td>
-                <td>有比较重要的创新性或应用性。</td>
-                <td>创新性或应用性一般。</td>
-                <td>基本属于重复性工作。</td>
-                <td>
-                  <div class="score-input-wrapper">
-                    <el-input-number
-                      v-model="midScoreForm.midScoreXtjz"
-                      :precision="0"
-                      :min="0"
-                      :max="100"
-                      size="small"
-                      @change="calculateScore"
-                      controls-position="right"
-                    />
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>研究基础</td>
-                <td>0.2</td>
-                <td>熟悉研究现状，所列参考文献具有代表性。</td>
-                <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
-                <td>一般了解研究现状，所列参考文献有一定代表性。</td>
-                <td>不了解研究现状，所列参考文献没有代表性。</td>
-                <td>
-                  <div class="score-input-wrapper">
-                    <el-input-number
-                      v-model="midScoreForm.midScoreYjjc"
-                      :precision="0"
-                      :min="0"
-                      :max="100"
-                      size="small"
-                      @change="calculateScore"
-                      controls-position="right"
-                    />
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>内容设计</td>
-                <td>0.5</td>
-                <td>目标明确，内容充实，思路清晰。</td>
-                <td>目标比较明确，内容比较充实，思路比较清晰。</td>
-                <td>目标基本明确，内容基本充实，思路基本清晰。</td>
-                <td>目标不够明确，内容空泛，思路模糊。</td>
-                <td>
-                  <div class="score-input-wrapper">
-                    <el-input-number
-                      v-model="midScoreForm.midScoreNrsj"
-                      :precision="0"
-                      :min="0"
-                      :max="100"
-                      size="small"
-                      @change="calculateScore"
-                      controls-position="right"
-                    />
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>研究方法</td>
-                <td>0.1</td>
-                <td>方法与手段科学、适切</td>
-                <td>方法比较科学、适切</td>
-                <td>方法手段基本科学、适切</td>
-                <td>方法手段不当</td>
-                <td>
-                  <div class="score-input-wrapper">
-                    <el-input-number
-                      v-model="midScoreForm.midScoreYjff"
-                      :precision="0"
-                      :min="0"
-                      :max="100"
-                      size="small"
-                      @change="calculateScore"
-                      controls-position="right"
-                    />
-                  </div>
-                </td>
-              </tr>
+            <tr>
+              <td>选题价值</td>
+              <td>0.2</td>
+              <td>有重要创新性或应用性。</td>
+              <td>有比较重要的创新性或应用性。</td>
+              <td>创新性或应用性一般。</td>
+              <td>基本属于重复性工作。</td>
+              <td>
+                <div class="score-input-wrapper">
+                  <el-input-number
+                    v-model="midScoreForm.midScoreXtjz"
+                    :precision="0"
+                    :min="0"
+                    :max="100"
+                    size="small"
+                    @change="calculateScore"
+                    controls-position="right"
+                  />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>研究基础</td>
+              <td>0.2</td>
+              <td>熟悉研究现状，所列参考文献具有代表性。</td>
+              <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
+              <td>一般了解研究现状，所列参考文献有一定代表性。</td>
+              <td>不了解研究现状，所列参考文献没有代表性。</td>
+              <td>
+                <div class="score-input-wrapper">
+                  <el-input-number
+                    v-model="midScoreForm.midScoreYjjc"
+                    :precision="0"
+                    :min="0"
+                    :max="100"
+                    size="small"
+                    @change="calculateScore"
+                    controls-position="right"
+                  />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>内容设计</td>
+              <td>0.5</td>
+              <td>目标明确，内容充实，思路清晰。</td>
+              <td>目标比较明确，内容比较充实，思路比较清晰。</td>
+              <td>目标基本明确，内容基本充实，思路基本清晰。</td>
+              <td>目标不够明确，内容空泛，思路模糊。</td>
+              <td>
+                <div class="score-input-wrapper">
+                  <el-input-number
+                    v-model="midScoreForm.midScoreNrsj"
+                    :precision="0"
+                    :min="0"
+                    :max="100"
+                    size="small"
+                    @change="calculateScore"
+                    controls-position="right"
+                  />
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>研究方法</td>
+              <td>0.1</td>
+              <td>方法与手段科学、适切</td>
+              <td>方法比较科学、适切</td>
+              <td>方法手段基本科学、适切</td>
+              <td>方法手段不当</td>
+              <td>
+                <div class="score-input-wrapper">
+                  <el-input-number
+                    v-model="midScoreForm.midScoreYjff"
+                    :precision="0"
+                    :min="0"
+                    :max="100"
+                    size="small"
+                    @change="calculateScore"
+                    controls-position="right"
+                  />
+                </div>
+              </td>
+            </tr>
             </tbody>
             <tfoot>
-              <tr>
-                <td colspan="6" style="text-align: right; font-weight: bold;">总分（加权平均）：</td>
-                <td>
-                  <el-tag type="success" size="medium">{{ totalScore }}</el-tag>
-                </td>
-              </tr>
+            <tr>
+              <td colspan="6" style="text-align: right; font-weight: bold;">总分（加权平均）：</td>
+              <td>
+                <el-tag type="success" size="medium">{{ totalScore }}</el-tag>
+              </td>
+            </tr>
             </tfoot>
           </table>
         </div>
@@ -630,7 +634,9 @@
             <el-descriptions-item label="研究方法分(权重0.1)">{{ detail.midScoreYjff || 0 }}</el-descriptions-item>
             <el-descriptions-item label="中期评分总分" :span="2">
               <el-tag type="success" size="medium">
-                {{ (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2) }}
+                {{
+                  (detail.midScoreXtjz * 0.2 + detail.midScoreYjjc * 0.2 + detail.midScoreNrsj * 0.5 + detail.midScoreYjff * 0.1).toFixed(2)
+                }}
               </el-tag>
             </el-descriptions-item>
           </el-descriptions>
@@ -640,82 +646,84 @@
           <div class="score-title">结项评分 (占总评权重70%)</div>
           <table class="score-table">
             <thead>
-              <tr>
-                <th rowspan="2" width="80">评审内容</th>
-                <th rowspan="2" width="60">权重</th>
-                <th colspan="4">评审标准</th>
-                <th rowspan="2" width="120">评分<br>(百分制)</th>
-              </tr>
-              <tr>
-                <th width="150">A级<br>(80-100分)</th>
-                <th width="150">B级<br>(60-80分)</th>
-                <th width="150">C级<br>(40-60分)</th>
-                <th width="150">D级<br>(0-40分)</th>
-              </tr>
+            <tr>
+              <th rowspan="2" width="80">评审内容</th>
+              <th rowspan="2" width="60">权重</th>
+              <th colspan="4">评审标准</th>
+              <th rowspan="2" width="120">评分<br>(百分制)</th>
+            </tr>
+            <tr>
+              <th width="150">A级<br>(80-100分)</th>
+              <th width="150">B级<br>(60-80分)</th>
+              <th width="150">C级<br>(40-60分)</th>
+              <th width="150">D级<br>(0-40分)</th>
+            </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>选题价值</td>
-                <td>0.2</td>
-                <td>有重要创新性或应用性。</td>
-                <td>有比较重要的创新性或应用性。</td>
-                <td>创新性或应用性一般。</td>
-                <td>基本属于重复性工作。</td>
-                <td>
-                  <div class="score-input-wrapper">
-                    <el-tag type="info">{{ detail.endScoreXtjz }}</el-tag>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>研究基础</td>
-                <td>0.2</td>
-                <td>熟悉研究现状，所列参考文献具有代表性。</td>
-                <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
-                <td>一般了解研究现状，所列参考文献有一定代表性。</td>
-                <td>不了解研究现状，所列参考文献没有代表性。</td>
-                <td>
-                  <div class="score-input-wrapper">
-                    <el-tag type="info">{{ detail.endScoreYjjc }}</el-tag>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>内容设计</td>
-                <td>0.5</td>
-                <td>目标明确，内容充实，思路清晰。</td>
-                <td>目标比较明确，内容比较充实，思路比较清晰。</td>
-                <td>目标基本明确，内容基本充实，思路基本清晰。</td>
-                <td>目标不够明确，内容空泛，思路模糊。</td>
-                <td>
-                  <div class="score-input-wrapper">
-                    <el-tag type="info">{{ detail.endScoreNrsj }}</el-tag>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>研究方法</td>
-                <td>0.1</td>
-                <td>方法与手段科学、适切</td>
-                <td>方法比较科学、适切</td>
-                <td>方法手段基本科学、适切</td>
-                <td>方法手段不当</td>
-                <td>
-                  <div class="score-input-wrapper">
-                    <el-tag type="info">{{ detail.endScoreYjff }}</el-tag>
-                  </div>
-                </td>
-              </tr>
+            <tr>
+              <td>选题价值</td>
+              <td>0.2</td>
+              <td>有重要创新性或应用性。</td>
+              <td>有比较重要的创新性或应用性。</td>
+              <td>创新性或应用性一般。</td>
+              <td>基本属于重复性工作。</td>
+              <td>
+                <div class="score-input-wrapper">
+                  <el-tag type="info">{{ detail.endScoreXtjz }}</el-tag>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>研究基础</td>
+              <td>0.2</td>
+              <td>熟悉研究现状，所列参考文献具有代表性。</td>
+              <td>比较熟悉研究现状，所列参考文献比较有代表性。</td>
+              <td>一般了解研究现状，所列参考文献有一定代表性。</td>
+              <td>不了解研究现状，所列参考文献没有代表性。</td>
+              <td>
+                <div class="score-input-wrapper">
+                  <el-tag type="info">{{ detail.endScoreYjjc }}</el-tag>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>内容设计</td>
+              <td>0.5</td>
+              <td>目标明确，内容充实，思路清晰。</td>
+              <td>目标比较明确，内容比较充实，思路比较清晰。</td>
+              <td>目标基本明确，内容基本充实，思路基本清晰。</td>
+              <td>目标不够明确，内容空泛，思路模糊。</td>
+              <td>
+                <div class="score-input-wrapper">
+                  <el-tag type="info">{{ detail.endScoreNrsj }}</el-tag>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>研究方法</td>
+              <td>0.1</td>
+              <td>方法与手段科学、适切</td>
+              <td>方法比较科学、适切</td>
+              <td>方法手段基本科学、适切</td>
+              <td>方法手段不当</td>
+              <td>
+                <div class="score-input-wrapper">
+                  <el-tag type="info">{{ detail.endScoreYjff }}</el-tag>
+                </div>
+              </td>
+            </tr>
             </tbody>
             <tfoot>
-              <tr>
-                <td colspan="6" style="text-align: right; font-weight: bold;">结项评分总分：</td>
-                <td>
-                  <el-tag type="success" size="medium">
-                    {{ (detail.endScoreXtjz * 0.2 + detail.endScoreYjjc * 0.2 + detail.endScoreNrsj * 0.5 + detail.endScoreYjff * 0.1).toFixed(2) }}
-                  </el-tag>
-                </td>
-              </tr>
+            <tr>
+              <td colspan="6" style="text-align: right; font-weight: bold;">结项评分总分：</td>
+              <td>
+                <el-tag type="success" size="medium">
+                  {{
+                    (detail.endScoreXtjz * 0.2 + detail.endScoreYjjc * 0.2 + detail.endScoreNrsj * 0.5 + detail.endScoreYjff * 0.1).toFixed(2)
+                  }}
+                </el-tag>
+              </td>
+            </tr>
             </tfoot>
           </table>
         </div>

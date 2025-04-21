@@ -105,16 +105,34 @@ public class InnoProjectController extends BaseController {
         //按钮 查看
         List<InnoProject> list = innoProjectMapper.getTableList(dto, userId, username, userType, projectType);
         for (InnoProject innoProject : list) {
-            if (userType == 1) {
-                //学生
-                if(StatusEnum.DRAFT.name.equals(innoProject.getStatus())){
-
+            if (userType != null) {
+                if (userType == 1) {
+                    //学生
+                    if (StatusEnum.DRAFT.name.equals(innoProject.getStatus()) || StatusEnum.APPROVE_FAIL.name.equals(innoProject.getStatus())) {
+                        innoProject.getButtonList().add("修改");
+                        innoProject.getButtonList().add("删除");
+                        innoProject.getButtonList().add("提交");
+                    } else if (StatusEnum.APPROVED.name.equals(innoProject.getStatus())) {
+                        innoProject.getButtonList().add("中期检查");
+                    } else if (StatusEnum.WAIT_FINAL_CHECK.name.equals(innoProject.getStatus())) {
+                        innoProject.getButtonList().add("结项");
+                    }
+                } else if (userType == 2) {
+                    //导师
+                    if (StatusEnum.WAIT_APPROVE.name.equals(innoProject.getStatus())) {
+                        innoProject.getButtonList().add("通过");
+                        innoProject.getButtonList().add("拒绝");
+                    }
+                } else if (userType == 3) {
+                    //专家
+                    if (StatusEnum.APPROVED.name.equals(innoProject.getStatus())) {
+                        innoProject.getButtonList().add("中期评分");
+                    } else if (StatusEnum.WAIT_FINAL_CHECK.name.equals(innoProject.getStatus())) {
+                        innoProject.getButtonList().add("结项评分");
+                    }
                 }
-            } else if (userType == 2) {
-
-            } else if (userType == 3) {
-
             }
+
         }
         return getDataTable(list);
     }
