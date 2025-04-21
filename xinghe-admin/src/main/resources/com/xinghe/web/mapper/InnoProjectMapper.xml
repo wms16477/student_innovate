@@ -23,12 +23,13 @@
 				#{userCode})
 			</if>
 			<if test="userType == 2">
-				and teacher_id = #{userId}
+				and teacher_id = #{teacherId}
 			</if>
 			<if test="userType == 3">
 				and project_type = #{projectType}
 			</if>
 		</where>
+		order by id desc
 	</select>
 
 

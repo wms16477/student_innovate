@@ -12,10 +12,7 @@ import com.xinghe.system.mapper.SysUserMapper;
 import com.xinghe.system.mapper.SysUserRoleMapper;
 import com.xinghe.system.service.impl.SysUserServiceImpl;
 import com.xinghe.web.constants.Constants;
-import com.xinghe.web.domain.InnoProject;
-import com.xinghe.web.domain.InnoProjectMember;
-import com.xinghe.web.domain.Professional;
-import com.xinghe.web.domain.Student;
+import com.xinghe.web.domain.*;
 import com.xinghe.web.dto.InnoProjectDTO;
 import com.xinghe.web.mapper.InnoProjectMapper;
 import com.xinghe.web.service.*;
@@ -80,6 +77,7 @@ public class InnoProjectController extends BaseController {
         Long userId = getUserId();
         //获取当前登录账号
         String username = SecurityUtils.getLoginUser().getUsername();
+        Long teacherId = null;
         //获取当前角色
         List<SysUserRole> roleList = sysUserRoleMapper.selectUserRoleByUserId(userId);
         Integer userType = null;
@@ -92,6 +90,8 @@ public class InnoProjectController extends BaseController {
             } else if (Objects.equals(sysUserRole.getRoleId(), Constants.TEA_ROLE_ID)) {
                 //教师
                 userType = 2;
+                Teacher one = teacherService.lambdaQuery().eq(Teacher::getAccount, username).one();
+                teacherId = one.getId();
                 break;
             } else if (Objects.equals(sysUserRole.getRoleId(), Constants.PRO_ROLE_ID)) {
                 //专家
@@ -103,7 +103,7 @@ public class InnoProjectController extends BaseController {
             }
         }
         //按钮 查看
-        List<InnoProject> list = innoProjectMapper.getTableList(dto, userId, username, userType, projectType);
+        List<InnoProject> list = innoProjectMapper.getTableList(dto, userId, username, userType, teacherId, projectType);
         for (InnoProject innoProject : list) {
             if (userType != null) {
                 if (userType == 1) {
@@ -159,6 +159,7 @@ public class InnoProjectController extends BaseController {
         innoProject.setTeacherName(teacherService.getById(innoProject.getTeacherId()).getTeacherName());
         innoProjectService.save(innoProject);
         //成员列表
+        innoProjectMemberService.lambdaUpdate().eq(InnoProjectMember::getProjectId, innoProject.getId()).remove();
         List<Student> list = studentService.list();
         Map<String, String> studentMap = list.stream().collect(Collectors.toMap(Student::getStuNo, Student::getStuName));
         if (CollectionUtils.isEmpty(innoProject.getMemberList())) {
@@ -189,15 +190,15 @@ public class InnoProjectController extends BaseController {
             return error("项目不存在");
         }
         if (submit) {
-            innoProject.setStatus(StatusEnum.WAIT_APPROVE.name());
+            innoProject.setStatus(StatusEnum.WAIT_APPROVE.getName());
         } else {
-            innoProject.setStatus(StatusEnum.DRAFT.name());
+            innoProject.setStatus(StatusEnum.DRAFT.getName());
         }
         //获取导师姓名
         innoProject.setTeacherName(teacherService.getById(innoProject.getTeacherId()).getTeacherName());
-        innoProjectService.save(innoProject);
         innoProjectService.updateById(innoProject);
         //成员列表
+        innoProjectMemberService.lambdaUpdate().eq(InnoProjectMember::getProjectId, innoProject.getId()).remove();
         List<Student> list = studentService.list();
         Map<String, String> studentMap = list.stream().collect(Collectors.toMap(Student::getStuNo, Student::getStuName));
         if (CollectionUtils.isEmpty(innoProject.getMemberList())) {
@@ -227,7 +228,7 @@ public class InnoProjectController extends BaseController {
         if (project == null) {
             return error("项目不存在");
         }
-        if (!StatusEnum.DRAFT.name().equals(project.getStatus()) && !StatusEnum.APPROVE_FAIL.name().equals(project.getStatus())) {
+        if (!StatusEnum.DRAFT.getName().equals(project.getStatus()) && !StatusEnum.APPROVE_FAIL.getName().equals(project.getStatus())) {
             return error("只有草稿和审批不通过状态的项目可以删除");
         }
         return toAjax(innoProjectService.removeById(id));
@@ -303,6 +304,7 @@ public class InnoProjectController extends BaseController {
         // 只更新中期检查评分相关字段
         InnoProject updateProject = new InnoProject();
         updateProject.setId(innoProject.getId());
+        updateProject.setStatus(StatusEnum.WAIT_FINAL_CHECK.getName());
         updateProject.setMidScoreXtjz(innoProject.getMidScoreXtjz());
         updateProject.setMidScoreYjjc(innoProject.getMidScoreYjjc());
         updateProject.setMidScoreNrsj(innoProject.getMidScoreNrsj());
@@ -390,6 +392,7 @@ public class InnoProjectController extends BaseController {
 
         // 只更新结项评分相关字段
         InnoProject updateProject = new InnoProject();
+        updateProject.setStatus(StatusEnum.FINAL_CHECKED.getName());
         updateProject.setId(innoProject.getId());
         updateProject.setEndScoreXtjz(innoProject.getEndScoreXtjz());
         updateProject.setEndScoreYjjc(innoProject.getEndScoreYjjc());

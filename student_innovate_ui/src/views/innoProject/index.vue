@@ -73,14 +73,15 @@
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
+            v-if="scope.row.buttonList.indexOf('删除') !== -1"
           >删除
           </el-button>
           <el-button
-            v-if="scope.row.status === 'DRAFT'"
             size="mini"
             type="text"
             icon="el-icon-upload2"
             @click="handleSubmit(scope.row)"
+            v-if="scope.row.buttonList.indexOf('提交') !== -1"
           >提交
           </el-button>
           <el-button
@@ -88,6 +89,7 @@
             type="text"
             icon="el-icon-check"
             @click="handleApprove(scope.row, true)"
+            v-if="scope.row.buttonList.indexOf('通过') !== -1"
           >通过
           </el-button>
           <el-button
@@ -95,6 +97,7 @@
             type="text"
             icon="el-icon-close"
             @click="handleApprove(scope.row, false)"
+            v-if="scope.row.buttonList.indexOf('拒绝') !== -1"
           >拒绝
           </el-button>
           <el-button
@@ -102,6 +105,7 @@
             type="text"
             icon="el-icon-document-checked"
             @click="handleMidCheck(scope.row)"
+            v-if="scope.row.buttonList.indexOf('中期检查') !== -1"
           >中期检查
           </el-button>
           <el-button
@@ -109,6 +113,7 @@
             type="text"
             icon="el-icon-s-claim"
             @click="handleMidCheckScore(scope.row)"
+             v-if="scope.row.buttonList.indexOf('中期评分') !== -1"
           >中期评分
           </el-button>
           <el-button
@@ -116,6 +121,7 @@
             type="text"
             icon="el-icon-circle-check"
             @click="handleEndProject(scope.row)"
+             v-if="scope.row.buttonList.indexOf('结项') !== -1"
           >结项
           </el-button>
           <el-button
@@ -123,6 +129,7 @@
             type="text"
             icon="el-icon-s-check"
             @click="handleEndProjectScore(scope.row)"
+             v-if="scope.row.buttonList.indexOf('结项评分') !== -1"
           >结项评分
           </el-button>
         </template>
@@ -1114,16 +1121,17 @@ export default {
         this.detailOpen = true;
       });
     },
-    /** 提交按钮操作 */
-    handleSubmit(row) {
-      this.$modal.confirm('是否确认提交大创项目编号为"' + row.id + '"的数据项？').then(function () {
-        return submitInnoProject(row.id);
-      }).then(() => {
-        this.getList();
-        this.$modal.msgSuccess("提交成功");
-      }).catch(() => {
-      });
-    },
+    // /** 提交按钮操作 */
+    // handleSubmit(row) {
+    //   this.$modal.confirm('是否确认提交大创项目？').then(function () {
+    //     console.log(222);
+    //     return submitInnoProject(row.id);
+    //   }).then(() => {
+    //     this.getList();
+    //     this.$modal.msgSuccess("提交成功");
+    //   }).catch(() => {
+    //   });
+    // },
     /** 审批按钮操作 */
     handleApprove(row, isApprove) {
       this.approveForm = {
