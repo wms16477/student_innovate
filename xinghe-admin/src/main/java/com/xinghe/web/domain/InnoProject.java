@@ -163,7 +163,7 @@ public class InnoProject {
      * 成员列表
      */
     @TableField(exist = false)
-    private List<InnoProjectMember> memberList;
+    private List<InnoProjectMember> memberList = new ArrayList<>();
 
     @TableField(exist = false)
     private List<String> buttonList = new ArrayList<>();

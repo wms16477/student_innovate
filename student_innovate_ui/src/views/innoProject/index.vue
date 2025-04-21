@@ -76,14 +76,14 @@
             v-if="scope.row.buttonList.indexOf('删除') !== -1"
           >删除
           </el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-upload2"
-            @click="handleSubmit(scope.row)"
-            v-if="scope.row.buttonList.indexOf('提交') !== -1"
-          >提交
-          </el-button>
+<!--          <el-button-->
+<!--            size="mini"-->
+<!--            type="text"-->
+<!--            icon="el-icon-upload2"-->
+<!--            @click="handleSubmit(scope.row)"-->
+<!--            v-if="scope.row.buttonList.indexOf('提交') !== -1"-->
+<!--          >提交-->
+<!--          </el-button>-->
           <el-button
             size="mini"
             type="text"
@@ -676,7 +676,15 @@
               <td>基本属于重复性工作。</td>
               <td>
                 <div class="score-input-wrapper">
-                  <el-tag type="info">{{ detail.endScoreXtjz }}</el-tag>
+                  <el-input-number
+                    v-model="endScoreForm.endScoreXtjz"
+                    :precision="0"
+                    :min="0"
+                    :max="100"
+                    size="small"
+                    @change="calculateEndScoreTotal"
+                    controls-position="right"
+                  />
                 </div>
               </td>
             </tr>
@@ -689,7 +697,15 @@
               <td>不了解研究现状，所列参考文献没有代表性。</td>
               <td>
                 <div class="score-input-wrapper">
-                  <el-tag type="info">{{ detail.endScoreYjjc }}</el-tag>
+                  <el-input-number
+                    v-model="endScoreForm.endScoreYjjc"
+                    :precision="0"
+                    :min="0"
+                    :max="100"
+                    size="small"
+                    @change="calculateEndScoreTotal"
+                    controls-position="right"
+                  />
                 </div>
               </td>
             </tr>
@@ -702,7 +718,15 @@
               <td>目标不够明确，内容空泛，思路模糊。</td>
               <td>
                 <div class="score-input-wrapper">
-                  <el-tag type="info">{{ detail.endScoreNrsj }}</el-tag>
+                  <el-input-number
+                    v-model="endScoreForm.endScoreNrsj"
+                    :precision="0"
+                    :min="0"
+                    :max="100"
+                    size="small"
+                    @change="calculateEndScoreTotal"
+                    controls-position="right"
+                  />
                 </div>
               </td>
             </tr>
@@ -715,7 +739,15 @@
               <td>方法手段不当</td>
               <td>
                 <div class="score-input-wrapper">
-                  <el-tag type="info">{{ detail.endScoreYjff }}</el-tag>
+                  <el-input-number
+                    v-model="endScoreForm.endScoreYjff"
+                    :precision="0"
+                    :min="0"
+                    :max="100"
+                    size="small"
+                    @change="calculateEndScoreTotal"
+                    controls-position="right"
+                  />
                 </div>
               </td>
             </tr>
@@ -725,9 +757,7 @@
               <td colspan="6" style="text-align: right; font-weight: bold;">结项评分总分：</td>
               <td>
                 <el-tag type="success" size="medium">
-                  {{
-                    (detail.endScoreXtjz * 0.2 + detail.endScoreYjjc * 0.2 + detail.endScoreNrsj * 0.5 + detail.endScoreYjff * 0.1).toFixed(2)
-                  }}
+                  {{ endTotalScore }}
                 </el-tag>
               </td>
             </tr>
@@ -1121,17 +1151,6 @@ export default {
         this.detailOpen = true;
       });
     },
-    // /** 提交按钮操作 */
-    // handleSubmit(row) {
-    //   this.$modal.confirm('是否确认提交大创项目？').then(function () {
-    //     console.log(222);
-    //     return submitInnoProject(row.id);
-    //   }).then(() => {
-    //     this.getList();
-    //     this.$modal.msgSuccess("提交成功");
-    //   }).catch(() => {
-    //   });
-    // },
     /** 审批按钮操作 */
     handleApprove(row, isApprove) {
       this.approveForm = {

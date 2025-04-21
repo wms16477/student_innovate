@@ -142,7 +142,11 @@ public class InnoProjectController extends BaseController {
      */
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id) {
-        return success(innoProjectService.getById(id));
+        InnoProject project = innoProjectService.getById(id);
+        //查询项目成员
+        List<InnoProjectMember> memberList = innoProjectMemberService.lambdaQuery().eq(InnoProjectMember::getProjectId, id).list();
+        project.setMemberList(memberList);
+        return success(project);
     }
 
     /**
