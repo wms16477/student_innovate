@@ -76,6 +76,7 @@
         </template>
       </el-table-column>
       <el-table-column label="身份证号" align="center" prop="userId"/>
+      <el-table-column label="学校" align="center" prop="schoolName"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -141,6 +142,16 @@
         <el-form-item label="身份证号" prop="userId">
           <el-input v-model="form.userId" placeholder="请输入身份证号"/>
         </el-form-item>
+        <el-form-item label="学校" prop="schoolId">
+          <el-select v-model="form.schoolId" placeholder="请选择学校" clearable>
+            <el-option
+              v-for="item in schoolOptions"
+              :key="item.id"
+              :label="item.schoolName"
+              :value="item.id">
+            </el-option>
+          </el-select>
+        </el-form-item>
         <div class="drawer-footer">
           <el-form-item label-width="0">
             <el-button type="primary" @click="submitForm">提 交</el-button>
@@ -154,7 +165,7 @@
 
 <script>
 import {listStudent, getStudent, delStudent, addStudent, updateStudent} from "@/api/person/student";
-
+import { getSchoolOptions } from "@/api/school";
 import { specialityOptions} from "@/constants/DictConstants";
 
 export default {
@@ -221,11 +232,14 @@ export default {
           {required: true, message: "身份证号不能为空", trigger: "blur"},
           {pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: "请输入正确的身份证号码", trigger: "blur"}
         ],
-      }
+      },
+      // 学校选项
+      schoolOptions: [],
     };
   },
   created() {
     this.getList();
+    this.getSchoolOptions();
   },
   methods: {
     specialityOptions() {
@@ -256,6 +270,7 @@ export default {
         email: null,
         inTime: null,
         userId: null,
+        schoolId: null,
         createTime: null
       };
       this.resetForm("form");
@@ -328,7 +343,13 @@ export default {
       this.download('student/student/export', {
         ...this.queryParams
       }, `student_${new Date().getTime()}.xlsx`)
-    }
+    },
+    /** 获取学校选项 */
+    getSchoolOptions() {
+      getSchoolOptions().then(response => {
+        this.schoolOptions = response.rows;
+      });
+    },
   }
 };
 </script>

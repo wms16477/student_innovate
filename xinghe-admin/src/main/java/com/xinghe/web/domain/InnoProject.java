@@ -142,6 +142,16 @@ public class InnoProject {
     private String approveDesc;
 
     /**
+     * 学校审批状态
+     */
+    private String schoolApproveStatus;
+
+    /**
+     * 学校审批意见
+     */
+    private String schoolApproveDesc;
+
+    /**
      * 申报人
      */
     @TableField(fill = FieldFill.INSERT)

@@ -70,6 +70,17 @@ public class Student implements Serializable {
      */
     @Excel(name = "身份证号")
     private String userId;
+    
+    /**
+     * 学校ID
+     */
+    private Long schoolId;
+    
+    /**
+     * 学校名称
+     */
+    @Excel(name = "学校")
+    private String schoolName;
 
     private Date createTime;
 

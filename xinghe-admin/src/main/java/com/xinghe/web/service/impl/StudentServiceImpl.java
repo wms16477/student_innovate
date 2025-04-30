@@ -9,6 +9,8 @@ import com.xinghe.common.exception.ServiceException;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
 import com.xinghe.system.service.ISysUserService;
+import com.xinghe.web.domain.School;
+import com.xinghe.web.service.SchoolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,9 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
 
     @Autowired
     private ISysUserService userService;
+    
+    @Autowired
+    private SchoolService schoolService;
 
 
     /**
@@ -42,6 +47,7 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
                 .like(StringUtils.isNotEmpty(student.getStuNo()), Student::getStuNo, student.getStuNo())
                 .like(StringUtils.isNotEmpty(student.getStuName()), Student::getStuName, student.getStuName())
                 .eq(student.getSpeciality() != null, Student::getSpeciality, student.getSpeciality())
+                .eq(student.getSchoolId() != null, Student::getSchoolId, student.getSchoolId())
                 .ne(excludeSelf, Student::getStuNo, SecurityUtils.getUsername())
                 .list();
     }
@@ -53,6 +59,17 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
         if (!collect.isEmpty()) {
             throw new ServiceException("该学号已有学生");
         }
+        
+        // 如果设置了学校ID，则获取学校名称
+        if (student.getSchoolId() != null) {
+            School school = schoolService.getById(student.getSchoolId());
+            if (school != null) {
+                student.setSchoolName(school.getSchoolName());
+            } else {
+                throw new ServiceException("所选学校不存在");
+            }
+        }
+        
         save(student);
         //添加用户
         /**
@@ -69,6 +86,4 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
         user.setRoleIds(new Long[]{100L});
         userService.insertUser(user);
     }
-
-
 }

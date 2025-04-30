@@ -54,6 +54,17 @@ public class Teacher implements Serializable {
      */
     @Excel(name = "学历")
     private String degree;
+    
+    /**
+     * 学校ID
+     */
+    private Long schoolId;
+    
+    /**
+     * 学校名称
+     */
+    @Excel(name = "学校")
+    private String schoolName;
 
     /**
      * 创建时间

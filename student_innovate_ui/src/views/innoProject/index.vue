@@ -132,6 +132,24 @@
              v-if="scope.row.buttonList.indexOf('结项评分') !== -1"
           >结项评分
           </el-button>
+          <el-button
+            size="mini"
+            type="warning"
+            plain
+            icon="el-icon-check"
+            @click="handleSchoolApprove(scope.row, true)"
+            v-if="scope.row.status === 'APPROVED' && scope.row.schoolApproveStatus === 'WAIT_APPROVE'"
+          >学校审批通过
+          </el-button>
+          <el-button
+            size="mini"
+            type="danger"
+            plain
+            icon="el-icon-close"
+            @click="handleSchoolApprove(scope.row, false)"
+            v-if="scope.row.status === 'APPROVED' && scope.row.schoolApproveStatus === 'WAIT_APPROVE'"
+          >学校审批拒绝
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -220,6 +238,15 @@
               <dict-tag :options="statusOptions" :value="detail.status"/>
             </el-descriptions-item>
             <el-descriptions-item label="创建时间">{{ parseTime(detail.createTime) }}</el-descriptions-item>
+            <el-descriptions-item label="审批意见" v-if="detail.approveDesc">
+              {{ detail.approveDesc }}
+            </el-descriptions-item>
+            <el-descriptions-item label="学校审批状态" v-if="detail.schoolApproveStatus">
+              <dict-tag :options="schoolApproveStatusOptions" :value="detail.schoolApproveStatus"/>
+            </el-descriptions-item>
+            <el-descriptions-item label="学校审批意见" v-if="detail.schoolApproveDesc">
+              {{ detail.schoolApproveDesc }}
+            </el-descriptions-item>
             <el-descriptions-item label="申报材料" :span="2">
               <el-link :href="baseUrl + detail.submitFileUrl" target="_blank">
                 {{ detail.submitFileUrl ? detail.submitFileUrl.split('/').pop() : null }}
@@ -454,6 +481,19 @@
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitApprove">确 定</el-button>
         <el-button @click="approveOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 学校审批对话框 -->
+    <el-dialog :title="schoolApproveTitle" :visible.sync="schoolApproveOpen" width="500px" append-to-body>
+      <el-form ref="schoolApproveForm" :model="schoolApproveForm" :rules="schoolApproveRules" label-width="120px">
+        <el-form-item label="学校审批意见" prop="schoolApproveDesc">
+          <el-input v-model="schoolApproveForm.schoolApproveDesc" type="textarea" placeholder="请输入审批意见"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitSchoolApprove">确 定</el-button>
+        <el-button @click="schoolApproveOpen = false">取 消</el-button>
       </div>
     </el-dialog>
 
@@ -796,6 +836,7 @@ import {
   addInnoProject,
   updateInnoProject,
   approveInnoProject,
+  schoolApproveInnoProject,
   submitMidCheck,
   submitMidCheckScore,
   calculateMidScore,
@@ -885,12 +926,34 @@ export default {
         approveDesc: undefined,
         isApprove: undefined
       },
+      // 学校审批对话框标题
+      schoolApproveTitle: "",
+      // 是否显示学校审批对话框
+      schoolApproveOpen: false,
+      // 学校审批表单参数
+      schoolApproveForm: {
+        id: undefined,
+        schoolApproveDesc: undefined,
+        isApprove: undefined
+      },
       // 审批表单校验
       approveRules: {
         approveDesc: [
           {required: true, message: "审批原因不能为空", trigger: "blur"}
         ]
       },
+      // 学校审批表单校验
+      schoolApproveRules: {
+        schoolApproveDesc: [
+          {required: true, message: "学校审批意见不能为空", trigger: "blur"}
+        ]
+      },
+      // 学校审批状态选项
+      schoolApproveStatusOptions: [
+        { dictValue: "WAIT_APPROVE", dictLabel: "待审批" },
+        { dictValue: "APPROVE_SUCCESS", dictLabel: "审批通过" },
+        { dictValue: "APPROVE_FAIL", dictLabel: "审批不通过" }
+      ],
       // 选中的成员工号
       selectedMemberCodes: [],
       // 中期检查对话框是否显示
@@ -1183,6 +1246,32 @@ export default {
           approveInnoProject(this.approveForm.isApprove, data).then(response => {
             this.$modal.msgSuccess("审批成功");
             this.approveOpen = false;
+            this.getList();
+          });
+        }
+      });
+    },
+    /** 学校审批按钮操作 */
+    handleSchoolApprove(row, isApprove) {
+      this.schoolApproveForm = {
+        id: row.id,
+        schoolApproveDesc: undefined,
+        isApprove: isApprove
+      };
+      this.schoolApproveTitle = isApprove ? "学校审批通过" : "学校审批拒绝";
+      this.schoolApproveOpen = true;
+    },
+    /** 提交学校审批 */
+    submitSchoolApprove() {
+      this.$refs["schoolApproveForm"].validate(valid => {
+        if (valid) {
+          const data = {
+            id: this.schoolApproveForm.id,
+            schoolApproveDesc: this.schoolApproveForm.schoolApproveDesc
+          };
+          schoolApproveInnoProject(this.schoolApproveForm.isApprove, data).then(response => {
+            this.$modal.msgSuccess("学校审批成功");
+            this.schoolApproveOpen = false;
             this.getList();
           });
         }

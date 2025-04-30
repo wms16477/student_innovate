@@ -18,6 +18,7 @@ import com.xinghe.web.mapper.InnoProjectMapper;
 import com.xinghe.web.service.*;
 import com.xinghe.web.enums.StatusEnum;
 import com.xinghe.web.enums.ProjectType;
+import com.xinghe.web.enums.SchoolApproveStatusEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
@@ -245,7 +246,25 @@ public class InnoProjectController extends BaseController {
     public AjaxResult approve(@PathVariable("agree") boolean agree, @RequestBody InnoProject dto) {
         if (agree) {
             dto.setStatus(StatusEnum.APPROVED.name);
+            // 导师审批通过后，设置学校审批状态为待审批
+            dto.setSchoolApproveStatus(SchoolApproveStatusEnum.WAIT_APPROVE.name);
         } else {
+            dto.setStatus(StatusEnum.APPROVE_FAIL.name);
+        }
+        innoProjectService.updateById(dto);
+        return success();
+    }
+
+    /**
+     * 学校审批
+     */
+    @PostMapping("/school-approve/{agree}")
+    public AjaxResult schoolApprove(@PathVariable("agree") boolean agree, @RequestBody InnoProject dto) {
+        if (agree) {
+            dto.setSchoolApproveStatus(SchoolApproveStatusEnum.APPROVE_SUCCESS.name);
+        } else {
+            dto.setSchoolApproveStatus(SchoolApproveStatusEnum.APPROVE_FAIL.name);
+            // 学校审批不通过时，项目状态变为审批不通过
             dto.setStatus(StatusEnum.APPROVE_FAIL.name);
         }
         innoProjectService.updateById(dto);

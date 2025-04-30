@@ -18,28 +18,30 @@
         />
       </el-form-item>
       <el-form-item label="性别" prop="gender">
-        <el-input
-          v-model="queryParams.gender"
-          placeholder="请输入性别"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+        <el-select v-model="queryParams.gender" placeholder="请选择性别" clearable>
+          <el-option label="男" value="男"></el-option>
+          <el-option label="女" value="女"></el-option>
+        </el-select>
       </el-form-item>
       <el-form-item label="级别" prop="level">
-        <el-input
-          v-model="queryParams.level"
-          placeholder="请输入级别"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+        <el-select v-model="queryParams.level" placeholder="请选择级别" clearable>
+          <el-option
+            v-for="item in levelOptions"
+            :key="item"
+            :label="item"
+            :value="item">
+          </el-option>
+        </el-select>
       </el-form-item>
       <el-form-item label="学历" prop="degree">
-        <el-input
-          v-model="queryParams.degree"
-          placeholder="请输入学历"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+        <el-select v-model="queryParams.degree" placeholder="请选择学历" clearable>
+          <el-option
+            v-for="item in degreeOptions"
+            :key="item"
+            :label="item"
+            :value="item">
+          </el-option>
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -96,6 +98,7 @@
       <el-table-column label="性别" align="center" prop="gender" />
       <el-table-column label="级别" align="center" prop="level" />
       <el-table-column label="学历" align="center" prop="degree" />
+      <el-table-column label="学校" align="center" prop="schoolName" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -133,13 +136,40 @@
           <el-input v-model="form.teacherName" placeholder="请输入老师姓名" />
         </el-form-item>
         <el-form-item label="性别" prop="gender">
-          <el-input v-model="form.gender" placeholder="请输入性别" />
+          <el-select v-model="form.gender" placeholder="请选择性别">
+            <el-option label="男" value="男"></el-option>
+            <el-option label="女" value="女"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="级别" prop="level">
-          <el-input v-model="form.level" placeholder="请输入级别" />
+          <el-select v-model="form.level" placeholder="请选择级别">
+            <el-option
+              v-for="item in levelOptions"
+              :key="item"
+              :label="item"
+              :value="item">
+            </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="学历" prop="degree">
-          <el-input v-model="form.degree" placeholder="请输入学历" />
+          <el-select v-model="form.degree" placeholder="请选择学历">
+            <el-option
+              v-for="item in degreeOptions"
+              :key="item"
+              :label="item"
+              :value="item">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="学校" prop="schoolId">
+          <el-select v-model="form.schoolId" placeholder="请选择学校" clearable>
+            <el-option
+              v-for="item in schoolOptions"
+              :key="item.id"
+              :label="item.schoolName"
+              :value="item.id">
+            </el-option>
+          </el-select>
         </el-form-item>
         <div class="drawer-footer">
           <el-form-item label-width="0">
@@ -154,6 +184,7 @@
 
 <script>
 import { listTeacher, getTeacher, delTeacher, addTeacher, updateTeacher } from "@/api/person/teacher";
+import { getSchoolOptions } from "@/api/school";
 
 export default {
   name: "Teacher",
@@ -206,11 +237,18 @@ export default {
         degree: [
           { required: true, message: "学历不能为空", trigger: "blur" }
         ],
-      }
+      },
+      // 学校选项
+      schoolOptions: [],
+      // 级别选项
+      levelOptions: ['助教', '讲师', '副教授', '教授'],
+      // 学历选项
+      degreeOptions: ['学士', '硕士', '博士', '博士后'],
     };
   },
   created() {
     this.getList();
+    this.getSchoolOptions();
   },
   methods: {
     /** 查询老师列表 */
@@ -220,6 +258,12 @@ export default {
         this.teacherList = response.rows;
         this.total = response.total;
         this.loading = false;
+      });
+    },
+    /** 获取学校选项 */
+    getSchoolOptions() {
+      getSchoolOptions().then(response => {
+        this.schoolOptions = response.rows;
       });
     },
     // 取消按钮
@@ -236,6 +280,7 @@ export default {
         gender: null,
         level: null,
         degree: null,
+        schoolId: null,
         createTime: null
       };
       this.resetForm("form");

@@ -66,6 +66,15 @@ export function approveInnoProject(agree, data) {
   })
 }
 
+// 学校审批大创项目
+export function schoolApproveInnoProject(agree, data) {
+  return request({
+    url: '/web/innoProject/school-approve/' + agree,
+    method: 'post',
+    data: data
+  })
+}
+
 // 提交中期检查
 export function submitMidCheck(data) {
   return request({
