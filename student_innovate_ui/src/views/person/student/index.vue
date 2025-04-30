@@ -47,7 +47,6 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['student:student:add']"
         >新增
         </el-button>
       </el-col>
@@ -58,7 +57,6 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['student:student:export']"
         >导出
         </el-button>
       </el-col>
@@ -85,7 +83,6 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['student:student:edit']"
           >修改
           </el-button>
           <el-button
@@ -93,7 +90,6 @@
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['student:student:remove']"
             style="color: #f56c6c"
           >删除
           </el-button>
