@@ -1124,13 +1124,82 @@ export default {
     },
     /** 经费管理按钮操作 */
     handleFundManage(row) {
-      this.$router.push({ 
-        path: '/innoProject/fundManage', 
-        query: { 
+      this.$router.push({
+        path: '/project/fee',
+        query: {
           projectId: row.id,
           projectName: row.projectName
         }
       });
+    },
+    /** 新增按钮操作 */
+    handleAdd() {
+      this.reset();
+      this.open = true;
+      this.title = "添加大创项目";
+    },
+    /** 重置表单 */
+    reset() {
+      this.form = {
+        id: undefined,
+        projectName: undefined,
+        projectType: undefined,
+        projectDesc: undefined,
+        teacherId: undefined,
+        submitFileUrl: undefined,
+        memberList: []
+      };
+      this.selectedMemberCodes = [];
+      this.resetForm("form");
+    },
+    /** 处理成员变更 */
+    handleMemberChange(value) {
+      // 根据学生工号更新memberList
+      const memberList = [];
+      value.forEach(studentCode => {
+        const student = this.studentOptions.find(item => item.studentCode === studentCode);
+        if (student) {
+          memberList.push({
+            memberCode: student.studentCode,
+            memberName: student.studentName,
+            memberType: "STUDENT"
+          });
+        }
+      });
+      this.form.memberList = memberList;
+    },
+    /** 提交表单 */
+    submitForm(submit = false) {
+      this.$refs["form"].validate(valid => {
+        if (valid) {
+          if (this.form.id != null) {
+            updateInnoProject(this.form, submit).then(response => {
+              this.$modal.msgSuccess(submit ? "提交成功" : "保存成功");
+              this.open = false;
+              this.getList();
+            });
+          } else {
+            addInnoProject(this.form, submit).then(response => {
+              this.$modal.msgSuccess(submit ? "提交成功" : "保存成功");
+              this.open = false;
+              this.getList();
+            });
+          }
+        }
+      });
+    },
+    /** 暂存按钮操作 */
+    handleSave() {
+      this.submitForm(false);
+    },
+    /** 提交按钮操作 */
+    handleSubmitForm() {
+      this.submitForm(true);
+    },
+    /** 取消按钮操作 */
+    cancel() {
+      this.open = false;
+      this.reset();
     },
     /** 初始化数据 */
     getInitialData() {

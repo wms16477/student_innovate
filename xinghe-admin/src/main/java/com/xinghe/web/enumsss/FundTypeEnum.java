@@ -1,4 +1,4 @@
-package com.xinghe.web.enum;
+package com.xinghe.web.enumsss;
 
 /**
  * 经费类型枚举
@@ -24,4 +24,4 @@ public enum FundTypeEnum {
         }
         return "";
     }
-} 
+}

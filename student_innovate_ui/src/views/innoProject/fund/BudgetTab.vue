@@ -79,7 +79,7 @@
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="项目" prop="projectId">
-          <el-select v-model="form.projectId" placeholder="请选择项目" :disabled="form.id !== undefined">
+          <el-select v-model="form.projectId" placeholder="请选择项目" :disabled="form.id !== undefined && form.id !== null">
             <el-option
               v-for="item in projectOptions"
               :key="item.id"
@@ -149,7 +149,7 @@
 
 <script>
 import { listFundBudget, getFundBudget, addFundBudget, updateFundBudget, delFundBudget, submitFundBudget, approveFundBudget } from "@/api/fundBudget";
-import { listInnoProject } from "@/api/innoproject";
+import { listInnoProject } from "@/api/innoProject";
 
 export default {
   name: "BudgetTab",
@@ -258,7 +258,19 @@ export default {
     /** 获取项目选项 */
     getProjectOptions() {
       listInnoProject({ status: 'APPROVED' }).then(response => {
-        this.projectOptions = response.rows;
+        if (response.rows && response.rows.length > 0) {
+          this.projectOptions = response.rows;
+          console.log("加载项目列表成功:", this.projectOptions);
+        } else {
+          console.warn("没有找到已批准的项目");
+          // 尝试获取所有项目
+          listInnoProject().then(allResponse => {
+            this.projectOptions = allResponse.rows || [];
+            console.log("加载所有项目:", this.projectOptions);
+          });
+        }
+      }).catch(error => {
+        console.error("加载项目列表失败:", error);
       });
     },
     // 取消按钮
