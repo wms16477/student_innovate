@@ -1,18 +1,23 @@
 package com.xinghe.web.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xinghe.common.core.domain.entity.SysRole;
 import com.xinghe.common.core.domain.entity.SysUser;
 import com.xinghe.common.exception.ServiceException;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
 import com.xinghe.system.service.ISysUserService;
+import com.xinghe.web.constants.Constants;
 import com.xinghe.web.domain.School;
 import com.xinghe.web.domain.Student;
 import com.xinghe.web.service.SchoolService;
+import com.xinghe.web.service.StudentService;
+import org.aspectj.weaver.ast.Var;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.xinghe.web.mapper.TeacherMapper;
@@ -31,9 +36,12 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
 
     @Autowired
     private ISysUserService userService;
-    
+
     @Autowired
     private SchoolService schoolService;
+
+    @Autowired
+    private StudentService studentService;
 
     /**
      * 查询老师列表
@@ -43,6 +51,10 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
      */
     @Override
     public List<Teacher> selectList(Teacher teacher) {
+        Optional<SysRole> first = SecurityUtils.getLoginUser().getUser().getRoles().stream().filter(role -> Constants.STU_ROLE_ID.equals(role.getRoleId())).findFirst();
+        if (first.isPresent()) {
+            teacher.setSchoolId(studentService.lambdaQuery().eq(Student::getStuNo, SecurityUtils.getUsername()).one().getSchoolId());
+        }
         LambdaQueryWrapper<Teacher> queryWrapper = new LambdaQueryWrapper<>();
         if (StringUtils.isNotEmpty(teacher.getAccount())) {
             queryWrapper.like(Teacher::getAccount, teacher.getAccount());
@@ -63,7 +75,7 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
         if (!collect.isEmpty()) {
             throw new ServiceException("该账号已被注册");
         }
-        
+
         // 如果设置了学校ID，则获取学校名称
         if (teacher.getSchoolId() != null) {
             School school = schoolService.getById(teacher.getSchoolId());
@@ -73,7 +85,7 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
                 throw new ServiceException("所选学校不存在");
             }
         }
-        
+
         save(teacher);
         //添加用户
         /**

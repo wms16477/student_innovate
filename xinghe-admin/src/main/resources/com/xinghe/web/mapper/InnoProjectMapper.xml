@@ -28,6 +28,9 @@
 			<if test="userType == 3">
 				and project_type = #{projectType}
 			</if>
+			<if test="userType == 4">
+				and create_by in (select stu_no from student where school_id = #{schoolId})
+			</if>
 		</where>
 		order by id desc
 	</select>

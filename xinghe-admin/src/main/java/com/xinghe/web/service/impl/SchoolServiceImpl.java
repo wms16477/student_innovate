@@ -9,6 +9,7 @@ import com.xinghe.common.exception.ServiceException;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
 import com.xinghe.system.service.ISysUserService;
+import com.xinghe.web.constants.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.xinghe.web.mapper.SchoolMapper;
@@ -71,7 +72,7 @@ public class SchoolServiceImpl extends ServiceImpl<SchoolMapper, School> impleme
         user.setStatus("0");
         user.setPostIds(new Long[]{});
         //角色设置成学生
-        user.setRoleIds(new Long[]{105L});
+        user.setRoleIds(new Long[]{Constants.SCHOOL_ROLE_ID});
         userService.insertUser(user);
     }
 }

@@ -181,16 +181,6 @@
         <el-form-item label="项目简介" prop="projectDesc">
           <el-input v-model="form.projectDesc" type="textarea" placeholder="请输入项目简介"/>
         </el-form-item>
-        <el-form-item label="导师" prop="teacherId">
-          <el-select v-model="form.teacherId" placeholder="请选择导师">
-            <el-option
-              v-for="teacher in teacherOptions"
-              :key="teacher.id"
-              :label="teacher.teacherName"
-              :value="teacher.id"
-            ></el-option>
-          </el-select>
-        </el-form-item>
         <el-form-item label="项目成员" prop="memberList">
           <el-select
             v-model="selectedMemberCodes"
@@ -205,6 +195,16 @@
               :key="student.stuNo"
               :label="student.stuName"
               :value="student.stuNo"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="导师" prop="teacherId">
+          <el-select v-model="form.teacherId" placeholder="请选择导师">
+            <el-option
+              v-for="teacher in filteredTeacherOptions"
+              :key="teacher.id"
+              :label="teacher.teacherName"
+              :value="teacher.id"
             ></el-option>
           </el-select>
         </el-form-item>
@@ -844,9 +844,10 @@ import {
   submitEndProjectScore,
   calculateEndScore
 } from "@/api/innoProject";
-import {listTeacher} from "@/api/person/teacher";
+import {listTeacher, listTeacherBySchool} from "@/api/person/teacher";
 import {listProjectType} from "@/api/system/projectType";
 import {listStudentOptions} from "@/api/person/student";
+import store from '@/store' // 导入store
 
 export default {
   name: "InnoProject",
@@ -910,8 +911,12 @@ export default {
       statusOptions: [],
       // 导师选项
       teacherOptions: [],
+      // 筛选后的导师选项
+      filteredTeacherOptions: [],
       // 学生选项
       studentOptions: [],
+      // 当前选中学生的学校ID
+      currentSchoolId: null,
       // 详情数据
       detail: {},
       // 项目类型列表
@@ -1055,10 +1060,8 @@ export default {
   created() {
     this.getList();
     this.getProjectTypeList();
-    this.getDicts("project_status").then(response => {
-      this.statusOptions = response.data;
-    });
     this.getTeacherList();
+    this.getStatusOptions();
     this.getStudentList();
   },
   methods: {
@@ -1077,18 +1080,25 @@ export default {
         this.projectTypeList = response.data;
       });
     },
-    /** 查询导师列表 */
-    getTeacherList() {
-      listTeacher().then(response => {
-        this.teacherOptions = response.rows;
-      });
-    },
     /** 查询学生列表 */
     getStudentList() {
       listStudentOptions().then(response => {
         this.studentOptions = response.data;
       });
     },
+    /** 获取老师列表 */
+    getTeacherList() {
+      listTeacher().then(response => {
+        this.teacherOptions = response.rows;
+        this.filteredTeacherOptions = this.teacherOptions;
+      });
+    },
+    // /** 获取状态选项 */
+    // getStatusOptions() {
+    //   this.getDicts("project_status").then(response => {
+    //     this.statusOptions = response.data;
+    //   });
+    // },
     /** 取消按钮 */
     cancel() {
       this.open = false;
@@ -1124,6 +1134,40 @@ export default {
       this.reset();
       this.open = true;
       this.title = "添加大创项目";
+
+      // 判断当前用户是否为学生角色
+      const roles = store.getters && store.getters.roles;
+      // 检测角色列表中是否包含学生角色标识
+      const isStudent = roles.some(role => role === '100' || role === 'student');
+
+      if (isStudent) {
+        // 如果是学生，获取当前学生信息
+        const username = store.getters.name;
+        // 查找当前学生的信息以获取学校ID
+        listStudentOptions().then(response => {
+          const currentStudent = response.data.find(s => s.stuNo === username);
+          if (currentStudent && currentStudent.schoolId) {
+            this.currentSchoolId = currentStudent.schoolId;
+            // 根据学校ID获取教师列表
+            this.getTeachersBySchool(currentStudent.schoolId);
+
+            // 如果是学生用户，自动将自己添加为项目成员
+            this.selectedMemberCodes = [username];
+            this.form.memberList = [{
+              memberUserCode: username,
+              memberUserName: currentStudent.stuName,
+              reportFlag: 1 // 设置为报告人
+            }];
+          } else {
+            // 无法获取学生的学校ID，使用所有教师列表
+            this.filteredTeacherOptions = this.teacherOptions;
+          }
+        });
+      } else {
+        // 非学生角色，重置筛选的教师列表
+        this.filteredTeacherOptions = this.teacherOptions;
+        this.currentSchoolId = null;
+      }
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -1279,11 +1323,49 @@ export default {
     },
     /** 成员选择变更 */
     handleMemberChange(value) {
-      this.form.memberList = value.map(code => ({
-        memberUserCode: code,
-        memberUserName: this.studentOptions.find(s => s.stuNo === code)?.stuName || '',
-        reportFlag: 0
-      }));
+      if (!value || value.length === 0) {
+        this.form.memberList = [];
+        this.filteredTeacherOptions = [];
+        this.currentSchoolId = null;
+        return;
+      }
+
+      // 获取第一个学生的学校ID
+      const firstStudent = this.studentOptions.find(s => s.stuNo === value[0]);
+      if (firstStudent && firstStudent.schoolId) {
+        this.currentSchoolId = firstStudent.schoolId;
+        // 根据学校ID获取教师列表
+        this.getTeachersBySchool(firstStudent.schoolId);
+      } else {
+        this.filteredTeacherOptions = this.teacherOptions;
+      }
+
+      // 判断是否为学生角色
+      const roles = store.getters && store.getters.roles;
+      const isStudent = roles.some(role => role === '100' || role === 'student');
+      const username = store.getters.name;
+
+      // 设置成员列表，对于学生用户，确保自己始终是项目成员
+      this.form.memberList = value.map(code => {
+        const student = this.studentOptions.find(s => s.stuNo === code);
+        const reportFlag = isStudent && code === username ? 1 : 0; // 如果是当前学生，设置为报告人
+        return {
+          memberUserCode: code,
+          memberUserName: student?.stuName || '',
+          reportFlag: reportFlag
+        };
+      });
+    },
+
+    /** 根据学校ID获取教师列表 */
+    getTeachersBySchool(schoolId) {
+      listTeacherBySchool(schoolId).then(response => {
+        this.filteredTeacherOptions = response.rows;
+        // 如果当前选中的教师不在筛选后的列表中，则清空选择
+        if (this.form.teacherId && !this.filteredTeacherOptions.some(t => t.id === this.form.teacherId)) {
+          this.form.teacherId = undefined;
+        }
+      });
     },
     /** 中期检查按钮操作 */
     handleMidCheck(row) {
@@ -1431,6 +1513,19 @@ export default {
             this.getList();
           });
         }
+      });
+    },
+    /** 初始化数据 */
+    getInitialData() {
+      this.getProjectTypeList();
+      this.getTeacherList();
+      this.getStatusOptions();
+      this.getStudentList();
+    },
+    /** 获取状态选项 */
+    getStatusOptions() {
+      this.getDicts("project_status").then(response => {
+        this.statusOptions = response.data;
       });
     }
   }

@@ -57,6 +57,9 @@ public class InnoProjectController extends BaseController {
     @Autowired
     private ProfessionalService professionalService;
 
+    @Autowired
+    private SchoolService schoolService;
+
     /**
      * 查询项目类型列表
      */
@@ -79,6 +82,7 @@ public class InnoProjectController extends BaseController {
         //获取当前登录账号
         String username = SecurityUtils.getLoginUser().getUsername();
         Long teacherId = null;
+        Long schoolId = null;
         //获取当前角色
         List<SysUserRole> roleList = sysUserRoleMapper.selectUserRoleByUserId(userId);
         Integer userType = null;
@@ -101,10 +105,14 @@ public class InnoProjectController extends BaseController {
                         .one();
                 projectType = professional.getArea();
                 break;
+            } else if (Objects.equals(sysUserRole.getRoleId(), Constants.SCHOOL_ROLE_ID)) {
+                //学校
+                userType = 4;
+                schoolId = schoolService.lambdaQuery().eq(School::getSchoolCode, username).one().getId();
             }
         }
         //按钮 查看
-        List<InnoProject> list = innoProjectMapper.getTableList(dto, userId, username, userType, teacherId, projectType);
+        List<InnoProject> list = innoProjectMapper.getTableList(dto, userId, username, userType, teacherId, schoolId, projectType);
         for (InnoProject innoProject : list) {
             if (userType != null) {
                 if (userType == 1) {

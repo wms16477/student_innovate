@@ -9,6 +9,8 @@ public class Constants {
 
     public static final Long PRO_ROLE_ID = 102L;
 
+    public static final Long SCHOOL_ROLE_ID = 105L;
+
 
 
 }

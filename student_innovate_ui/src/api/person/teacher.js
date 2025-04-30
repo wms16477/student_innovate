@@ -9,6 +9,15 @@ export function listTeacher(query) {
   })
 }
 
+// 根据学校ID查询老师列表
+export function listTeacherBySchool(schoolId) {
+  return request({
+    url: '/person/teacher/list',
+    method: 'get',
+    params: { schoolId }
+  })
+}
+
 // 查询老师详细
 export function getTeacher(id) {
   return request({

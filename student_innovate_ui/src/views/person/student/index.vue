@@ -207,31 +207,29 @@ export default {
       // 表单校验
       rules: {
         stuNo: [
-          {required: true, message: "学号不能为空", trigger: "blur"},
-          {min: 8, max: 20, message: "学号长度必须在8到20个字符之间", trigger: "blur"}
+          {required: true, message: "学号不能为空", trigger: "blur"}
         ],
         stuName: [
-          {required: true, message: "学生姓名不能为空", trigger: "blur"},
-          {min: 2, max: 20, message: "姓名长度必须在2到20个字符之间", trigger: "blur"}
+          {required: true, message: "学生姓名不能为空", trigger: "blur"}
         ],
         speciality: [
           {required: true, message: "专业不能为空", trigger: "blur"}
         ],
         phoneNum: [
-          {required: true, message: "联系电话不能为空", trigger: "blur"},
-          {pattern: /^1[3-9]\d{9}$/, message: "请输入正确的手机号码", trigger: "blur"}
+          {required: true, message: "联系电话不能为空", trigger: "blur"}
         ],
         email: [
-          {required: true, message: "邮箱不能为空", trigger: "blur"},
-          {type: "email", message: "请输入正确的邮箱地址", trigger: "blur"}
+          {required: true, message: "邮箱不能为空", trigger: "blur"}
         ],
         inTime: [
           {required: true, message: "入学时间不能为空", trigger: "blur"}
         ],
         userId: [
-          {required: true, message: "身份证号不能为空", trigger: "blur"},
-          {pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/, message: "请输入正确的身份证号码", trigger: "blur"}
+          {required: true, message: "身份证号不能为空", trigger: "blur"}
         ],
+        schoolId: [
+          {required: true, message: "学校不能为空", trigger: "change"}
+        ]
       },
       // 学校选项
       schoolOptions: [],
