@@ -76,6 +76,13 @@
             v-if="scope.row.buttonList.indexOf('删除') !== -1"
           >删除
           </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-money"
+            @click="handleFundManage(scope.row)"
+          >经费管理
+          </el-button>
 <!--          <el-button-->
 <!--            size="mini"-->
 <!--            type="text"-->
@@ -1093,412 +1100,12 @@ export default {
         this.filteredTeacherOptions = this.teacherOptions;
       });
     },
-    // /** 获取状态选项 */
-    // getStatusOptions() {
-    //   this.getDicts("project_status").then(response => {
-    //     this.statusOptions = response.data;
-    //   });
-    // },
-    /** 取消按钮 */
-    cancel() {
-      this.open = false;
-      this.reset();
-    },
-    /** 表单重置 */
-    reset() {
-      this.form = {
-        id: undefined,
-        projectName: undefined,
-        projectType: undefined,
-        projectDesc: undefined,
-        teacherId: undefined,
-        submitFileUrl: undefined,
-        memberList: []
-      };
-      this.selectedMemberCodes = [];
-      this.resetForm("form");
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.pageNum = 1;
-      this.getList();
-    },
-    /** 重置按钮操作 */
-    resetQuery() {
-      this.dateRange = [];
-      this.resetForm("queryForm");
-      this.handleQuery();
-    },
-    /** 新增按钮操作 */
-    handleAdd() {
-      this.reset();
-      this.open = true;
-      this.title = "添加大创项目";
-
-      // 判断当前用户是否为学生角色
-      const roles = store.getters && store.getters.roles;
-      // 检测角色列表中是否包含学生角色标识
-      const isStudent = roles.some(role => role === '100' || role === 'student');
-
-      if (isStudent) {
-        // 如果是学生，获取当前学生信息
-        const username = store.getters.name;
-        // 查找当前学生的信息以获取学校ID
-        listStudentOptions().then(response => {
-          const currentStudent = response.data.find(s => s.stuNo === username);
-          if (currentStudent && currentStudent.schoolId) {
-            this.currentSchoolId = currentStudent.schoolId;
-            // 根据学校ID获取教师列表
-            this.getTeachersBySchool(currentStudent.schoolId);
-
-            // 如果是学生用户，自动将自己添加为项目成员
-            this.selectedMemberCodes = [username];
-            this.form.memberList = [{
-              memberUserCode: username,
-              memberUserName: currentStudent.stuName,
-              reportFlag: 1 // 设置为报告人
-            }];
-          } else {
-            // 无法获取学生的学校ID，使用所有教师列表
-            this.filteredTeacherOptions = this.teacherOptions;
-          }
-        });
-      } else {
-        // 非学生角色，重置筛选的教师列表
-        this.filteredTeacherOptions = this.teacherOptions;
-        this.currentSchoolId = null;
-      }
-    },
-    /** 修改按钮操作 */
-    handleUpdate(row) {
-      this.reset();
-      const id = row.id || this.ids;
-      getInnoProject(id).then(response => {
-        this.form = response.data;
-        // 处理成员列表回显
-        if (this.form.memberList && this.form.memberList.length > 0) {
-          this.selectedMemberCodes = this.form.memberList.map(member => member.memberUserCode);
-        }
-        this.open = true;
-        this.title = "修改大创项目";
+    /** 获取状态选项 */
+    getStatusOptions() {
+      this.getDicts("project_status").then(response => {
+        this.statusOptions = response.data;
       });
     },
-    /** 暂存按钮 */
-    handleSave() {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          if (this.form.id !== undefined && this.form.id !== null) {
-            updateInnoProject(this.form, false).then(response => {
-              this.$modal.msgSuccess("暂存成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addInnoProject(this.form, false).then(response => {
-              this.$modal.msgSuccess("暂存成功");
-              this.open = false;
-              this.getList();
-            });
-          }
-        }
-      });
-    },
-    /** 提交按钮 */
-    handleSubmitForm() {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          if (this.form.id !== undefined && this.form.id !== null) {
-            updateInnoProject(this.form, true).then(response => {
-              this.$modal.msgSuccess("暂存成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addInnoProject(this.form, true).then(response => {
-              this.$modal.msgSuccess("暂存成功");
-              this.open = false;
-              this.getList();
-            });
-          }
-        }
-      });
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      const ids = row.id || this.ids;
-      this.$modal.confirm('是否确认删除大创项目编号为"' + ids + '"的数据项？').then(function () {
-        return delInnoProject(ids);
-      }).then(() => {
-        this.getList();
-        this.$modal.msgSuccess("删除成功");
-      }).catch(() => {
-      });
-    },
-    /** 详情按钮操作 */
-    handleDetail(row) {
-      getInnoProject(row.id).then(response => {
-        this.detail = response.data;
-        console.log("详情数据:", this.detail); // 调试日志
-
-        // 计算中期总分
-        if (this.detail.midScoreXtjz !== null && this.detail.midScoreXtjz !== undefined) {
-          this.midTotalScoreInfo = (
-            this.detail.midScoreXtjz * 0.2 +
-            this.detail.midScoreYjjc * 0.2 +
-            this.detail.midScoreNrsj * 0.5 +
-            this.detail.midScoreYjff * 0.1
-          ).toFixed(2);
-        }
-
-        // 计算结项总分和最终分数
-        if (this.detail.endScoreXtjz !== null && this.detail.endScoreXtjz !== undefined) {
-          // 计算结项总分
-          this.endTotalScore = (
-            this.detail.endScoreXtjz * 0.2 +
-            this.detail.endScoreYjjc * 0.2 +
-            this.detail.endScoreNrsj * 0.5 +
-            this.detail.endScoreYjff * 0.1
-          ).toFixed(2);
-
-          // 计算最终评分
-          this.finalScore = (parseFloat(this.midTotalScoreInfo) * 0.3 + parseFloat(this.endTotalScore) * 0.7).toFixed(2);
-        }
-
-        // 设置默认显示基础信息标签
-        this.activeName = 'basic';
-        this.detailOpen = true;
-      });
-    },
-    /** 审批按钮操作 */
-    handleApprove(row, isApprove) {
-      this.approveForm = {
-        id: row.id,
-        approveDesc: undefined,
-        isApprove: isApprove
-      };
-      this.approveTitle = isApprove ? "审批通过" : "审批拒绝";
-      this.approveOpen = true;
-    },
-    /** 提交审批 */
-    submitApprove() {
-      this.$refs["approveForm"].validate(valid => {
-        if (valid) {
-          const data = {
-            id: this.approveForm.id,
-            approveDesc: this.approveForm.approveDesc
-          };
-          approveInnoProject(this.approveForm.isApprove, data).then(response => {
-            this.$modal.msgSuccess("审批成功");
-            this.approveOpen = false;
-            this.getList();
-          });
-        }
-      });
-    },
-    /** 学校审批按钮操作 */
-    handleSchoolApprove(row, isApprove) {
-      this.schoolApproveForm = {
-        id: row.id,
-        schoolApproveDesc: undefined,
-        isApprove: isApprove
-      };
-      this.schoolApproveTitle = isApprove ? "学校审批通过" : "学校审批拒绝";
-      this.schoolApproveOpen = true;
-    },
-    /** 提交学校审批 */
-    submitSchoolApprove() {
-      this.$refs["schoolApproveForm"].validate(valid => {
-        if (valid) {
-          const data = {
-            id: this.schoolApproveForm.id,
-            schoolApproveDesc: this.schoolApproveForm.schoolApproveDesc
-          };
-          schoolApproveInnoProject(this.schoolApproveForm.isApprove, data).then(response => {
-            this.$modal.msgSuccess("学校审批成功");
-            this.schoolApproveOpen = false;
-            this.getList();
-          });
-        }
-      });
-    },
-    /** 成员选择变更 */
-    handleMemberChange(value) {
-      if (!value || value.length === 0) {
-        this.form.memberList = [];
-        this.filteredTeacherOptions = [];
-        this.currentSchoolId = null;
-        return;
-      }
-
-      // 获取第一个学生的学校ID
-      const firstStudent = this.studentOptions.find(s => s.stuNo === value[0]);
-      if (firstStudent && firstStudent.schoolId) {
-        this.currentSchoolId = firstStudent.schoolId;
-        // 根据学校ID获取教师列表
-        this.getTeachersBySchool(firstStudent.schoolId);
-      } else {
-        this.filteredTeacherOptions = this.teacherOptions;
-      }
-
-      // 判断是否为学生角色
-      const roles = store.getters && store.getters.roles;
-      const isStudent = roles.some(role => role === '100' || role === 'student');
-      const username = store.getters.name;
-
-      // 设置成员列表，对于学生用户，确保自己始终是项目成员
-      this.form.memberList = value.map(code => {
-        const student = this.studentOptions.find(s => s.stuNo === code);
-        const reportFlag = isStudent && code === username ? 1 : 0; // 如果是当前学生，设置为报告人
-        return {
-          memberUserCode: code,
-          memberUserName: student?.stuName || '',
-          reportFlag: reportFlag
-        };
-      });
-    },
-
-    /** 根据学校ID获取教师列表 */
-    getTeachersBySchool(schoolId) {
-      listTeacherBySchool(schoolId).then(response => {
-        this.filteredTeacherOptions = response.rows;
-        // 如果当前选中的教师不在筛选后的列表中，则清空选择
-        if (this.form.teacherId && !this.filteredTeacherOptions.some(t => t.id === this.form.teacherId)) {
-          this.form.teacherId = undefined;
-        }
-      });
-    },
-    /** 中期检查按钮操作 */
-    handleMidCheck(row) {
-      this.midCheckForm = {
-        id: row.id,
-        midCheckDesc: row.midCheckDesc,
-        midCheckFileUrl: row.midCheckFileUrl
-      };
-      this.midCheckOpen = true;
-    },
-    /** 提交中期检查 */
-    submitMidCheck() {
-      this.$refs["midCheckForm"].validate(valid => {
-        if (valid) {
-          submitMidCheck(this.midCheckForm).then(response => {
-            this.$modal.msgSuccess("中期检查提交成功");
-            this.midCheckOpen = false;
-            this.getList();
-          });
-        }
-      });
-    },
-    /** 中期评分按钮操作 */
-    handleMidCheckScore(row) {
-      getInnoProject(row.id).then(response => {
-        const data = response.data;
-        this.midScoreForm = {
-          id: data.id,
-          midScoreXtjz: data.midScoreXtjz || 0,
-          midScoreYjjc: data.midScoreYjjc || 0,
-          midScoreNrsj: data.midScoreNrsj || 0,
-          midScoreYjff: data.midScoreYjff || 0
-        };
-        this.calculateScore();
-        this.midScoreOpen = true;
-      });
-    },
-    /** 计算总分 */
-    calculateScore() {
-      const params = {
-        xtjz: this.midScoreForm.midScoreXtjz,
-        yjjc: this.midScoreForm.midScoreYjjc,
-        nrsj: this.midScoreForm.midScoreNrsj,
-        yjff: this.midScoreForm.midScoreYjff
-      };
-      calculateMidScore(params).then(response => {
-        this.totalScore = response.data;
-      });
-    },
-    /** 提交中期评分 */
-    submitMidScore() {
-      this.$refs["midScoreForm"].validate(valid => {
-        if (valid) {
-          submitMidCheckScore(this.midScoreForm).then(response => {
-            this.$modal.msgSuccess("中期评分提交成功");
-            this.midScoreOpen = false;
-            this.getList();
-          });
-        }
-      });
-    },
-    /** 结项按钮操作 */
-    handleEndProject(row) {
-      this.endProjectForm = {
-        id: row.id,
-        endDesc: row.endDesc,
-        endFileUrl: row.endFileUrl
-      };
-      this.endProjectOpen = true;
-    },
-    /** 提交结项 */
-    submitEndProject() {
-      this.$refs["endProjectForm"].validate(valid => {
-        if (valid) {
-          submitEndProject(this.endProjectForm).then(response => {
-            this.$modal.msgSuccess("结项提交成功");
-            this.endProjectOpen = false;
-            this.getList();
-          });
-        }
-      });
-    },
-    /** 结项评分按钮操作 */
-    handleEndProjectScore(row) {
-      getInnoProject(row.id).then(response => {
-        const data = response.data;
-
-        // 保存中期评分信息
-        this.midScoreInfo = {
-          midScoreXtjz: data.midScoreXtjz || 0,
-          midScoreYjjc: data.midScoreYjjc || 0,
-          midScoreNrsj: data.midScoreNrsj || 0,
-          midScoreYjff: data.midScoreYjff || 0
-        };
-
-        // 计算中期总分
-        this.midTotalScoreInfo = (
-          this.midScoreInfo.midScoreXtjz * 0.2 +
-          this.midScoreInfo.midScoreYjjc * 0.2 +
-          this.midScoreInfo.midScoreNrsj * 0.5 +
-          this.midScoreInfo.midScoreYjff * 0.1
-        ).toFixed(2);
-
-        // 保存结项评分表单
-        this.endScoreForm = {
-          id: data.id,
-          endScoreXtjz: data.endScoreXtjz || 0,
-          endScoreYjjc: data.endScoreYjjc || 0,
-          endScoreNrsj: data.endScoreNrsj || 0,
-          endScoreYjff: data.endScoreYjff || 0
-        };
-
-        // 计算结项总分和最终评分
-        this.calculateEndScoreTotal();
-        this.endScoreOpen = true;
-      });
-    },
-
-    /** 计算结项总分 */
-    calculateEndScoreTotal() {
-      const params = {
-        xtjz: this.endScoreForm.endScoreXtjz,
-        yjjc: this.endScoreForm.endScoreYjjc,
-        nrsj: this.endScoreForm.endScoreNrsj,
-        yjff: this.endScoreForm.endScoreYjff
-      };
-      calculateEndScore(params).then(response => {
-        this.endTotalScore = response.data;
-        // 计算最终评分
-        this.calculateFinalScore();
-      });
-    },
-
     /** 计算最终评分 */
     calculateFinalScore() {
       this.finalScore = (parseFloat(this.midTotalScoreInfo) * 0.3 + parseFloat(this.endTotalScore) * 0.7).toFixed(2);
@@ -1515,18 +1122,22 @@ export default {
         }
       });
     },
+    /** 经费管理按钮操作 */
+    handleFundManage(row) {
+      this.$router.push({ 
+        path: '/innoProject/fundManage', 
+        query: { 
+          projectId: row.id,
+          projectName: row.projectName
+        }
+      });
+    },
     /** 初始化数据 */
     getInitialData() {
       this.getProjectTypeList();
       this.getTeacherList();
       this.getStatusOptions();
       this.getStudentList();
-    },
-    /** 获取状态选项 */
-    getStatusOptions() {
-      this.getDicts("project_status").then(response => {
-        this.statusOptions = response.data;
-      });
     }
   }
 };

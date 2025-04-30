@@ -17,4 +17,4 @@ controller层是接收前端请求；service层是处理业务逻辑；mapper层
 # 前端开发规范
 1. 接入后端的api在src/api目录下。组件在view目录下
 # 表设计规范
-对于建表而言，id(bigint),create_by(varchar(30)),create_by_name(varchar(30)),create_time,del_flag(tinyint不为空，默认0)字段必须有，建完表后实体类生成需要有相应的注释。数据库表只需要编码字段，名称字段不需要有（比如有statusCode,没有statusName）。表中的字段除了id,del_flag,其他都不要设置默认值，也不要设置成不为空
+对于建表而言，id(bigint),create_by(varchar(30)),create_by_name(varchar(30)),create_time,建完表后实体类生成需要有相应的注释。数据库表只需要编码字段，名称字段不需要有（比如有statusCode,没有statusName）。表中的字段除了id,其他都不要设置默认值，也不要设置成不为空

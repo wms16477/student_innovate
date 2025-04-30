@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xinghe.web.mapper.InnoProjectFundPaymentMapper">
+    
+    <select id="getTableList" resultType="com.xinghe.web.domain.InnoProjectFundPayment">
+        SELECT p.*, pr.project_name 
+        FROM inno_project_fund_payment p
+        LEFT JOIN inno_project pr ON p.project_id = pr.id
+        <where>
+            <if test="dto.projectId != null">
+                AND p.project_id = #{dto.projectId}
+            </if>
+            <if test="dto.expenseId != null">
+                AND p.expense_id = #{dto.expenseId}
+            </if>
+            <if test="dto.paymentMethod != null and dto.paymentMethod != ''">
+                AND p.payment_method = #{dto.paymentMethod}
+            </if>
+            <if test="dto.projectName != null and dto.projectName != ''">
+                AND pr.project_name like concat('%', #{dto.projectName}, '%')
+            </if>
+        </where>
+        ORDER BY p.create_time DESC
+    </select>
+    
+</mapper> 
