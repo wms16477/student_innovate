@@ -163,7 +163,8 @@
 </template>
 
 <script>
-import { listFundBudget, getFundBudget, addFundBudget, updateFundBudget, delFundBudget, submitFundBudget, approveFundBudget, schoolApproveFundBudget } from "@/api/fund";
+import { listFundBudget, getFundBudget, addFundBudget, updateFundBudget, delFundBudget } from "@/api/fundBudget";
+import { submitFundBudget, approveFundBudget, schoolApproveFundBudget } from "@/api/fund";
 import { listInnoProject } from "@/api/innoProject";
 import { getUserInfo } from "@/utils/auth";
 
@@ -285,10 +286,16 @@ export default {
     /** 查询预算列表 */
     getList() {
       this.loading = true;
+      console.log('开始获取预算列表，参数：', this.queryParams);
       listFundBudget(this.queryParams).then(response => {
+        console.log('成功获取预算列表：', response);
         this.budgetList = response.rows;
         this.total = response.total;
         this.loading = false;
+      }).catch(error => {
+        console.error('获取预算列表失败：', error);
+        this.loading = false;
+        this.$message.error('获取预算列表失败，请检查网络或联系管理员');
       });
     },
     /** 获取项目选项 */

@@ -208,7 +208,8 @@
 </template>
 
 <script>
-import { listFundExpense, getFundExpense, addFundExpense, updateFundExpense, delFundExpense, submitFundExpense, approveFundExpense, schoolApproveFundExpense, markAsPaidFundExpense } from "@/api/fundExpense";
+import { listFundExpense, getFundExpense, addFundExpense, updateFundExpense, delFundExpense, submitFundExpense, approveFundExpense, markAsPaidFundExpense } from "@/api/fundExpense";
+import { schoolApproveFundExpense } from "@/api/fund";
 import { listInnoProject } from "@/api/innoProject";
 import { listFundBudget } from "@/api/fundBudget";
 import { getToken, getUserInfo } from "@/utils/auth";
