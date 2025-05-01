@@ -13,6 +13,10 @@ CREATE TABLE `inno_project_fund_budget` (
   `create_by` varchar(30) NOT NULL COMMENT '创建人',
   `create_by_name` varchar(30) NOT NULL COMMENT '创建人姓名',
   `create_time` datetime NOT NULL COMMENT '创建时间',
+  `school_approve_by` varchar(30) DEFAULT NULL COMMENT '学校审批人',
+  `school_approve_by_name` varchar(30) DEFAULT NULL COMMENT '学校审批人姓名',
+  `school_approve_time` datetime DEFAULT NULL COMMENT '学校审批时间',
+  `school_approve_desc` varchar(500) DEFAULT NULL COMMENT '学校审批说明',
   PRIMARY KEY (`id`),
   KEY `idx_project_id` (`project_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目经费预算表';
@@ -35,6 +39,10 @@ CREATE TABLE `inno_project_fund_expense` (
   `create_by` varchar(30) NOT NULL COMMENT '创建人',
   `create_by_name` varchar(30) NOT NULL COMMENT '创建人姓名',
   `create_time` datetime NOT NULL COMMENT '创建时间',
+  `school_approve_by` varchar(30) DEFAULT NULL COMMENT '学校审批人',
+  `school_approve_by_name` varchar(30) DEFAULT NULL COMMENT '学校审批人姓名',
+  `school_approve_time` datetime DEFAULT NULL COMMENT '学校审批时间',
+  `school_approve_desc` varchar(500) DEFAULT NULL COMMENT '学校审批说明',
   PRIMARY KEY (`id`),
   KEY `idx_project_id` (`project_id`),
   KEY `idx_budget_id` (`budget_id`)

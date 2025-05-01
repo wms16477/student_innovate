@@ -66,8 +66,10 @@
           <el-button v-if="scope.row.status === 'DRAFT' || scope.row.status === 'REJECTED'" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
           <el-button v-if="scope.row.status === 'DRAFT' || scope.row.status === 'REJECTED'" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
           <el-button v-if="scope.row.status === 'DRAFT' || scope.row.status === 'REJECTED'" size="mini" type="text" icon="el-icon-upload2" @click="handleSubmit(scope.row)">提交</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED'" size="mini" type="text" icon="el-icon-check" @click="handleApprove(scope.row, true)">批准</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED'" size="mini" type="text" icon="el-icon-close" @click="handleApprove(scope.row, false)">拒绝</el-button>
+          <el-button v-if="scope.row.status === 'SUBMITTED' && isAdmin" size="mini" type="text" icon="el-icon-check" @click="handleApprove(scope.row, true)">批准</el-button>
+          <el-button v-if="scope.row.status === 'SUBMITTED' && isAdmin" size="mini" type="text" icon="el-icon-close" @click="handleApprove(scope.row, false)">拒绝</el-button>
+          <el-button v-if="scope.row.status === 'SUBMITTED' && isSchool" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">学校批准</el-button>
+          <el-button v-if="scope.row.status === 'SUBMITTED' && isSchool" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">学校拒绝</el-button>
           <el-button v-if="scope.row.status === 'APPROVED'" size="mini" type="text" icon="el-icon-money" @click="handleMarkAsPaid(scope.row)">标记已支付</el-button>
         </template>
       </el-table-column>
@@ -189,14 +191,27 @@
         <el-button type="primary" @click="submitApprove">确 定</el-button>
       </div>
     </el-dialog>
+    
+    <!-- 学校审批对话框 -->
+    <el-dialog :title="isApprove ? '学校批准' : '学校拒绝'" :visible.sync="schoolApproveOpen" width="500px" append-to-body>
+      <el-form ref="schoolApproveForm" :model="schoolApproveForm" :rules="approveRules" label-width="100px">
+        <el-form-item label="审批说明" prop="schoolApproveDesc">
+          <el-input v-model="schoolApproveForm.schoolApproveDesc" type="textarea" placeholder="请输入审批说明" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="schoolApproveOpen = false">取 消</el-button>
+        <el-button type="primary" @click="submitSchoolApprove">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listFundExpense, getFundExpense, addFundExpense, updateFundExpense, delFundExpense, submitFundExpense, approveFundExpense, markAsPaidFundExpense } from "@/api/fundExpense";
+import { listFundExpense, getFundExpense, addFundExpense, updateFundExpense, delFundExpense, submitFundExpense, approveFundExpense, schoolApproveFundExpense, markAsPaidFundExpense } from "@/api/fundExpense";
 import { listInnoProject } from "@/api/innoProject";
 import { listFundBudget } from "@/api/fundBudget";
-import { getToken } from "@/utils/auth";
+import { getToken, getUserInfo } from "@/utils/auth";
 
 export default {
   name: "ExpenseTab",
@@ -238,14 +253,25 @@ export default {
       viewOpen: false,
       // 是否显示审批弹出层
       approveOpen: false,
+      // 是否显示学校审批弹出层
+      schoolApproveOpen: false,
       // 是否为批准操作
       isApprove: true,
+      // 是否为管理员
+      isAdmin: false,
+      // 是否为学校
+      isSchool: false,
       // 查看表单
       viewForm: {},
       // 审批表单
       approveForm: {
         id: null,
         approveDesc: ""
+      },
+      // 学校审批表单
+      schoolApproveForm: {
+        id: null,
+        schoolApproveDesc: ""
       },
       // 项目选项
       projectOptions: [],
@@ -323,8 +349,17 @@ export default {
   created() {
     this.getList();
     this.getProjectOptions();
+    this.checkUserRole();
   },
   methods: {
+    /** 获取用户角色信息 */
+    checkUserRole() {
+      const userInfo = JSON.parse(getUserInfo());
+      if (userInfo && userInfo.roles) {
+        this.isAdmin = userInfo.roles.some(role => role.roleName === '管理员' || role.roleName === '专家');
+        this.isSchool = userInfo.roles.some(role => role.roleName === '学校');
+      }
+    },
     /** 查询支出列表 */
     getList() {
       this.loading = true;
@@ -480,6 +515,15 @@ export default {
       this.isApprove = isApprove;
       this.approveOpen = true;
     },
+    /** 学校审批按钮操作 */
+    handleSchoolApprove(row, isApprove) {
+      this.schoolApproveForm = {
+        id: row.id,
+        schoolApproveDesc: ""
+      };
+      this.isApprove = isApprove;
+      this.schoolApproveOpen = true;
+    },
     /** 标记为已支付按钮操作 */
     handleMarkAsPaid(row) {
       this.$modal.confirm('是否确认将该支出标记为已支付？').then(function() {
@@ -496,6 +540,18 @@ export default {
           approveFundExpense(this.isApprove, this.approveForm).then(response => {
             this.$modal.msgSuccess(this.isApprove ? "批准成功" : "拒绝成功");
             this.approveOpen = false;
+            this.getList();
+          });
+        }
+      });
+    },
+    /** 提交学校审批 */
+    submitSchoolApprove() {
+      this.$refs["schoolApproveForm"].validate(valid => {
+        if (valid) {
+          schoolApproveFundExpense(this.isApprove, this.schoolApproveForm).then(response => {
+            this.$modal.msgSuccess(this.isApprove ? "学校批准成功" : "学校拒绝成功");
+            this.schoolApproveOpen = false;
             this.getList();
           });
         }

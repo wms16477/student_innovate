@@ -20,6 +20,16 @@ public interface InnoProjectFundExpenseService extends IService<InnoProjectFundE
     int approveExpense(boolean isApprove, InnoProjectFundExpense expense);
     
     /**
+     * 学校审批经费支出
+     *
+     * @param isApprove 是否批准
+     * @param expense 经费支出
+     * @param schoolId 学校ID
+     * @return 结果
+     */
+    int schoolApproveExpense(boolean isApprove, InnoProjectFundExpense expense, Long schoolId);
+    
+    /**
      * 提交经费支出
      *
      * @param id 经费支出ID

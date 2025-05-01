@@ -79,6 +79,26 @@ public class InnoProjectFundExpense {
      * 审批说明
      */
     private String approveDesc;
+    
+    /**
+     * 学校审批人
+     */
+    private String schoolApproveBy;
+
+    /**
+     * 学校审批人姓名
+     */
+    private String schoolApproveByName;
+
+    /**
+     * 学校审批时间
+     */
+    private Date schoolApproveTime;
+
+    /**
+     * 学校审批说明
+     */
+    private String schoolApproveDesc;
 
     /**
      * 创建人

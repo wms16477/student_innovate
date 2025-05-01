@@ -7,6 +7,7 @@ import com.xinghe.web.domain.InnoProjectFundExpense;
 import com.xinghe.web.enums.FundStatusEnum;
 import com.xinghe.web.mapper.InnoProjectFundExpenseMapper;
 import com.xinghe.web.service.InnoProjectFundExpenseService;
+import com.xinghe.web.util.ProjectUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -43,6 +44,42 @@ public class InnoProjectFundExpenseServiceImpl extends ServiceImpl<InnoProjectFu
         db.setApproveByName(SecurityUtils.getLoginUser().getUser().getNickName());
         db.setApproveTime(new Date());
         db.setApproveDesc(expense.getApproveDesc());
+        db.setStatus(isApprove ? FundStatusEnum.APPROVED.name() : FundStatusEnum.REJECTED.name());
+        
+        return baseMapper.updateById(db);
+    }
+    
+    /**
+     * 学校审批经费支出
+     *
+     * @param isApprove 是否批准
+     * @param expense 经费支出
+     * @param schoolId 学校ID
+     * @return 结果
+     */
+    @Override
+    public int schoolApproveExpense(boolean isApprove, InnoProjectFundExpense expense, Long schoolId) {
+        // 检查状态
+        InnoProjectFundExpense db = getById(expense.getId());
+        if (db == null) {
+            throw new ServiceException("经费支出不存在");
+        }
+        
+        // 检查是否为相应学校的项目
+        Long projectSchoolId = ProjectUtil.getSchoolIdByProjectId(db.getProjectId());
+        if (!schoolId.equals(projectSchoolId)) {
+            throw new ServiceException("只能审批本校项目的支出");
+        }
+        
+        if (!FundStatusEnum.SUBMITTED.name().equals(db.getStatus())) {
+            throw new ServiceException("只有已提交的经费支出才能审批");
+        }
+        
+        // 设置学校审批信息
+        db.setSchoolApproveBy(SecurityUtils.getUsername());
+        db.setSchoolApproveByName(SecurityUtils.getLoginUser().getUser().getNickName());
+        db.setSchoolApproveTime(new Date());
+        db.setSchoolApproveDesc(expense.getSchoolApproveDesc());
         db.setStatus(isApprove ? FundStatusEnum.APPROVED.name() : FundStatusEnum.REJECTED.name());
         
         return baseMapper.updateById(db);

@@ -20,6 +20,16 @@ public interface InnoProjectFundBudgetService extends IService<InnoProjectFundBu
     int approveBudget(boolean isApprove, InnoProjectFundBudget budget);
     
     /**
+     * 学校审批经费预算
+     *
+     * @param isApprove 是否批准
+     * @param budget 经费预算
+     * @param schoolId 学校ID
+     * @return 结果
+     */
+    int schoolApproveBudget(boolean isApprove, InnoProjectFundBudget budget, Long schoolId);
+    
+    /**
      * 提交经费预算
      *
      * @param id 经费预算ID

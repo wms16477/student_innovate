@@ -7,6 +7,7 @@ import com.xinghe.web.domain.InnoProjectFundBudget;
 import com.xinghe.web.enums.FundStatusEnum;
 import com.xinghe.web.mapper.InnoProjectFundBudgetMapper;
 import com.xinghe.web.service.InnoProjectFundBudgetService;
+import com.xinghe.web.util.ProjectUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -43,6 +44,42 @@ public class InnoProjectFundBudgetServiceImpl extends ServiceImpl<InnoProjectFun
         db.setApproveByName(SecurityUtils.getLoginUser().getUser().getNickName());
         db.setApproveTime(new Date());
         db.setApproveDesc(budget.getApproveDesc());
+        db.setStatus(isApprove ? FundStatusEnum.APPROVED.name() : FundStatusEnum.REJECTED.name());
+        
+        return baseMapper.updateById(db);
+    }
+    
+    /**
+     * 学校审批经费预算
+     *
+     * @param isApprove 是否批准
+     * @param budget 经费预算
+     * @param schoolId 学校ID
+     * @return 结果
+     */
+    @Override
+    public int schoolApproveBudget(boolean isApprove, InnoProjectFundBudget budget, Long schoolId) {
+        // 检查状态
+        InnoProjectFundBudget db = getById(budget.getId());
+        if (db == null) {
+            throw new ServiceException("经费预算不存在");
+        }
+        
+        // 检查是否为相应学校的项目
+        Long projectSchoolId = ProjectUtil.getSchoolIdByProjectId(db.getProjectId());
+        if (!schoolId.equals(projectSchoolId)) {
+            throw new ServiceException("只能审批本校项目的预算");
+        }
+        
+        if (!FundStatusEnum.SUBMITTED.name().equals(db.getStatus())) {
+            throw new ServiceException("只有已提交的经费预算才能审批");
+        }
+        
+        // 设置学校审批信息
+        db.setSchoolApproveBy(SecurityUtils.getUsername());
+        db.setSchoolApproveByName(SecurityUtils.getLoginUser().getUser().getNickName());
+        db.setSchoolApproveTime(new Date());
+        db.setSchoolApproveDesc(budget.getSchoolApproveDesc());
         db.setStatus(isApprove ? FundStatusEnum.APPROVED.name() : FundStatusEnum.REJECTED.name());
         
         return baseMapper.updateById(db);

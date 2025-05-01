@@ -5,12 +5,15 @@ import com.xinghe.common.core.controller.BaseController;
 import com.xinghe.common.core.domain.AjaxResult;
 import com.xinghe.common.core.page.TableDataInfo;
 import com.xinghe.common.enums.BusinessType;
+import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
 import com.xinghe.web.domain.InnoProjectFundExpense;
+import com.xinghe.web.domain.School;
 import com.xinghe.web.dto.InnoProjectFundExpenseDTO;
 import com.xinghe.web.enums.FundStatusEnum;
 import com.xinghe.web.mapper.InnoProjectFundExpenseMapper;
 import com.xinghe.web.service.InnoProjectFundExpenseService;
+import com.xinghe.web.service.SchoolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +34,9 @@ public class InnoProjectFundExpenseController extends BaseController {
     
     @Autowired
     private InnoProjectFundExpenseMapper expenseMapper;
+    
+    @Autowired
+    private SchoolService schoolService;
     
     /**
      * 查询经费支出列表
@@ -130,6 +136,31 @@ public class InnoProjectFundExpenseController extends BaseController {
         }
         
         return toAjax(expenseService.approveExpense(isApprove, expense));
+    }
+    
+    /**
+     * 学校审批经费支出
+     */
+    @Log(title = "经费支出管理-学校审批", businessType = BusinessType.UPDATE)
+    @PostMapping("/school-approve/{isApprove}")
+    public AjaxResult schoolApprove(@PathVariable("isApprove") boolean isApprove, @RequestBody InnoProjectFundExpense expense) {
+        if (expense.getId() == null) {
+            return error("支出ID不能为空");
+        }
+        if (StringUtils.isEmpty(expense.getSchoolApproveDesc())) {
+            return error("审批说明不能为空");
+        }
+        
+        // 获取当前登录账号
+        String username = SecurityUtils.getUsername();
+        
+        // 获取学校ID
+        School school = schoolService.lambdaQuery().eq(School::getSchoolCode, username).one();
+        if (school == null) {
+            return error("当前用户不是学校管理员");
+        }
+        
+        return toAjax(expenseService.schoolApproveExpense(isApprove, expense, school.getId()));
     }
     
     /**
