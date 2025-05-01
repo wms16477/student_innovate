@@ -5,9 +5,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <mapper namespace="com.xinghe.web.mapper.InnoProjectFundPaymentMapper">
     
     <select id="getTableList" resultType="com.xinghe.web.domain.InnoProjectFundPayment">
-        SELECT p.*, pr.project_name 
+        SELECT p.*, 
+               pr.project_name, 
+               e.expense_type as "expense.expenseType",
+               e.status as "expense.status",
+               e.expense_amount as "expense.expenseAmount",
+               e.expense_desc as "expense.expenseDesc" 
         FROM inno_project_fund_payment p
         LEFT JOIN inno_project pr ON p.project_id = pr.id
+        LEFT JOIN inno_project_fund_expense e ON p.expense_id = e.id
+        LEFT JOIN student s ON pr.create_by = s.stu_no
         <where>
             <if test="dto.projectId != null">
                 AND p.project_id = #{dto.projectId}
@@ -20,6 +27,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
             <if test="dto.projectName != null and dto.projectName != ''">
                 AND pr.project_name like concat('%', #{dto.projectName}, '%')
+            </if>
+            <if test="dto.schoolId != null">
+                AND s.school_id = #{dto.schoolId}
             </if>
         </where>
         ORDER BY p.create_time DESC

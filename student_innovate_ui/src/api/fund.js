@@ -1,3 +1,5 @@
+import request from '@/utils/request'
+
 // 审批经费预算
 export function approveFundBudget(isApprove, data) {
   return request({
@@ -56,4 +58,4 @@ export function markAsPaidFundExpense(id) {
     url: '/web/fundExpense/markAsPaid/' + id,
     method: 'put'
   })
-} 
+}

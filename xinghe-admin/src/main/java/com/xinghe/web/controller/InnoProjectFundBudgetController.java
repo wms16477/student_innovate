@@ -7,6 +7,9 @@ import com.xinghe.common.core.page.TableDataInfo;
 import com.xinghe.common.enums.BusinessType;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
+import com.xinghe.system.domain.SysUserRole;
+import com.xinghe.system.mapper.SysUserRoleMapper;
+import com.xinghe.web.constants.Constants;
 import com.xinghe.web.domain.InnoProjectFundBudget;
 import com.xinghe.web.domain.School;
 import com.xinghe.web.dto.InnoProjectFundBudgetDTO;
@@ -17,8 +20,10 @@ import com.xinghe.web.service.SchoolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 经费预算管理Controller
@@ -38,13 +43,73 @@ public class InnoProjectFundBudgetController extends BaseController {
     @Autowired
     private SchoolService schoolService;
     
+    @Autowired
+    private SysUserRoleMapper sysUserRoleMapper;
+    
     /**
      * 查询经费预算列表
      */
     @GetMapping("/list")
     public TableDataInfo list(InnoProjectFundBudgetDTO dto) {
         startPage();
+        
+        // 获取当前登录用户
+        Long userId = getUserId();
+        String username = SecurityUtils.getUsername();
+        Long schoolId = null;
+        boolean isAdmin = false;
+        boolean isSchool = false;
+        
+        // 获取当前角色
+        List<SysUserRole> roleList = sysUserRoleMapper.selectUserRoleByUserId(userId);
+        for (SysUserRole sysUserRole : roleList) {
+            if (Objects.equals(sysUserRole.getRoleId(), Constants.ADMIN_ROLE_ID)) {
+                // 管理员
+                isAdmin = true;
+            } else if (Objects.equals(sysUserRole.getRoleId(), Constants.SCHOOL_ROLE_ID)) {
+                // 学校
+                isSchool = true;
+                School school = schoolService.lambdaQuery().eq(School::getSchoolCode, username).one();
+                if (school != null) {
+                    schoolId = school.getId();
+                    // 设置学校ID，用于过滤数据
+                    dto.setSchoolId(schoolId);
+                }
+            }
+        }
+        
         List<InnoProjectFundBudget> list = budgetMapper.getTableList(dto);
+        
+        // 设置可操作按钮
+        for (InnoProjectFundBudget budget : list) {
+            if (budget.getButtonList() == null) {
+                budget.setButtonList(new ArrayList<>());
+            }
+            
+            // 所有用户都可以查看
+            budget.getButtonList().add("查看");
+            
+            // 根据状态和角色设置按钮
+            if (FundStatusEnum.DRAFT.name().equals(budget.getStatus()) || 
+                FundStatusEnum.REJECTED.name().equals(budget.getStatus())) {
+                budget.getButtonList().add("修改");
+                budget.getButtonList().add("删除");
+                budget.getButtonList().add("提交");
+            }
+            
+            if (FundStatusEnum.SUBMITTED.name().equals(budget.getStatus())) {
+                if (isAdmin) {
+                    budget.getButtonList().add("批准");
+                    budget.getButtonList().add("拒绝");
+                }
+                
+                if (isSchool) {
+                    budget.getButtonList().add("学校批准");
+                    budget.getButtonList().add("学校拒绝");
+                }
+            }
+        }
+        
         return getDataTable(list);
     }
     

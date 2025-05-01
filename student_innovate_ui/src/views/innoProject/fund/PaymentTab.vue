@@ -41,7 +41,15 @@
       <el-table-column label="支付金额" align="center" prop="paymentAmount" />
       <el-table-column label="支付方式" align="center" prop="paymentMethod">
         <template slot-scope="scope">
-          <dict-tag :options="paymentMethodOptions" :value="scope.row.paymentMethod"/>
+          {{ getDictLabel(paymentMethodOptions, scope.row.paymentMethod) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="支出类型" align="center">
+        <template slot-scope="scope">
+          <span v-if="scope.row.expense && scope.row.expense.expenseType">
+            {{ getExpenseTypeText(scope.row.expense.expenseType) }}
+          </span>
+          <span v-else>-</span>
         </template>
       </el-table-column>
       <el-table-column label="支付日期" align="center" prop="paymentDate" width="100">
@@ -58,7 +66,7 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('删除')" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -79,7 +87,7 @@
             <el-option
               v-for="item in expenseOptions"
               :key="item.id"
-              :label="item.projectName + ' - ' + item.expenseType | expenseTypeFilter + ' - ' + item.expenseAmount"
+              :label="`${item.projectName} - ${item.expenseType | expenseTypeFilter} - ${item.expenseAmount}元`"
               :value="item.id"
             ></el-option>
           </el-select>
@@ -121,7 +129,7 @@
         <el-descriptions-item label="项目名称">{{ viewForm.projectName }}</el-descriptions-item>
         <el-descriptions-item label="支付金额">{{ viewForm.paymentAmount }}</el-descriptions-item>
         <el-descriptions-item label="支付方式">
-          <dict-tag :options="paymentMethodOptions" :value="viewForm.paymentMethod"/>
+          <span>{{ getDictLabel(paymentMethodOptions, viewForm.paymentMethod) }}</span>
         </el-descriptions-item>
         <el-descriptions-item label="支付日期">{{ parseTime(viewForm.paymentDate, '{y}-{m}-{d}') }}</el-descriptions-item>
         <el-descriptions-item label="创建人">{{ viewForm.createByName }}</el-descriptions-item>
@@ -130,14 +138,17 @@
         <template v-if="viewForm.expense">
           <el-divider content-position="center">相关支出信息</el-divider>
           <el-descriptions-item label="支出类型">
-            <dict-tag :options="expenseTypeOptions" :value="viewForm.expense.expenseType"/>
+            <span>{{ getExpenseTypeText(viewForm.expense.expenseType) }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="支出金额">{{ viewForm.expense.expenseAmount }}</el-descriptions-item>
-          <el-descriptions-item label="支出日期">{{ parseTime(viewForm.expense.expenseDate, '{y}-{m}-{d}') }}</el-descriptions-item>
+          <el-descriptions-item label="支出金额">{{ viewForm.expense.expenseAmount || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="支出日期">
+            <span v-if="viewForm.expense.expenseDate">{{ parseTime(viewForm.expense.expenseDate, '{y}-{m}-{d}') }}</span>
+            <span v-else>-</span>
+          </el-descriptions-item>
           <el-descriptions-item label="状态">
-            <dict-tag :options="statusOptions" :value="viewForm.expense.status"/>
+            <span>{{ getStatusText(viewForm.expense.status) }}</span>
           </el-descriptions-item>
-          <el-descriptions-item :span="2" label="支出说明">{{ viewForm.expense.expenseDesc }}</el-descriptions-item>
+          <el-descriptions-item :span="2" label="支出说明">{{ viewForm.expense.expenseDesc || '-' }}</el-descriptions-item>
         </template>
       </el-descriptions>
     </el-dialog>
@@ -160,6 +171,24 @@ export default {
         'OTHER': '其他费用'
       }
       return typeMap[type] || type
+    },
+    paymentMethodFilter(method) {
+      const methodMap = {
+        'CASH': '现金',
+        'BANK': '银行转账',
+        'OTHER': '其他'
+      }
+      return methodMap[method] || method
+    },
+    statusFilter(status) {
+      const statusMap = {
+        'DRAFT': '草稿',
+        'SUBMITTED': '已提交',
+        'APPROVED': '已批准',
+        'REJECTED': '已拒绝',
+        'PAID': '已支付'
+      }
+      return statusMap[status] || status
     }
   },
   data() {
@@ -252,7 +281,11 @@ export default {
       this.loading = true;
       listFundPayment(this.queryParams).then(response => {
         this.paymentList = response.rows;
+        console.log("支付记录列表:", this.paymentList);
         this.total = response.total;
+        this.loading = false;
+      }).catch(error => {
+        console.error("获取支付记录列表失败:", error);
         this.loading = false;
       });
     },
@@ -279,6 +312,20 @@ export default {
       };
       this.resetForm("form");
     },
+    /** 获取字典标签文本 */
+    getDictLabel(options, value) {
+      if (!value) return '-';
+      const option = options.find(opt => opt.value === value);
+      return option ? option.label : value;
+    },
+    /** 获取支出类型文本 */
+    getExpenseTypeText(type) {
+      return this.$options.filters.expenseTypeFilter(type) || '-';
+    },
+    /** 获取状态文本 */
+    getStatusText(status) {
+      return this.$options.filters.statusFilter(status) || '-';
+    },
     /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNum = 1;
@@ -304,7 +351,42 @@ export default {
     handleView(row) {
       getFundPayment(row.id).then(response => {
         this.viewForm = response.data;
-        this.viewOpen = true;
+        console.log("支付记录详情：", this.viewForm);
+        
+        // 确保项目名称显示
+        if (!this.viewForm.projectName && row.projectName) {
+          this.viewForm.projectName = row.projectName;
+        }
+        
+        // 确保支出信息完整
+        if (this.viewForm.expense) {
+          // 支出信息已加载，直接显示
+          console.log("支出信息已加载:", this.viewForm.expense);
+          if (this.viewForm.expense.expenseType) {
+            console.log("支出类型:", this.viewForm.expense.expenseType);
+          }
+          this.viewOpen = true;
+        } else if (this.viewForm.expenseId) {
+          // 需要加载支出信息
+          console.log("加载支出信息，ID:", this.viewForm.expenseId);
+          listFundExpense({ id: this.viewForm.expenseId }).then(expResponse => {
+            if (expResponse.rows && expResponse.rows.length > 0) {
+              this.viewForm.expense = expResponse.rows[0];
+              console.log("加载到的支出信息:", this.viewForm.expense);
+            } else {
+              console.log("未找到支出信息");
+            }
+            this.viewOpen = true;
+          }).catch(error => {
+            console.error("获取支出信息失败:", error);
+            this.viewOpen = true;
+          });
+        } else {
+          console.log("无支出ID，无法加载支出信息");
+          this.viewOpen = true;
+        }
+      }).catch(error => {
+        console.error("获取支付记录详情失败:", error);
       });
     },
     /** 提交按钮 */

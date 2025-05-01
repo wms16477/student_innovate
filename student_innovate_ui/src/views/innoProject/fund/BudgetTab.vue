@@ -58,17 +58,17 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
-          <el-button v-if="scope.row.status === 'DRAFT' || scope.row.status === 'REJECTED'" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
-          <el-button v-if="scope.row.status === 'DRAFT' || scope.row.status === 'REJECTED'" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
-          <el-button v-if="scope.row.status === 'DRAFT' || scope.row.status === 'REJECTED'" size="mini" type="text" icon="el-icon-upload2" @click="handleSubmit(scope.row)">提交</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED' && isAdmin" size="mini" type="text" icon="el-icon-check" @click="handleApprove(scope.row, true)">批准</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED' && isAdmin" size="mini" type="text" icon="el-icon-close" @click="handleApprove(scope.row, false)">拒绝</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED' && isSchool" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">学校批准</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED' && isSchool" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">学校拒绝</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('修改')" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('删除')" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('提交')" size="mini" type="text" icon="el-icon-upload2" @click="handleSubmit(scope.row)">提交</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('批准')" size="mini" type="text" icon="el-icon-check" @click="handleApprove(scope.row, true)">批准</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleApprove(scope.row, false)">拒绝</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校批准')" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">学校批准</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">学校拒绝</el-button>
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -166,7 +166,6 @@
 import { listFundBudget, getFundBudget, addFundBudget, updateFundBudget, delFundBudget } from "@/api/fundBudget";
 import { submitFundBudget, approveFundBudget, schoolApproveFundBudget } from "@/api/fund";
 import { listInnoProject } from "@/api/innoProject";
-import { getUserInfo } from "@/utils/auth";
 
 export default {
   name: "BudgetTab",
@@ -200,10 +199,6 @@ export default {
       schoolApproveOpen: false,
       // 是否为批准操作
       isApprove: true,
-      // 是否为管理员
-      isAdmin: false,
-      // 是否为学校
-      isSchool: false,
       // 查看表单
       viewForm: {},
       // 审批表单
@@ -220,18 +215,18 @@ export default {
       projectOptions: [],
       // 预算类型选项
       budgetTypeOptions: [
-        { value: "MATERIAL", label: "材料费" },
-        { value: "TRAVEL", label: "差旅费" },
-        { value: "MEETING", label: "会议费" },
-        { value: "PRINT", label: "印刷费" },
-        { value: "OTHER", label: "其他费用" }
+        { value: "MATERIAL", label: "材料费", raw: { listClass: 'primary', cssClass: '' } },
+        { value: "TRAVEL", label: "差旅费", raw: { listClass: 'success', cssClass: '' } },
+        { value: "MEETING", label: "会议费", raw: { listClass: 'info', cssClass: '' } },
+        { value: "PRINT", label: "印刷费", raw: { listClass: 'warning', cssClass: '' } },
+        { value: "OTHER", label: "其他费用", raw: { listClass: 'danger', cssClass: '' } }
       ],
       // 状态选项
       statusOptions: [
-        { value: "DRAFT", label: "草稿" },
-        { value: "SUBMITTED", label: "已提交" },
-        { value: "APPROVED", label: "已批准" },
-        { value: "REJECTED", label: "已拒绝" }
+        { value: "DRAFT", label: "草稿", raw: { listClass: 'info', cssClass: '' } },
+        { value: "SUBMITTED", label: "已提交", raw: { listClass: 'warning', cssClass: '' } },
+        { value: "APPROVED", label: "已批准", raw: { listClass: 'success', cssClass: '' } },
+        { value: "REJECTED", label: "已拒绝", raw: { listClass: 'danger', cssClass: '' } }
       ],
       // 查询参数
       queryParams: {
@@ -272,17 +267,8 @@ export default {
   created() {
     this.getList();
     this.getProjectOptions();
-    this.checkUserRole();
   },
   methods: {
-    /** 获取用户角色信息 */
-    checkUserRole() {
-      const userInfo = JSON.parse(getUserInfo());
-      if (userInfo && userInfo.roles) {
-        this.isAdmin = userInfo.roles.some(role => role.roleName === '管理员' || role.roleName === '专家');
-        this.isSchool = userInfo.roles.some(role => role.roleName === '学校');
-      }
-    },
     /** 查询预算列表 */
     getList() {
       this.loading = true;
@@ -347,11 +333,11 @@ export default {
       this.ids = selection.map(item => item.id);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
-      
+
       // 只有状态为草稿或已拒绝的记录才能提交
       this.submitDisabled = true;
       if (selection.length > 0) {
-        const canSubmit = selection.every(item => 
+        const canSubmit = selection.every(item =>
           item.status === 'DRAFT' || item.status === 'REJECTED'
         );
         this.submitDisabled = !canSubmit;
@@ -377,18 +363,28 @@ export default {
     handleView(row) {
       getFundBudget(row.id).then(response => {
         this.viewForm = response.data;
+        // 确保项目名称显示
+        if (!this.viewForm.projectName && row.projectName) {
+          this.viewForm.projectName = row.projectName;
+        }
         this.viewOpen = true;
       });
     },
     /** 提交按钮操作 */
     handleSubmit(row) {
       const id = row.id || this.ids[0];
-      this.$modal.confirm('是否确认提交该预算？').then(function() {
+      this.$modal.confirm('是否确认提交该预算？').then(() => {
         return submitFundBudget(id);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("提交成功");
-      }).catch(() => {});
+      }).catch(error => {
+        // 只有当error不是空对象时才显示错误信息（用户取消不会有具体错误对象）
+        if (error && (error.message || error.stack || error.name)) {
+          console.error("提交预算失败:", error);
+          this.$message.error("提交预算失败，请检查网络或联系管理员");
+        }
+      });
     },
     /** 审批按钮操作 */
     handleApprove(row, isApprove) {
@@ -464,4 +460,4 @@ export default {
     }
   }
 };
-</script> 
+</script>

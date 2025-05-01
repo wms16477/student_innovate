@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 项目经费预算表
@@ -108,4 +109,10 @@ public class InnoProjectFundBudget {
      */
     @TableField(exist = false)
     private String projectName;
+    
+    /**
+     * 可操作按钮列表（非数据库字段）
+     */
+    @TableField(exist = false)
+    private List<String> buttonList;
 } 

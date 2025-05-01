@@ -8,6 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         SELECT b.*, p.project_name 
         FROM inno_project_fund_budget b
         LEFT JOIN inno_project p ON b.project_id = p.id
+        LEFT JOIN student s ON p.create_by = s.stu_no
         <where>
             <if test="dto.projectId != null">
                 AND b.project_id = #{dto.projectId}
@@ -20,6 +21,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
             <if test="dto.projectName != null and dto.projectName != ''">
                 AND p.project_name like concat('%', #{dto.projectName}, '%')
+            </if>
+            <if test="dto.schoolId != null">
+                AND s.school_id = #{dto.schoolId}
             </if>
         </where>
         ORDER BY b.create_time DESC

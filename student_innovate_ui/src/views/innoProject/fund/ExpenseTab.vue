@@ -63,18 +63,18 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
-          <el-button v-if="scope.row.status === 'DRAFT' || scope.row.status === 'REJECTED'" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
-          <el-button v-if="scope.row.status === 'DRAFT' || scope.row.status === 'REJECTED'" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
-          <el-button v-if="scope.row.status === 'DRAFT' || scope.row.status === 'REJECTED'" size="mini" type="text" icon="el-icon-upload2" @click="handleSubmit(scope.row)">提交</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED' && isAdmin" size="mini" type="text" icon="el-icon-check" @click="handleApprove(scope.row, true)">批准</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED' && isAdmin" size="mini" type="text" icon="el-icon-close" @click="handleApprove(scope.row, false)">拒绝</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED' && isSchool" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">学校批准</el-button>
-          <el-button v-if="scope.row.status === 'SUBMITTED' && isSchool" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">学校拒绝</el-button>
-          <el-button v-if="scope.row.status === 'APPROVED'" size="mini" type="text" icon="el-icon-money" @click="handleMarkAsPaid(scope.row)">标记已支付</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('修改')" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('删除')" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('提交')" size="mini" type="text" icon="el-icon-upload2" @click="handleSubmit(scope.row)">提交</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('批准')" size="mini" type="text" icon="el-icon-check" @click="handleApprove(scope.row, true)">批准</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleApprove(scope.row, false)">拒绝</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校批准')" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">学校批准</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">学校拒绝</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('标记已支付')" size="mini" type="text" icon="el-icon-money" @click="handleMarkAsPaid(scope.row)">标记已支付</el-button>
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -101,7 +101,7 @@
             <el-option
               v-for="item in budgetOptions"
               :key="item.id"
-              :label="item.budgetType | budgetTypeFilter"
+              :label="(item.budgetType | budgetTypeFilter) + ' - ' + item.budgetAmount + '元 ' + (item.status === 'APPROVED' ? '(已批准)' : '')"
               :value="item.id"
             ></el-option>
           </el-select>
@@ -167,9 +167,9 @@
         <el-descriptions-item label="创建人">{{ viewForm.createByName }}</el-descriptions-item>
         <el-descriptions-item :span="2" label="支出说明">{{ viewForm.expenseDesc }}</el-descriptions-item>
         <el-descriptions-item :span="2" label="票据附件" v-if="viewForm.fileUrl">
-          <el-image 
+          <el-image
             style="max-width: 100%; max-height: 300px"
-            :src="viewForm.fileUrl" 
+            :src="viewForm.fileUrl"
             :preview-src-list="[viewForm.fileUrl]">
           </el-image>
         </el-descriptions-item>
@@ -191,7 +191,7 @@
         <el-button type="primary" @click="submitApprove">确 定</el-button>
       </div>
     </el-dialog>
-    
+
     <!-- 学校审批对话框 -->
     <el-dialog :title="isApprove ? '学校批准' : '学校拒绝'" :visible.sync="schoolApproveOpen" width="500px" append-to-body>
       <el-form ref="schoolApproveForm" :model="schoolApproveForm" :rules="approveRules" label-width="100px">
@@ -212,7 +212,7 @@ import { listFundExpense, getFundExpense, addFundExpense, updateFundExpense, del
 import { schoolApproveFundExpense } from "@/api/fund";
 import { listInnoProject } from "@/api/innoProject";
 import { listFundBudget } from "@/api/fundBudget";
-import { getToken, getUserInfo } from "@/utils/auth";
+import { getToken } from "@/utils/auth";
 
 export default {
   name: "ExpenseTab",
@@ -258,10 +258,6 @@ export default {
       schoolApproveOpen: false,
       // 是否为批准操作
       isApprove: true,
-      // 是否为管理员
-      isAdmin: false,
-      // 是否为学校
-      isSchool: false,
       // 查看表单
       viewForm: {},
       // 审批表单
@@ -350,17 +346,8 @@ export default {
   created() {
     this.getList();
     this.getProjectOptions();
-    this.checkUserRole();
   },
   methods: {
-    /** 获取用户角色信息 */
-    checkUserRole() {
-      const userInfo = JSON.parse(getUserInfo());
-      if (userInfo && userInfo.roles) {
-        this.isAdmin = userInfo.roles.some(role => role.roleName === '管理员' || role.roleName === '专家');
-        this.isSchool = userInfo.roles.some(role => role.roleName === '学校');
-      }
-    },
     /** 查询支出列表 */
     getList() {
       this.loading = true;
@@ -390,8 +377,20 @@ export default {
     },
     /** 获取预算选项 */
     getBudgetOptions(projectId) {
-      listFundBudget({ projectId: projectId, status: 'APPROVED' }).then(response => {
-        this.budgetOptions = response.rows;
+      console.log("获取项目预算，项目ID:", projectId);
+
+      if (!projectId) {
+        this.budgetOptions = [];
+        return;
+      }
+
+      // 不再按状态过滤，获取所有与项目相关的预算
+      listFundBudget({ projectId: projectId }).then(response => {
+        console.log("获取到预算列表:", response.rows);
+        this.budgetOptions = response.rows || [];
+      }).catch(error => {
+        console.error("获取预算列表失败:", error);
+        this.$message.error("获取预算列表失败");
       });
     },
     /** 处理项目变更 */
@@ -434,11 +433,11 @@ export default {
       this.ids = selection.map(item => item.id);
       this.single = selection.length !== 1;
       this.multiple = !selection.length;
-      
+
       // 只有状态为草稿或已拒绝的记录才能提交
       this.submitDisabled = true;
       if (selection.length > 0) {
-        const canSubmit = selection.every(item => 
+        const canSubmit = selection.every(item =>
           item.status === 'DRAFT' || item.status === 'REJECTED'
         );
         this.submitDisabled = !canSubmit;
@@ -494,6 +493,10 @@ export default {
     handleView(row) {
       getFundExpense(row.id).then(response => {
         this.viewForm = response.data;
+        // 确保项目名称显示
+        if (!this.viewForm.projectName && row.projectName) {
+          this.viewForm.projectName = row.projectName;
+        }
         this.viewOpen = true;
       });
     },
@@ -505,7 +508,13 @@ export default {
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("提交成功");
-      }).catch(() => {});
+      }).catch(error => {
+        // 只有当error不是空对象时才显示错误信息（用户取消不会有具体错误对象）
+        if (error && (error.message || error.stack || error.name)) {
+          console.error("提交支出失败:", error);
+          this.$message.error("提交支出失败，请检查网络或联系管理员");
+        }
+      });
     },
     /** 审批按钮操作 */
     handleApprove(row, isApprove) {
@@ -590,4 +599,4 @@ export default {
     }
   }
 };
-</script> 
+</script>

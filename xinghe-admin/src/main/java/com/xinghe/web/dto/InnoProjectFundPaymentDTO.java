@@ -9,4 +9,8 @@ import lombok.Data;
 @Data
 public class InnoProjectFundPaymentDTO extends InnoProjectFundPayment {
     
+    /**
+     * 学校ID（用于数据权限过滤）
+     */
+    private Long schoolId;
 } 
