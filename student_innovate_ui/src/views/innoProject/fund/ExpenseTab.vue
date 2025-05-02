@@ -284,19 +284,19 @@ export default {
       },
       // 支出类型选项
       expenseTypeOptions: [
-        { value: "MATERIAL", label: "材料费" },
-        { value: "TRAVEL", label: "差旅费" },
-        { value: "MEETING", label: "会议费" },
-        { value: "PRINT", label: "印刷费" },
-        { value: "OTHER", label: "其他费用" }
+        { value: "MATERIAL", label: "材料费", raw: { listClass: 'primary', cssClass: '' } },
+        { value: "TRAVEL", label: "差旅费", raw: { listClass: 'success', cssClass: '' } },
+        { value: "MEETING", label: "会议费", raw: { listClass: 'info', cssClass: '' } },
+        { value: "PRINT", label: "印刷费", raw: { listClass: 'warning', cssClass: '' } },
+        { value: "OTHER", label: "其他费用", raw: { listClass: 'danger', cssClass: '' } }
       ],
       // 状态选项
       statusOptions: [
-        { value: "DRAFT", label: "草稿" },
-        { value: "SUBMITTED", label: "已提交" },
-        { value: "APPROVED", label: "已批准" },
-        { value: "REJECTED", label: "已拒绝" },
-        { value: "PAID", label: "已支付" }
+        { value: "DRAFT", label: "草稿",raw: { listClass: 'primary', cssClass: '' } },
+        { value: "SUBMITTED", label: "已提交",raw: { listClass: 'primary', cssClass: '' } },
+        { value: "APPROVED", label: "已批准",raw: { listClass: 'primary', cssClass: '' } },
+        { value: "REJECTED", label: "已拒绝",raw: { listClass: 'primary', cssClass: '' } },
+        { value: "PAID", label: "已支付",raw: { listClass: 'primary', cssClass: '' } }
       ],
       // 查询参数
       queryParams: {
