@@ -7,7 +7,7 @@
       <el-tab-pane label="支出管理" name="expense">
         <expense-tab />
       </el-tab-pane>
-      <el-tab-pane label="支付记录" name="payment">
+      <el-tab-pane label="支付记录" name="payment" v-if="isSchoolRole">
         <payment-tab />
       </el-tab-pane>
     </el-tabs>
@@ -28,7 +28,19 @@ export default {
   },
   data() {
     return {
-      activeTab: 'budget'
+      activeTab: 'budget',
+      isSchoolRole: false
+    }
+  },
+  created() {
+    this.checkUserRole();
+  },
+  methods: {
+    /** 检查用户角色 */
+    checkUserRole() {
+      // 通过读取用户角色信息，判断是否为学校角色
+      const roles = this.$store.getters && this.$store.getters.roles;
+      this.isSchoolRole = roles.includes('school');
     }
   }
 }

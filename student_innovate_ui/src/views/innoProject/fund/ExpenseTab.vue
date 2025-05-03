@@ -134,6 +134,7 @@
             :before-upload="beforeFileUpload"
             :on-remove="handleFileRemove"
             :limit="1"
+            :on-exceed="handleExceed"
             list-type="picture-card"
             accept=".jpg,.jpeg,.png"
           >
@@ -492,6 +493,10 @@ export default {
         return false;
       }
       return true;
+    },
+    /** 超出文件上传限制处理 */
+    handleExceed(files, fileList) {
+      this.$message.warning('最多只能上传1张票据图片，请先删除已有票据后再上传');
     },
     /** 新增按钮操作 */
     handleAdd() {
