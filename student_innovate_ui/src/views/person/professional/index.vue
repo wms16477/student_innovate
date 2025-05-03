@@ -152,7 +152,7 @@
         :limit="1"
         accept=".xlsx, .xls"
         :headers="upload.headers"
-        :action="upload.url"
+        :action="upload.url + '?updateSupport=' + upload.updateSupport"
         :disabled="upload.isUploading"
         :on-progress="handleFileUploadProgress"
         :on-success="handleFileSuccess"
@@ -162,6 +162,9 @@
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
         <div class="el-upload__tip text-center" slot="tip">
+<!--          <div class="el-upload__tip" slot="tip">-->
+<!--            <el-checkbox v-model="upload.updateSupport" />是否更新已经存在的专家数据-->
+<!--          </div>-->
           <span>仅允许导入xls、xlsx格式文件。</span>
           <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="importTemplate">下载模板</el-link>
         </div>
@@ -235,11 +238,12 @@ export default {
       },
       // 导入相关参数
       upload: {
-        title: "导入专家",
+        title: "导入专家数据",
         open: false,
-        url: process.env.VUE_APP_BASE_API + "/web/professional/importData",
+        url: process.env.VUE_APP_BASE_API + "/professional/professional/importData",
         headers: { Authorization: "Bearer " + getToken() },
-        isUploading: false
+        isUploading: false,
+        updateSupport: 0
       }
     };
   },
@@ -349,27 +353,25 @@ export default {
     handleImport() {
       this.upload.open = true;
     },
-    // 处理文件上传进度
-    handleFileUploadProgress(event) {
+    // 文件上传中处理
+    handleFileUploadProgress(event, file, fileList) {
       this.upload.isUploading = true;
     },
-    // 处理文件上传成功后的逻辑
-    handleFileSuccess(response) {
+    // 文件上传成功处理
+    handleFileSuccess(response, file, fileList) {
       this.upload.open = false;
       this.upload.isUploading = false;
       this.$refs.upload.clearFiles();
-      this.$message.success(response.msg);
+      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", { dangerouslyUseHTMLString: true });
       this.getList();
+    },
+    // 提交上传文件
+    submitFileForm() {
+      this.$refs.upload.submit();
     },
     // 下载模板
     importTemplate() {
-      importTemplate().then(response => {
-        this.download(response.msg);
-      });
-    },
-    // 提交文件表单
-    submitFileForm() {
-      this.$refs.upload.submit();
+      this.download('web/professional/importTemplate', {}, `专家导入模版.xlsx`)
     }
   }
 };

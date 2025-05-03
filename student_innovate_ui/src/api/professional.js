@@ -54,7 +54,7 @@ export function getAreaList() {
 // 导出专家
 export function exportProfessional(query) {
   return request({
-    url: '/web/professional/export',
+    url: '/professional/professional/export',
     method: 'post',
     params: query
   })
@@ -63,7 +63,7 @@ export function exportProfessional(query) {
 // 获取专家导入模板
 export function importTemplate() {
   return request({
-    url: '/web/professional/importTemplate',
+    url: '/professional/professional/importTemplate',
     method: 'post',
     responseType: 'blob'
   })
@@ -72,7 +72,7 @@ export function importTemplate() {
 // 导入专家数据
 export function importData(data) {
   return request({
-    url: '/web/professional/importData',
+    url: '/professional/professional/importData',
     method: 'post',
     data: data
   })

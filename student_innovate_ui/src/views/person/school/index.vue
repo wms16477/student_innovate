@@ -69,7 +69,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -99,7 +99,7 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
-    
+
     <!-- 导入对话框 -->
     <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
       <el-upload
@@ -107,7 +107,7 @@
         :limit="1"
         accept=".xlsx, .xls"
         :headers="upload.headers"
-        :action="upload.url"
+        :action="upload.url + '?updateSupport=' + upload.updateSupport"
         :disabled="upload.isUploading"
         :on-progress="handleFileUploadProgress"
         :on-success="handleFileSuccess"
@@ -117,6 +117,9 @@
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
         <div class="el-upload__tip text-center" slot="tip">
+<!--          <div class="el-upload__tip" slot="tip">-->
+<!--            <el-checkbox v-model="upload.updateSupport" />是否更新已经存在的学校数据-->
+<!--          </div>-->
           <span>仅允许导入xls、xlsx格式文件。</span>
           <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="importTemplate">下载模板</el-link>
         </div>
@@ -173,12 +176,20 @@ export default {
           { required: true, message: "学校名称不能为空", trigger: "blur" }
         ]
       },
+      // 导入参数
       upload: {
-        title: "导入学校",
+        // 是否显示弹出层（导入）
         open: false,
-        url: process.env.VUE_APP_BASE_API + "/school/importData",
+        // 弹出层标题（导入）
+        title: "导入学校数据",
+        // 是否禁用上传
+        isUploading: false,
+        // 设置上传的请求头部
         headers: { Authorization: "Bearer " + getToken() },
-        isUploading: false
+        // 上传的地址
+        url: process.env.VUE_APP_BASE_API + "/person/school/importData",
+        // 是否更新已存在数据
+        updateSupport: 0
       }
     };
   },
@@ -282,24 +293,26 @@ export default {
     handleImport() {
       this.upload.open = true;
     },
-    handleFileUploadProgress(event, file) {
+    handleFileUploadProgress(event, file, fileList) {
       this.upload.isUploading = true;
     },
-    handleFileSuccess(response, file) {
+    handleFileSuccess(response, file, fileList) {
       this.upload.open = false;
       this.upload.isUploading = false;
       this.$refs.upload.clearFiles();
-      this.$message.success(response.msg);
+      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", { dangerouslyUseHTMLString: true });
       this.getList();
     },
     importTemplate() {
-      importTemplate().then(response => {
-        this.download(response.msg);
-      });
+      // importTemplate().then(response => {
+      //   this.download(response.msg);
+      // });
+      this.download('school/importTemplate', {
+      }, `学校导入模版.xlsx`)
     },
     submitFileForm() {
       this.$refs.upload.submit();
     }
   }
 };
-</script> 
+</script>

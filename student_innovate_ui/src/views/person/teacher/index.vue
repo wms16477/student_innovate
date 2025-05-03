@@ -57,7 +57,8 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-        >新增</el-button>
+        >新增
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -67,7 +68,8 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-        >修改</el-button>
+        >修改
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -77,7 +79,8 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-        >删除</el-button>
+        >删除
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -86,7 +89,8 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-        >导出</el-button>
+        >导出
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -95,19 +99,20 @@
           icon="el-icon-upload2"
           size="mini"
           @click="handleImport"
-        >导入</el-button>
+        >导入
+        </el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="teacherList" @selection-change="handleSelectionChange">
-      <el-table-column label="id" align="center" prop="id" />
-      <el-table-column label="账号" align="center" prop="account" />
-      <el-table-column label="老师姓名" align="center" prop="teacherName" />
-      <el-table-column label="性别" align="center" prop="gender" />
-      <el-table-column label="级别" align="center" prop="level" />
-      <el-table-column label="学历" align="center" prop="degree" />
-      <el-table-column label="学校" align="center" prop="schoolName" />
+      <el-table-column label="id" align="center" prop="id"/>
+      <el-table-column label="账号" align="center" prop="account"/>
+      <el-table-column label="老师姓名" align="center" prop="teacherName"/>
+      <el-table-column label="性别" align="center" prop="gender"/>
+      <el-table-column label="级别" align="center" prop="level"/>
+      <el-table-column label="学历" align="center" prop="degree"/>
+      <el-table-column label="学校" align="center" prop="schoolName"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -115,14 +120,16 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-          >修改</el-button>
+          >修改
+          </el-button>
           <el-button
             size="mini"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
             style="color: #f56c6c"
-          >删除</el-button>
+          >删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -139,10 +146,10 @@
     <el-drawer :title="title" :visible.sync="open" size="420px" append-to-body @close="cancel">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px" style="padding: 20px">
         <el-form-item label="账号" prop="account">
-          <el-input v-model="form.account" placeholder="请输入账号" />
+          <el-input v-model="form.account" placeholder="请输入账号"/>
         </el-form-item>
         <el-form-item label="老师姓名" prop="teacherName">
-          <el-input v-model="form.teacherName" placeholder="请输入老师姓名" />
+          <el-input v-model="form.teacherName" placeholder="请输入老师姓名"/>
         </el-form-item>
         <el-form-item label="性别" prop="gender">
           <el-select v-model="form.gender" placeholder="请选择性别">
@@ -188,7 +195,7 @@
         </div>
       </el-form>
     </el-drawer>
-    
+
     <!-- 导入对话框 -->
     <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
       <el-upload
@@ -196,7 +203,7 @@
         :limit="1"
         accept=".xlsx, .xls"
         :headers="upload.headers"
-        :action="upload.url"
+        :action="upload.url + '?updateSupport=' + upload.updateSupport"
         :disabled="upload.isUploading"
         :on-progress="handleFileUploadProgress"
         :on-success="handleFileSuccess"
@@ -206,8 +213,14 @@
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
         <div class="el-upload__tip text-center" slot="tip">
+<!--          <div class="el-upload__tip" slot="tip">-->
+<!--            <el-checkbox v-model="upload.updateSupport"/>-->
+<!--            是否更新已经存在的教师数据-->
+<!--          </div>-->
           <span>仅允许导入xls、xlsx格式文件。</span>
-          <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="importTemplate">下载模板</el-link>
+          <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;"
+                   @click="importTemplate">下载模板
+          </el-link>
         </div>
       </el-upload>
       <div slot="footer" class="dialog-footer">
@@ -219,9 +232,18 @@
 </template>
 
 <script>
-import { listTeacher, getTeacher, delTeacher, addTeacher, updateTeacher, exportTeacher, importTemplate, importData } from "@/api/person/teacher";
-import { getSchoolOptions } from "@/api/school";
-import { getToken } from "@/utils/auth";
+import {
+  listTeacher,
+  getTeacher,
+  delTeacher,
+  addTeacher,
+  updateTeacher,
+  exportTeacher,
+  importTemplate,
+  importData
+} from "@/api/person/teacher";
+import {getSchoolOptions} from "@/api/school";
+import {getToken} from "@/utils/auth";
 
 export default {
   name: "Teacher",
@@ -260,19 +282,19 @@ export default {
       // 表单校验
       rules: {
         account: [
-          { required: true, message: "账号不能为空", trigger: "blur" }
+          {required: true, message: "账号不能为空", trigger: "blur"}
         ],
         teacherName: [
-          { required: true, message: "老师姓名不能为空", trigger: "blur" }
+          {required: true, message: "老师姓名不能为空", trigger: "blur"}
         ],
         gender: [
-          { required: true, message: "性别不能为空", trigger: "blur" }
+          {required: true, message: "性别不能为空", trigger: "blur"}
         ],
         level: [
-          { required: true, message: "级别不能为空", trigger: "blur" }
+          {required: true, message: "级别不能为空", trigger: "blur"}
         ],
         degree: [
-          { required: true, message: "学历不能为空", trigger: "blur" }
+          {required: true, message: "学历不能为空", trigger: "blur"}
         ],
       },
       // 学校选项
@@ -283,11 +305,12 @@ export default {
       degreeOptions: ['学士', '硕士', '博士', '博士后'],
       // 导入相关参数
       upload: {
-        title: "导入老师数据",
+        title: "导入教师数据",
         open: false,
-        url: process.env.VUE_APP_BASE_API + "/person/teacher/importData",
-        headers: { Authorization: "Bearer " + getToken() },
+        url: process.env.VUE_APP_BASE_API + "/teacher/teacher/importData",
+        headers: {Authorization: "Bearer " + getToken()},
         isUploading: false,
+        updateSupport: 0
       },
     };
   },
@@ -343,7 +366,7 @@ export default {
     // 多选框选中数据
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.id)
-      this.single = selection.length!==1
+      this.single = selection.length !== 1
       this.multiple = !selection.length
     },
     /** 新增按钮操作 */
@@ -385,12 +408,13 @@ export default {
     /** 删除按钮操作 */
     handleDelete(row) {
       const ids = row.id || this.ids;
-      this.$modal.confirm('是否确认删除老师编号为"' + ids + '"的数据项？').then(function() {
+      this.$modal.confirm('是否确认删除老师编号为"' + ids + '"的数据项？').then(function () {
         return delTeacher(ids);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("删除成功");
-      }).catch(() => {});
+      }).catch(() => {
+      });
     },
     /** 导出按钮操作 */
     handleExport() {
@@ -402,23 +426,27 @@ export default {
     handleImport() {
       this.upload.open = true;
     },
-    handleFileUploadProgress(event) {
+    // 文件上传中处理
+    handleFileUploadProgress(event, file, fileList) {
       this.upload.isUploading = true;
     },
-    handleFileSuccess(response, file) {
+    // 文件上传成功处理
+    handleFileSuccess(response, file, fileList) {
       this.upload.open = false;
       this.upload.isUploading = false;
       this.$refs.upload.clearFiles();
-      this.$message.success(response.msg);
+      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", {dangerouslyUseHTMLString: true});
       this.getList();
     },
-    importTemplate() {
-      importTemplate().then(response => {
-        this.download(response.msg);
-      });
-    },
+    // 提交上传文件
     submitFileForm() {
       this.$refs.upload.submit();
+    },
+    importTemplate() {
+      // importTemplate().then(response => {
+      //   this.download(response.msg);
+      // });
+      this.download('person/teacher/importTemplate', {}, `教师导入模版.xlsx`)
     },
   }
 };
