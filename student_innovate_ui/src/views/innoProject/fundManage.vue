@@ -10,6 +10,9 @@
       <el-tab-pane label="支付记录" name="payment" v-if="isSchoolRole">
         <payment-tab />
       </el-tab-pane>
+      <el-tab-pane label="经费分析" name="analysis">
+        <analysis-tab />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -18,13 +21,15 @@
 import BudgetTab from './fund/BudgetTab'
 import ExpenseTab from './fund/ExpenseTab'
 import PaymentTab from './fund/PaymentTab'
+import AnalysisTab from './fund/AnalysisTab'
 
 export default {
   name: "FundManage",
   components: {
     BudgetTab,
     ExpenseTab,
-    PaymentTab
+    PaymentTab,
+    AnalysisTab
   },
   data() {
     return {
