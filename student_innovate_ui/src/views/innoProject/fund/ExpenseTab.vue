@@ -136,9 +136,8 @@
             :limit="1"
             list-type="picture-card"
             accept=".jpg,.jpeg,.png"
-            :disabled="!!form.fileUrl"
           >
-            <i v-if="!form.fileUrl" class="el-icon-plus"></i>
+            <i v-if="!form.fileUrl && fileList.length === 0" class="el-icon-plus"></i>
             <div slot="tip" class="el-upload__tip">只能上传jpg/jpeg/png格式的票据文件，且不超过10MB</div>
           </el-upload>
         </el-form-item>
@@ -456,17 +455,28 @@ export default {
         // 直接保存后端返回的文件URL
         this.form.fileUrl = response.url || response.data;
         console.log("设置fileUrl成功:", this.form.fileUrl);
-        
+
         // 确保fileList中的文件也有正确的URL
         if (fileList && fileList.length > 0) {
           fileList[0].url = this.form.fileUrl;
         }
-        
+
         this.$message.success('票据上传成功');
       } else {
         this.$message.error('票据上传失败: ' + response.msg);
       }
       this.fileList = fileList;
+    },
+    /** 文件删除处理 - el-upload组件触发 */
+    handleFileRemove(file, fileList) {
+      this.form.fileUrl = null;
+      this.fileList = [];
+    },
+    /** 手动删除文件 - 按钮触发 */
+    handleManualRemove() {
+      this.form.fileUrl = null;
+      this.fileList = [];
+      this.$message.success('票据已删除');
     },
     /** 文件上传前检查 */
     beforeFileUpload(file) {
@@ -482,11 +492,6 @@ export default {
         return false;
       }
       return true;
-    },
-    /** 文件删除处理 */
-    handleFileRemove() {
-      this.form.fileUrl = null;
-      this.fileList = [];
     },
     /** 新增按钮操作 */
     handleAdd() {
@@ -504,17 +509,17 @@ export default {
         this.form = response.data;
         console.log("修改支出获取到数据:", this.form);
         console.log("fileUrl:", this.form.fileUrl);
-        
+
         // 设置文件列表显示已上传票据
         if (this.form.fileUrl) {
-          this.fileList = [{ 
-            name: '已上传票据', 
-            url: this.form.fileUrl 
+          this.fileList = [{
+            name: '已上传票据',
+            url: this.form.fileUrl
           }];
         } else {
           this.fileList = [];
         }
-        
+
         this.getBudgetOptions(this.form.projectId);
         this.open = true;
         this.title = "修改支出";
@@ -610,14 +615,14 @@ export default {
     submitForm(submit) {
       console.log("提交前form状态:", JSON.stringify(this.form));
       console.log("提交前fileList状态:", this.fileList);
-      
+
       this.$refs["form"].validate(valid => {
         if (valid) {
           // 确保获取到正确的fileUrl
           if (this.fileList.length > 0 && !this.form.fileUrl) {
             const file = this.fileList[0];
             console.log("从fileList获取文件信息:", file);
-            
+
             if (file.response) {
               this.form.fileUrl = file.response.url || file.response.data;
               console.log("从response获取fileUrl:", this.form.fileUrl);
@@ -626,18 +631,18 @@ export default {
               console.log("从url获取fileUrl:", this.form.fileUrl);
             }
           }
-          
+
           console.log("提交前最终fileUrl:", this.form.fileUrl);
-          
+
           // 始终确保fileUrl字段存在并正确传递
           const submitForm = {
             ...this.form
           };
-          
+
           // 强制打印确认文件URL是否正确传递
           console.log("最终提交的表单数据:", JSON.stringify(submitForm));
           console.log("最终提交的fileUrl:", submitForm.fileUrl);
-          
+
           this.$confirm('确认提交?', '提交确认', {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
@@ -675,3 +680,9 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.upload-demo .el-upload-list--picture-card .el-upload-list__item-actions {
+  cursor: default;
+}
+</style>
