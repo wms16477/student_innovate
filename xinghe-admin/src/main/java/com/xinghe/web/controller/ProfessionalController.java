@@ -11,6 +11,11 @@ import com.xinghe.web.service.ProfessionalService;
 import com.xinghe.web.enums.ProjectType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.web.multipart.MultipartFile;
+import com.xinghe.common.annotation.Log;
+import com.xinghe.common.enums.BusinessType;
+import com.xinghe.common.utils.poi.ExcelUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +50,38 @@ public class ProfessionalController extends BaseController {
         startPage();
         List<Professional> list = professionalService.selectList(professional);
         return getDataTable(list);
+    }
+
+    /**
+     * 导出专家列表
+     */
+    @PostMapping("/export")
+    public void export(HttpServletResponse response, Professional professional) {
+        List<Professional> list = professionalService.selectList(professional);
+        ExcelUtil<Professional> util = new ExcelUtil<Professional>(Professional.class);
+        util.exportExcel(response, list, "专家数据");
+    }
+
+    /**
+     * 获取导入模板
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        ExcelUtil<Professional> util = new ExcelUtil<Professional>(Professional.class);
+        util.importTemplateExcel(response, "专家数据");
+    }
+
+    /**
+     * 批量导入专家数据
+     */
+    @Log(title = "专家", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public AjaxResult importData(MultipartFile file) throws Exception {
+        ExcelUtil<Professional> util = new ExcelUtil<Professional>(Professional.class);
+        List<Professional> professionalList = util.importExcel(file.getInputStream());
+        
+        String message = professionalService.importProfessionals(professionalList);
+        return success(message);
     }
 
     /**

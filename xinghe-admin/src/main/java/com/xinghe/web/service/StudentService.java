@@ -24,4 +24,12 @@ public interface StudentService extends IService<Student> {
     List<Student> selectList(Student student, boolean excludeSelf);
 
     void addStudent(Student student);
+    
+    /**
+     * 导入学生数据
+     * 
+     * @param studentList 学生数据列表
+     * @return 结果
+     */
+    String importStudents(List<Student> studentList);
 }

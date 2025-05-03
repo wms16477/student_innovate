@@ -26,4 +26,12 @@ public interface SchoolService extends IService<School> {
      * @param school 学校
      */
     void addSchool(School school);
+    
+    /**
+     * 导入学校数据
+     * 
+     * @param schoolList 学校数据列表
+     * @return 结果
+     */
+    String importSchools(List<School> schoolList);
 } 

@@ -61,6 +61,59 @@ public class ProfessionalServiceImpl extends ServiceImpl<ProfessionalMapper, Pro
         user.setRoleIds(new Long[]{102L});
         userService.insertUser(user);
     }
+    
+    /**
+     * 导入专家数据
+     * 
+     * @param professionalList 专家数据列表
+     * @return 结果
+     */
+    @Override
+    public String importProfessionals(List<Professional> professionalList) {
+        if (StringUtils.isNull(professionalList) || professionalList.isEmpty()) {
+            throw new ServiceException("导入专家数据不能为空！");
+        }
+        
+        int successNum = 0;
+        int failureNum = 0;
+        StringBuilder successMsg = new StringBuilder();
+        StringBuilder failureMsg = new StringBuilder();
+        
+        for (Professional professional : professionalList) {
+            try {
+                // 验证必要字段
+                if (StringUtils.isEmpty(professional.getAccount())) {
+                    failureNum++;
+                    failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据账号为空");
+                    continue;
+                }
+                
+                if (StringUtils.isEmpty(professional.getName())) {
+                    failureNum++;
+                    failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据专家姓名为空");
+                    continue;
+                }
+                
+                // 添加专家
+                addProfessional(professional);
+                successNum++;
+                successMsg.append("<br/>第 ").append(successNum).append(" 条数据导入成功");
+            } catch (Exception e) {
+                failureNum++;
+                String msg = "<br/>第 " + (successNum + failureNum) + " 条数据导入失败：";
+                failureMsg.append(msg).append(e.getMessage());
+            }
+        }
+        
+        if (failureNum > 0) {
+            failureMsg.insert(0, "很抱歉，导入失败！共 " + failureNum + " 条数据格式不正确，错误如下：");
+            throw new ServiceException(failureMsg.toString());
+        } else {
+            successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条，数据如下：");
+        }
+        
+        return successMsg.toString();
+    }
 }
 
 

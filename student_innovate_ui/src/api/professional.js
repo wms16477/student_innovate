@@ -49,4 +49,31 @@ export function getAreaList() {
     url: '/web/professional/area/list',
     method: 'get'
   })
+}
+
+// 导出专家
+export function exportProfessional(query) {
+  return request({
+    url: '/web/professional/export',
+    method: 'post',
+    params: query
+  })
+}
+
+// 获取专家导入模板
+export function importTemplate() {
+  return request({
+    url: '/web/professional/importTemplate',
+    method: 'post',
+    responseType: 'blob'
+  })
+}
+
+// 导入专家数据
+export function importData(data) {
+  return request({
+    url: '/web/professional/importData',
+    method: 'post',
+    data: data
+  })
 } 

@@ -22,6 +22,7 @@ import com.xinghe.web.domain.Student;
 import com.xinghe.web.service.StudentService;
 import com.xinghe.common.utils.poi.ExcelUtil;
 import com.xinghe.common.core.page.TableDataInfo;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 学生Controller
@@ -74,6 +75,28 @@ public class StudentController extends BaseController {
         List<Student> list = studentService.selectList(student, false);
         ExcelUtil<Student> util = new ExcelUtil<Student>(Student.class);
         util.exportExcel(response, list, "学生数据");
+    }
+
+    /**
+     * 获取导入模板
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        ExcelUtil<Student> util = new ExcelUtil<Student>(Student.class);
+        util.importTemplateExcel(response, "学生数据");
+    }
+
+    /**
+     * 批量导入学生数据
+     */
+    @Log(title = "学生", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public AjaxResult importData(MultipartFile file) throws Exception {
+        ExcelUtil<Student> util = new ExcelUtil<Student>(Student.class);
+        List<Student> studentList = util.importExcel(file.getInputStream());
+        
+        String message = studentService.importStudents(studentList);
+        return success(message);
     }
 
     /**

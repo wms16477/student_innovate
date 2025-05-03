@@ -51,3 +51,30 @@ export function delTeacher(id) {
     method: 'delete'
   })
 }
+
+// 导出老师
+export function exportTeacher(query) {
+  return request({
+    url: '/person/teacher/export',
+    method: 'post',
+    params: query
+  })
+}
+
+// 获取老师导入模板
+export function importTemplate() {
+  return request({
+    url: '/person/teacher/importTemplate',
+    method: 'post',
+    responseType: 'blob'
+  })
+}
+
+// 导入老师数据
+export function importData(data) {
+  return request({
+    url: '/person/teacher/importData',
+    method: 'post',
+    data: data
+  })
+}

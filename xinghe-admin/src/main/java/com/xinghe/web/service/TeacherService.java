@@ -25,4 +25,12 @@ public interface TeacherService extends IService<Teacher> {
      * 新增教师
      */
     void addTeacher(Teacher teacher);
+
+    /**
+     * 导入老师数据
+     * 
+     * @param teacherList 老师数据列表
+     * @return 结果
+     */
+    String importTeachers(List<Teacher> teacherList);
 }

@@ -51,3 +51,30 @@ export function delStudent(id) {
     method: 'delete'
   })
 }
+
+// 导出学生
+export function exportStudent(query) {
+  return request({
+    url: '/student/student/export',
+    method: 'post',
+    params: query
+  })
+}
+
+// 获取学生导入模板
+export function importTemplate() {
+  return request({
+    url: '/student/student/importTemplate',
+    method: 'post',
+    responseType: 'blob'
+  })
+}
+
+// 导入学生数据
+export function importData(data) {
+  return request({
+    url: '/student/student/importData',
+    method: 'post',
+    data: data
+  })
+}

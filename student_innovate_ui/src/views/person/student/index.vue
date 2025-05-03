@@ -60,6 +60,16 @@
         >导出
         </el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-upload2"
+          size="mini"
+          @click="handleImport"
+        >导入
+        </el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -160,13 +170,41 @@
         </div>
       </el-form>
     </el-drawer>
+
+    <!-- 导入对话框 -->
+    <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
+      <el-upload
+        ref="upload"
+        :limit="1"
+        accept=".xlsx, .xls"
+        :headers="upload.headers"
+        :action="upload.url"
+        :disabled="upload.isUploading"
+        :on-progress="handleFileUploadProgress"
+        :on-success="handleFileSuccess"
+        :auto-upload="false"
+        drag
+      >
+        <i class="el-icon-upload"></i>
+        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+        <div class="el-upload__tip text-center" slot="tip">
+          <span>仅允许导入xls、xlsx格式文件。</span>
+          <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="importTemplate">下载模板</el-link>
+        </div>
+      </el-upload>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitFileForm">确 定</el-button>
+        <el-button @click="upload.open = false">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import {listStudent, getStudent, delStudent, addStudent, updateStudent} from "@/api/person/student";
+import {listStudent, getStudent, delStudent, addStudent, updateStudent, exportStudent, importTemplate, importData} from "@/api/person/student";
 import { getSchoolOptions } from "@/api/school";
 import { specialityOptions} from "@/constants/DictConstants";
+import { getToken } from "@/utils/auth";
 
 export default {
   name: "Student",
@@ -233,6 +271,14 @@ export default {
       },
       // 学校选项
       schoolOptions: [],
+      // 导入参数
+      upload: {
+        title: "导入学生数据",
+        open: false,
+        url: process.env.VUE_APP_BASE_API + "/student/student/importData",
+        headers: { Authorization: "Bearer " + getToken() },
+        isUploading: false
+      },
     };
   },
   created() {
@@ -338,14 +384,40 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      this.download('student/student/export', {
-        ...this.queryParams
-      }, `student_${new Date().getTime()}.xlsx`)
+      exportStudent(this.queryParams).then(response => {
+        this.download(response.msg);
+      });
     },
     /** 获取学校选项 */
     getSchoolOptions() {
       getSchoolOptions().then(response => {
         this.schoolOptions = response.rows;
+      });
+    },
+    // 导入按钮操作
+    handleImport() {
+      this.upload.open = true;
+    },
+    // 处理文件上传进度
+    handleFileUploadProgress(event, file) {
+      this.upload.isUploading = true;
+    },
+    // 处理文件上传成功后的逻辑
+    handleFileSuccess(response, file) {
+      this.upload.open = false;
+      this.upload.isUploading = false;
+      this.$refs.upload.clearFiles();
+      this.$message.success(response.msg);
+      this.getList();
+    },
+    // 提交文件表单
+    submitFileForm() {
+      this.$refs.upload.submit();
+    },
+    // 下载模板
+    importTemplate() {
+      importTemplate().then(response => {
+        this.download(response);
       });
     },
   }

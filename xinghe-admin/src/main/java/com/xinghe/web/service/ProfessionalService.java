@@ -23,4 +23,12 @@ public interface ProfessionalService extends IService<Professional> {
      * @param professional 专家
      */
     void addProfessional(Professional professional);
+
+    /**
+     * 导入专家数据
+     * 
+     * @param professionalList 专家数据列表
+     * @return 结果
+     */
+    String importProfessionals(List<Professional> professionalList);
 }

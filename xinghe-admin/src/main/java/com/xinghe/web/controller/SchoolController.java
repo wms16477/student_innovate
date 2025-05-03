@@ -22,6 +22,7 @@ import com.xinghe.web.domain.School;
 import com.xinghe.web.service.SchoolService;
 import com.xinghe.common.utils.poi.ExcelUtil;
 import com.xinghe.common.core.page.TableDataInfo;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 学校Controller
@@ -53,6 +54,28 @@ public class SchoolController extends BaseController {
         List<School> list = schoolService.selectList(school);
         ExcelUtil<School> util = new ExcelUtil<School>(School.class);
         util.exportExcel(response, list, "学校数据");
+    }
+
+    /**
+     * 获取导入模板
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        ExcelUtil<School> util = new ExcelUtil<School>(School.class);
+        util.importTemplateExcel(response, "学校数据");
+    }
+
+    /**
+     * 批量导入学校数据
+     */
+    @Log(title = "学校", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public AjaxResult importData(MultipartFile file) throws Exception {
+        ExcelUtil<School> util = new ExcelUtil<School>(School.class);
+        List<School> schoolList = util.importExcel(file.getInputStream());
+        
+        String message = schoolService.importSchools(schoolList);
+        return success(message);
     }
 
     /**

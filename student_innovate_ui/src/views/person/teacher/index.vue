@@ -88,6 +88,15 @@
           @click="handleExport"
         >导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-upload2"
+          size="mini"
+          @click="handleImport"
+        >导入</el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -179,12 +188,40 @@
         </div>
       </el-form>
     </el-drawer>
+    
+    <!-- 导入对话框 -->
+    <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
+      <el-upload
+        ref="upload"
+        :limit="1"
+        accept=".xlsx, .xls"
+        :headers="upload.headers"
+        :action="upload.url"
+        :disabled="upload.isUploading"
+        :on-progress="handleFileUploadProgress"
+        :on-success="handleFileSuccess"
+        :auto-upload="false"
+        drag
+      >
+        <i class="el-icon-upload"></i>
+        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+        <div class="el-upload__tip text-center" slot="tip">
+          <span>仅允许导入xls、xlsx格式文件。</span>
+          <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="importTemplate">下载模板</el-link>
+        </div>
+      </el-upload>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitFileForm">确 定</el-button>
+        <el-button @click="upload.open = false">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listTeacher, getTeacher, delTeacher, addTeacher, updateTeacher } from "@/api/person/teacher";
+import { listTeacher, getTeacher, delTeacher, addTeacher, updateTeacher, exportTeacher, importTemplate, importData } from "@/api/person/teacher";
 import { getSchoolOptions } from "@/api/school";
+import { getToken } from "@/utils/auth";
 
 export default {
   name: "Teacher",
@@ -244,6 +281,14 @@ export default {
       levelOptions: ['助教', '讲师', '副教授', '教授'],
       // 学历选项
       degreeOptions: ['学士', '硕士', '博士', '博士后'],
+      // 导入相关参数
+      upload: {
+        title: "导入老师数据",
+        open: false,
+        url: process.env.VUE_APP_BASE_API + "/person/teacher/importData",
+        headers: { Authorization: "Bearer " + getToken() },
+        isUploading: false,
+      },
     };
   },
   created() {
@@ -349,10 +394,32 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      this.download('person/teacher/export', {
-        ...this.queryParams
-      }, `teacher_${new Date().getTime()}.xlsx`)
-    }
+      exportTeacher(this.queryParams).then(response => {
+        this.download(response.msg);
+      });
+    },
+    // 导入相关方法
+    handleImport() {
+      this.upload.open = true;
+    },
+    handleFileUploadProgress(event) {
+      this.upload.isUploading = true;
+    },
+    handleFileSuccess(response, file) {
+      this.upload.open = false;
+      this.upload.isUploading = false;
+      this.$refs.upload.clearFiles();
+      this.$message.success(response.msg);
+      this.getList();
+    },
+    importTemplate() {
+      importTemplate().then(response => {
+        this.download(response.msg);
+      });
+    },
+    submitFileForm() {
+      this.$refs.upload.submit();
+    },
   }
 };
 </script>

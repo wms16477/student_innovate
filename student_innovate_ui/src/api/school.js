@@ -49,4 +49,31 @@ export function getSchoolOptions() {
     url: '/school/list',
     method: 'get'
   })
+}
+
+// 导出学校
+export function exportSchool(query) {
+  return request({
+    url: '/school/export',
+    method: 'post',
+    params: query
+  })
+}
+
+// 获取学校导入模板
+export function importTemplate() {
+  return request({
+    url: '/school/importTemplate',
+    method: 'post',
+    responseType: 'blob'
+  })
+}
+
+// 导入学校数据
+export function importData(data) {
+  return request({
+    url: '/school/importData',
+    method: 'post',
+    data: data
+  })
 } 

@@ -22,6 +22,7 @@ import com.xinghe.web.domain.Teacher;
 import com.xinghe.web.service.TeacherService;
 import com.xinghe.common.utils.poi.ExcelUtil;
 import com.xinghe.common.core.page.TableDataInfo;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 老师Controller
@@ -55,6 +56,28 @@ public class TeacherController extends BaseController {
         List<Teacher> list = teacherService.selectList(teacher);
         ExcelUtil<Teacher> util = new ExcelUtil<Teacher>(Teacher.class);
         util.exportExcel(response, list, "老师数据");
+    }
+
+    /**
+     * 获取导入模板
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        ExcelUtil<Teacher> util = new ExcelUtil<Teacher>(Teacher.class);
+        util.importTemplateExcel(response, "老师数据");
+    }
+
+    /**
+     * 批量导入老师数据
+     */
+    @Log(title = "老师", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public AjaxResult importData(MultipartFile file) throws Exception {
+        ExcelUtil<Teacher> util = new ExcelUtil<Teacher>(Teacher.class);
+        List<Teacher> teacherList = util.importExcel(file.getInputStream());
+        
+        String message = teacherService.importTeachers(teacherList);
+        return success(message);
     }
 
     /**

@@ -35,6 +35,24 @@
           @click="handleAdd"
         >新增</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          @click="handleExport"
+        >导出</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="success"
+          plain
+          icon="el-icon-upload2"
+          size="mini"
+          @click="handleImport"
+        >导入</el-button>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -81,11 +99,39 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+    
+    <!-- 导入对话框 -->
+    <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
+      <el-upload
+        ref="upload"
+        :limit="1"
+        accept=".xlsx, .xls"
+        :headers="upload.headers"
+        :action="upload.url"
+        :disabled="upload.isUploading"
+        :on-progress="handleFileUploadProgress"
+        :on-success="handleFileSuccess"
+        :auto-upload="false"
+        drag
+      >
+        <i class="el-icon-upload"></i>
+        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+        <div class="el-upload__tip text-center" slot="tip">
+          <span>仅允许导入xls、xlsx格式文件。</span>
+          <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="importTemplate">下载模板</el-link>
+        </div>
+      </el-upload>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitFileForm">确 定</el-button>
+        <el-button @click="upload.open = false">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listSchool, getSchool, delSchool, addSchool, updateSchool } from "@/api/school";
+import { listSchool, getSchool, delSchool, addSchool, updateSchool, exportSchool, importTemplate, importData } from "@/api/school";
+import { getToken } from "@/utils/auth";
 
 export default {
   name: "School",
@@ -126,6 +172,13 @@ export default {
         schoolName: [
           { required: true, message: "学校名称不能为空", trigger: "blur" }
         ]
+      },
+      upload: {
+        title: "导入学校",
+        open: false,
+        url: process.env.VUE_APP_BASE_API + "/school/importData",
+        headers: { Authorization: "Bearer " + getToken() },
+        isUploading: false
       }
     };
   },
@@ -219,6 +272,33 @@ export default {
         this.getList();
         this.$modal.msgSuccess("删除成功");
       }).catch(() => {});
+    },
+    /** 导出按钮操作 */
+    handleExport() {
+      exportSchool(this.queryParams).then(response => {
+        this.download(response.msg);
+      });
+    },
+    handleImport() {
+      this.upload.open = true;
+    },
+    handleFileUploadProgress(event, file) {
+      this.upload.isUploading = true;
+    },
+    handleFileSuccess(response, file) {
+      this.upload.open = false;
+      this.upload.isUploading = false;
+      this.$refs.upload.clearFiles();
+      this.$message.success(response.msg);
+      this.getList();
+    },
+    importTemplate() {
+      importTemplate().then(response => {
+        this.download(response.msg);
+      });
+    },
+    submitFileForm() {
+      this.$refs.upload.submit();
     }
   }
 };

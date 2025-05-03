@@ -75,4 +75,57 @@ public class SchoolServiceImpl extends ServiceImpl<SchoolMapper, School> impleme
         user.setRoleIds(new Long[]{Constants.SCHOOL_ROLE_ID});
         userService.insertUser(user);
     }
+    
+    /**
+     * 导入学校数据
+     * 
+     * @param schoolList 学校数据列表
+     * @return 结果
+     */
+    @Override
+    public String importSchools(List<School> schoolList) {
+        if (StringUtils.isNull(schoolList) || schoolList.isEmpty()) {
+            throw new ServiceException("导入学校数据不能为空！");
+        }
+        
+        int successNum = 0;
+        int failureNum = 0;
+        StringBuilder successMsg = new StringBuilder();
+        StringBuilder failureMsg = new StringBuilder();
+        
+        for (School school : schoolList) {
+            try {
+                // 验证必要字段
+                if (StringUtils.isEmpty(school.getSchoolCode())) {
+                    failureNum++;
+                    failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据学校编码为空");
+                    continue;
+                }
+                
+                if (StringUtils.isEmpty(school.getSchoolName())) {
+                    failureNum++;
+                    failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据学校名称为空");
+                    continue;
+                }
+                
+                // 添加学校
+                addSchool(school);
+                successNum++;
+                successMsg.append("<br/>第 ").append(successNum).append(" 条数据导入成功");
+            } catch (Exception e) {
+                failureNum++;
+                String msg = "<br/>第 " + (successNum + failureNum) + " 条数据导入失败：";
+                failureMsg.append(msg).append(e.getMessage());
+            }
+        }
+        
+        if (failureNum > 0) {
+            failureMsg.insert(0, "很抱歉，导入失败！共 " + failureNum + " 条数据格式不正确，错误如下：");
+            throw new ServiceException(failureMsg.toString());
+        } else {
+            successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条，数据如下：");
+        }
+        
+        return successMsg.toString();
+    }
 }
