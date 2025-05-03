@@ -21,23 +21,13 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <el-col :span="1.5" v-if="isTeacherRole">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd">新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate">修改</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete">删除</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-upload2" size="mini" :disabled="submitDisabled" @click="handleSubmit">提交</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="expenseList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
+    <el-table v-loading="loading" :data="expenseList">
       <el-table-column label="项目名称" align="center" prop="projectName" :show-overflow-tooltip="true" />
       <el-table-column label="支出名称" align="center" prop="expenseName" :show-overflow-tooltip="true" />
       <el-table-column label="支出类型" align="center" prop="expenseType">
@@ -64,13 +54,13 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('修改')" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('删除')" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('提交')" size="mini" type="text" icon="el-icon-upload2" @click="handleSubmit(scope.row)">提交</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('修改') && isTeacherRole" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('删除') && isTeacherRole" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('提交') && isTeacherRole" size="mini" type="text" icon="el-icon-upload2" @click="handleSubmit(scope.row)">提交</el-button>
           <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('批准')" size="mini" type="text" icon="el-icon-check" @click="handleApprove(scope.row, true)">批准</el-button>
           <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleApprove(scope.row, false)">拒绝</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校批准')" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">学校批准</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">学校拒绝</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校批准')" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">批准</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">拒绝</el-button>
           <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('标记已支付')" size="mini" type="text" icon="el-icon-money" @click="handleMarkAsPaid(scope.row)">标记已支付</el-button>
         </template>
       </el-table-column>
@@ -101,17 +91,17 @@
           <el-input v-model="form.expenseName" placeholder="请输入支出名称" />
         </el-form-item>
         <el-form-item label="预算" prop="budgetId">
-          <el-select v-model="form.budgetId" placeholder="请选择预算">
+          <el-select v-model="form.budgetId" placeholder="请选择预算" @change="handleBudgetChange">
             <el-option
               v-for="item in budgetOptions"
               :key="item.id"
-              :label="item.budgetName + ' - ' + (item.budgetType | budgetTypeFilter) + ' - 剩余' + item.remainingAmount + '元'"
+              :label="item.budgetName + '（剩余' + item.remainingAmount + '元）'"
               :value="item.id"
             ></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="支出类型" prop="expenseType">
-          <el-select v-model="form.expenseType" placeholder="请选择支出类型">
+          <el-select v-model="form.expenseType" placeholder="请选择支出类型" disabled>
             <el-option
               v-for="dict in expenseTypeOptions"
               :key="dict.value"
@@ -134,7 +124,7 @@
         <el-form-item label="支出说明" prop="expenseDesc">
           <el-input v-model="form.expenseDesc" type="textarea" placeholder="请输入支出说明" />
         </el-form-item>
-        <el-form-item label="票据附件" prop="fileUrl">
+        <el-form-item label="上传票据" prop="fileUrl">
           <el-upload
             class="upload-demo"
             :action="uploadFileUrl"
@@ -146,9 +136,10 @@
             :limit="1"
             list-type="picture-card"
             accept=".jpg,.jpeg,.png"
+            :disabled="!!form.fileUrl"
           >
-            <i class="el-icon-plus"></i>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png图片文件，且不超过10MB</div>
+            <i v-if="!form.fileUrl" class="el-icon-plus"></i>
+            <div slot="tip" class="el-upload__tip">只能上传jpg/jpeg/png格式的票据文件，且不超过10MB</div>
           </el-upload>
         </el-form-item>
       </el-form>
@@ -238,6 +229,8 @@ export default {
   },
   data() {
     return {
+      // 是否为教师角色
+      isTeacherRole: false,
       // 遮罩层
       loading: true,
       // 选中数组
@@ -357,8 +350,15 @@ export default {
   created() {
     this.getList();
     this.getProjectOptions();
+    this.checkUserRole();
   },
   methods: {
+    /** 检查用户角色 */
+    checkUserRole() {
+      // 通过读取用户角色信息，判断是否为教师角色
+      const roles = this.$store.getters && this.$store.getters.roles;
+      this.isTeacherRole = roles.includes('teacher');
+    },
     /** 查询支出列表 */
     getList() {
       this.loading = true;
@@ -395,8 +395,8 @@ export default {
         return;
       }
 
-      // 不再按状态过滤，获取所有与项目相关的预算
-      listFundBudget({ projectId: projectId }).then(response => {
+      // 只获取已批准状态的预算
+      listFundBudget({ projectId: projectId, status: 'APPROVED' }).then(response => {
         console.log("获取到预算列表:", response.rows);
         this.budgetOptions = response.rows || [];
       }).catch(error => {
@@ -408,6 +408,16 @@ export default {
     handleProjectChange(val) {
       this.form.budgetId = null;
       this.getBudgetOptions(val);
+    },
+    /** 处理预算变更 */
+    handleBudgetChange(val) {
+      if (val) {
+        const selectedBudget = this.budgetOptions.find(item => item.id === val);
+        if (selectedBudget) {
+          // 设置支出类型与预算类型一致
+          this.form.expenseType = selectedBudget.budgetType;
+        }
+      }
     },
     // 取消按钮
     cancel() {
@@ -439,37 +449,36 @@ export default {
       this.resetForm("queryForm");
       this.handleQuery();
     },
-    // 多选框选中数据
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.id);
-      this.single = selection.length !== 1;
-      this.multiple = !selection.length;
-
-      // 只有状态为草稿或已拒绝的记录才能提交
-      this.submitDisabled = true;
-      if (selection.length > 0) {
-        const canSubmit = selection.every(item =>
-          item.status === 'DRAFT' || item.status === 'REJECTED'
-        );
-        this.submitDisabled = !canSubmit;
-      }
-    },
     /** 文件上传成功处理 */
     handleFileSuccess(response, file, fileList) {
-      this.form.fileUrl = response.data;
+      console.log("票据上传成功，返回数据:", response);
+      if (response.code === 200) {
+        // 直接保存后端返回的文件URL
+        this.form.fileUrl = response.url || response.data;
+        console.log("设置fileUrl成功:", this.form.fileUrl);
+        
+        // 确保fileList中的文件也有正确的URL
+        if (fileList && fileList.length > 0) {
+          fileList[0].url = this.form.fileUrl;
+        }
+        
+        this.$message.success('票据上传成功');
+      } else {
+        this.$message.error('票据上传失败: ' + response.msg);
+      }
       this.fileList = fileList;
     },
     /** 文件上传前检查 */
     beforeFileUpload(file) {
-      const isImage = file.type.indexOf('image') !== -1;
+      const isValidFormat = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg';
       const isLt10M = file.size / 1024 / 1024 < 10;
 
-      if (!isImage) {
-        this.$message.error('只能上传图片文件!');
+      if (!isValidFormat) {
+        this.$message.error('只能上传JPG/JPEG/PNG格式的票据文件!');
         return false;
       }
       if (!isLt10M) {
-        this.$message.error('上传文件大小不能超过 10MB!');
+        this.$message.error('上传票据文件大小不能超过10MB!');
         return false;
       }
       return true;
@@ -477,10 +486,13 @@ export default {
     /** 文件删除处理 */
     handleFileRemove() {
       this.form.fileUrl = null;
+      this.fileList = [];
     },
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
+      console.log("新增初始化form:", JSON.stringify(this.form));
+      console.log("新增初始化fileList:", this.fileList);
       this.open = true;
       this.title = "添加支出";
     },
@@ -490,9 +502,19 @@ export default {
       const id = row.id || this.ids[0];
       getFundExpense(id).then(response => {
         this.form = response.data;
+        console.log("修改支出获取到数据:", this.form);
+        console.log("fileUrl:", this.form.fileUrl);
+        
+        // 设置文件列表显示已上传票据
         if (this.form.fileUrl) {
-          this.fileList = [{ name: '已上传文件', url: this.form.fileUrl }];
+          this.fileList = [{ 
+            name: '已上传票据', 
+            url: this.form.fileUrl 
+          }];
+        } else {
+          this.fileList = [];
         }
+        
         this.getBudgetOptions(this.form.projectId);
         this.open = true;
         this.title = "修改支出";
@@ -506,23 +528,31 @@ export default {
         if (!this.viewForm.projectName && row.projectName) {
           this.viewForm.projectName = row.projectName;
         }
+        console.log("查看支出详情:", this.viewForm);
         this.viewOpen = true;
       });
     },
     /** 提交按钮操作 */
     handleSubmit(row) {
       const id = row.id || this.ids[0];
-      this.$modal.confirm('是否确认提交该支出？').then(function() {
-        return submitFundExpense(id);
-      }).then(() => {
-        this.getList();
-        this.$modal.msgSuccess("提交成功");
+      // 先获取完整的支出数据(包含fileUrl)
+      getFundExpense(id).then(response => {
+        const expenseData = response.data;
+        this.$modal.confirm('是否确认提交该支出？').then(() => {
+          return submitFundExpense(id);
+        }).then(() => {
+          this.getList();
+          this.$modal.msgSuccess("提交成功");
+        }).catch(error => {
+          // 只有当error不是空对象时才显示错误信息（用户取消不会有具体错误对象）
+          if (error && (error.message || error.stack || error.name)) {
+            console.error("提交支出失败:", error);
+            this.$message.error("提交支出失败，请检查网络或联系管理员");
+          }
+        });
       }).catch(error => {
-        // 只有当error不是空对象时才显示错误信息（用户取消不会有具体错误对象）
-        if (error && (error.message || error.stack || error.name)) {
-          console.error("提交支出失败:", error);
-          this.$message.error("提交支出失败，请检查网络或联系管理员");
-        }
+        console.error("获取支出详情失败:", error);
+        this.$message.error("获取支出详情失败，请检查网络或联系管理员");
       });
     },
     /** 审批按钮操作 */
@@ -578,21 +608,57 @@ export default {
     },
     /** 提交按钮 */
     submitForm(submit) {
+      console.log("提交前form状态:", JSON.stringify(this.form));
+      console.log("提交前fileList状态:", this.fileList);
+      
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.id != null) {
-            updateFundExpense(this.form, submit).then(response => {
-              this.$modal.msgSuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addFundExpense(this.form, submit).then(response => {
-              this.$modal.msgSuccess("新增成功");
-              this.open = false;
-              this.getList();
-            });
+          // 确保获取到正确的fileUrl
+          if (this.fileList.length > 0 && !this.form.fileUrl) {
+            const file = this.fileList[0];
+            console.log("从fileList获取文件信息:", file);
+            
+            if (file.response) {
+              this.form.fileUrl = file.response.url || file.response.data;
+              console.log("从response获取fileUrl:", this.form.fileUrl);
+            } else if (file.url) {
+              this.form.fileUrl = file.url;
+              console.log("从url获取fileUrl:", this.form.fileUrl);
+            }
           }
+          
+          console.log("提交前最终fileUrl:", this.form.fileUrl);
+          
+          // 始终确保fileUrl字段存在并正确传递
+          const submitForm = {
+            ...this.form
+          };
+          
+          // 强制打印确认文件URL是否正确传递
+          console.log("最终提交的表单数据:", JSON.stringify(submitForm));
+          console.log("最终提交的fileUrl:", submitForm.fileUrl);
+          
+          this.$confirm('确认提交?', '提交确认', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            if (this.form.id != null) {
+              updateFundExpense(submitForm, submit).then(response => {
+                this.$modal.msgSuccess("修改成功");
+                this.open = false;
+                this.getList();
+              });
+            } else {
+              addFundExpense(submitForm, submit).then(response => {
+                this.$modal.msgSuccess("新增成功");
+                this.open = false;
+                this.getList();
+              });
+            }
+          }).catch(() => {
+            this.$message.info('已取消提交');
+          });
         }
       });
     },

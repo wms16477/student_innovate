@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" v-if="isSchoolRole">
     <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="项目名称" prop="projectName">
         <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable size="small" @keyup.enter.native="handleQuery" />
@@ -26,17 +26,13 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <el-col :span="1.5" v-if="isSchoolRole">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd">新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete">删除</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="paymentList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
+    <el-table v-loading="loading" :data="paymentList">
       <el-table-column label="项目名称" align="center" prop="projectName" :show-overflow-tooltip="true" />
       <el-table-column label="支付金额" align="center" prop="paymentAmount" />
       <el-table-column label="支付方式" align="center" prop="paymentMethod">
@@ -83,17 +79,17 @@
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="支出申请" prop="expenseId">
-          <el-select v-model="form.expenseId" placeholder="请选择支出申请" filterable>
+          <el-select v-model="form.expenseId" placeholder="请选择支出申请" filterable @change="handleExpenseChange">
             <el-option
               v-for="item in expenseOptions"
               :key="item.id"
-              :label="`${item.projectName} - ${item.expenseType | expenseTypeFilter} - ${item.expenseAmount}元`"
+              :label="item.expenseName"
               :value="item.id"
             ></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="支付金额" prop="paymentAmount">
-          <el-input-number v-model="form.paymentAmount" :precision="2" :min="0" :step="100" />
+          <el-input-number v-model="form.paymentAmount" :precision="2" :min="0" :step="100" :disabled="true" />
         </el-form-item>
         <el-form-item label="支付日期" prop="paymentDate">
           <el-date-picker
@@ -268,12 +264,17 @@ export default {
         paymentMethod: [
           { required: true, message: "支付方式不能为空", trigger: "change" }
         ]
-      }
+      },
+      // 是否为教师角色
+      isTeacherRole: false,
+      // 是否为学校角色 
+      isSchoolRole: false
     };
   },
   created() {
     this.getList();
     this.getExpenseOptions();
+    this.checkUserRole();
   },
   methods: {
     /** 查询支付记录列表 */
@@ -336,10 +337,22 @@ export default {
       this.resetForm("queryForm");
       this.handleQuery();
     },
-    // 多选框选中数据
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.id);
-      this.multiple = !selection.length;
+    /** 检查用户角色 */
+    checkUserRole() {
+      // 通过读取用户角色信息，判断是否为学校角色
+      const roles = this.$store.getters && this.$store.getters.roles;
+      this.isSchoolRole = roles.includes('school');
+      this.isTeacherRole = roles.includes('teacher');
+    },
+    /** 处理支出选择 */
+    handleExpenseChange(val) {
+      if (val) {
+        const selectedExpense = this.expenseOptions.find(item => item.id === val);
+        if (selectedExpense) {
+          // 设置支付金额等于支出金额
+          this.form.paymentAmount = selectedExpense.expenseAmount;
+        }
+      }
     },
     /** 新增按钮操作 */
     handleAdd() {

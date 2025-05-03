@@ -21,23 +21,13 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <el-col :span="1.5" v-if="isTeacherRole">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd">新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate">修改</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete">删除</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="warning" plain icon="el-icon-upload2" size="mini" :disabled="submitDisabled" @click="handleSubmit">提交</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="budgetList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
+    <el-table v-loading="loading" :data="budgetList">
       <el-table-column label="项目名称" align="center" prop="projectName" :show-overflow-tooltip="true" />
       <el-table-column label="预算名称" align="center" prop="budgetName" :show-overflow-tooltip="true" />
       <el-table-column label="预算类型" align="center" prop="budgetType">
@@ -60,13 +50,13 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('修改')" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('删除')" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('提交')" size="mini" type="text" icon="el-icon-upload2" @click="handleSubmit(scope.row)">提交</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('修改') && isTeacherRole" size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)">修改</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('删除') && isTeacherRole" size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('提交') && isTeacherRole" size="mini" type="text" icon="el-icon-upload2" @click="handleSubmit(scope.row)">提交</el-button>
           <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('批准')" size="mini" type="text" icon="el-icon-check" @click="handleApprove(scope.row, true)">批准</el-button>
           <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleApprove(scope.row, false)">拒绝</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校批准')" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">学校批准</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">学校拒绝</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校批准')" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">批准</el-button>
+          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">拒绝</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -178,6 +168,8 @@ export default {
   name: "BudgetTab",
   data() {
     return {
+      // 是否为教师角色
+      isTeacherRole: false,
       // 遮罩层
       loading: true,
       // 选中数组
@@ -277,8 +269,15 @@ export default {
   created() {
     this.getList();
     this.getProjectOptions();
+    this.checkUserRole();
   },
   methods: {
+    /** 检查用户角色 */
+    checkUserRole() {
+      // 通过读取用户角色信息，判断是否为教师角色
+      const roles = this.$store.getters && this.$store.getters.roles;
+      this.isTeacherRole = roles.includes('teacher');
+    },
     /** 查询预算列表 */
     getList() {
       this.loading = true;
@@ -337,21 +336,6 @@ export default {
     resetQuery() {
       this.resetForm("queryForm");
       this.handleQuery();
-    },
-    // 多选框选中数据
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.id);
-      this.single = selection.length !== 1;
-      this.multiple = !selection.length;
-
-      // 只有状态为草稿或已拒绝的记录才能提交
-      this.submitDisabled = true;
-      if (selection.length > 0) {
-        const canSubmit = selection.every(item =>
-          item.status === 'DRAFT' || item.status === 'REJECTED'
-        );
-        this.submitDisabled = !canSubmit;
-      }
     },
     /** 新增按钮操作 */
     handleAdd() {
