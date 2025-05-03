@@ -39,12 +39,14 @@
     <el-table v-loading="loading" :data="budgetList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="项目名称" align="center" prop="projectName" :show-overflow-tooltip="true" />
+      <el-table-column label="预算名称" align="center" prop="budgetName" :show-overflow-tooltip="true" />
       <el-table-column label="预算类型" align="center" prop="budgetType">
         <template slot-scope="scope">
           <dict-tag :options="budgetTypeOptions" :value="scope.row.budgetType"/>
         </template>
       </el-table-column>
       <el-table-column label="预算金额" align="center" prop="budgetAmount" />
+      <el-table-column label="剩余金额" align="center" prop="remainingAmount" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="statusOptions" :value="scope.row.status"/>
@@ -90,6 +92,9 @@
             ></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="预算名称" prop="budgetName">
+          <el-input v-model="form.budgetName" placeholder="请输入预算名称" />
+        </el-form-item>
         <el-form-item label="预算类型" prop="budgetType">
           <el-select v-model="form.budgetType" placeholder="请选择预算类型">
             <el-option
@@ -118,10 +123,12 @@
     <el-dialog title="预算详情" :visible.sync="viewOpen" width="600px" append-to-body>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="项目名称">{{ viewForm.projectName }}</el-descriptions-item>
+        <el-descriptions-item label="预算名称">{{ viewForm.budgetName }}</el-descriptions-item>
         <el-descriptions-item label="预算类型">
           <dict-tag :options="budgetTypeOptions" :value="viewForm.budgetType"/>
         </el-descriptions-item>
         <el-descriptions-item label="预算金额">{{ viewForm.budgetAmount }}</el-descriptions-item>
+        <el-descriptions-item label="剩余金额">{{ viewForm.remainingAmount }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <dict-tag :options="statusOptions" :value="viewForm.status"/>
         </el-descriptions-item>
@@ -249,8 +256,11 @@ export default {
         projectId: [
           { required: true, message: "项目不能为空", trigger: "blur" }
         ],
+        budgetName: [
+          { required: true, message: "预算名称不能为空", trigger: "blur" }
+        ],
         budgetType: [
-          { required: true, message: "预算类型不能为空", trigger: "change" }
+          { required: true, message: "预算类型不能为空", trigger: "blur" }
         ],
         budgetAmount: [
           { required: true, message: "预算金额不能为空", trigger: "blur" }

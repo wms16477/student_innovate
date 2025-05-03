@@ -3,13 +3,19 @@ package com.xinghe.web.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xinghe.common.exception.ServiceException;
 import com.xinghe.common.utils.SecurityUtils;
+import com.xinghe.web.domain.InnoProjectFundBudget;
 import com.xinghe.web.domain.InnoProjectFundExpense;
 import com.xinghe.web.enums.FundStatusEnum;
+import com.xinghe.web.mapper.InnoProjectFundBudgetMapper;
 import com.xinghe.web.mapper.InnoProjectFundExpenseMapper;
+import com.xinghe.web.service.InnoProjectFundBudgetService;
 import com.xinghe.web.service.InnoProjectFundExpenseService;
 import com.xinghe.web.util.ProjectUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -20,6 +26,12 @@ import java.util.Date;
 @Service
 public class InnoProjectFundExpenseServiceImpl extends ServiceImpl<InnoProjectFundExpenseMapper, InnoProjectFundExpense>
         implements InnoProjectFundExpenseService {
+        
+    @Autowired
+    private InnoProjectFundBudgetService budgetService;
+    
+    @Autowired
+    private InnoProjectFundBudgetMapper budgetMapper;
 
     /**
      * 审批经费支出
@@ -29,6 +41,7 @@ public class InnoProjectFundExpenseServiceImpl extends ServiceImpl<InnoProjectFu
      * @return 结果
      */
     @Override
+    @Transactional
     public int approveExpense(boolean isApprove, InnoProjectFundExpense expense) {
         // 检查状态
         InnoProjectFundExpense db = getById(expense.getId());
@@ -46,6 +59,23 @@ public class InnoProjectFundExpenseServiceImpl extends ServiceImpl<InnoProjectFu
         db.setApproveDesc(expense.getApproveDesc());
         db.setStatus(isApprove ? FundStatusEnum.APPROVED.name() : FundStatusEnum.REJECTED.name());
         
+        // 如果批准，需要扣减预算剩余金额
+        if (isApprove && db.getBudgetId() != null) {
+            InnoProjectFundBudget budget = budgetService.getById(db.getBudgetId());
+            if (budget == null) {
+                throw new ServiceException("预算不存在");
+            }
+            
+            // 检查预算剩余金额是否足够
+            if (budget.getRemainingAmount().compareTo(db.getExpenseAmount()) < 0) {
+                throw new ServiceException("预算剩余金额不足，无法批准支出");
+            }
+            
+            // 扣减预算剩余金额
+            budget.setRemainingAmount(budget.getRemainingAmount().subtract(db.getExpenseAmount()));
+            budgetService.updateById(budget);
+        }
+        
         return baseMapper.updateById(db);
     }
     
@@ -58,6 +88,7 @@ public class InnoProjectFundExpenseServiceImpl extends ServiceImpl<InnoProjectFu
      * @return 结果
      */
     @Override
+    @Transactional
     public int schoolApproveExpense(boolean isApprove, InnoProjectFundExpense expense, Long schoolId) {
         // 检查状态
         InnoProjectFundExpense db = getById(expense.getId());
@@ -81,6 +112,23 @@ public class InnoProjectFundExpenseServiceImpl extends ServiceImpl<InnoProjectFu
         db.setSchoolApproveTime(new Date());
         db.setSchoolApproveDesc(expense.getSchoolApproveDesc());
         db.setStatus(isApprove ? FundStatusEnum.APPROVED.name() : FundStatusEnum.REJECTED.name());
+        
+        // 如果批准，需要扣减预算剩余金额
+        if (isApprove && db.getBudgetId() != null) {
+            InnoProjectFundBudget budget = budgetService.getById(db.getBudgetId());
+            if (budget == null) {
+                throw new ServiceException("预算不存在");
+            }
+            
+            // 检查预算剩余金额是否足够
+            if (budget.getRemainingAmount().compareTo(db.getExpenseAmount()) < 0) {
+                throw new ServiceException("预算剩余金额不足，无法批准支出");
+            }
+            
+            // 扣减预算剩余金额
+            budget.setRemainingAmount(budget.getRemainingAmount().subtract(db.getExpenseAmount()));
+            budgetService.updateById(budget);
+        }
         
         return baseMapper.updateById(db);
     }

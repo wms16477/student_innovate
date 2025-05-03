@@ -11,11 +11,13 @@ import com.xinghe.system.domain.SysUserRole;
 import com.xinghe.system.mapper.SysUserRoleMapper;
 import com.xinghe.web.constants.Constants;
 import com.xinghe.web.domain.InnoProjectFundExpense;
+import com.xinghe.web.domain.InnoProjectFundBudget;
 import com.xinghe.web.domain.School;
 import com.xinghe.web.dto.InnoProjectFundExpenseDTO;
 import com.xinghe.web.enums.FundStatusEnum;
 import com.xinghe.web.mapper.InnoProjectFundExpenseMapper;
 import com.xinghe.web.service.InnoProjectFundExpenseService;
+import com.xinghe.web.service.InnoProjectFundBudgetService;
 import com.xinghe.web.service.SchoolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +47,9 @@ public class InnoProjectFundExpenseController extends BaseController {
     
     @Autowired
     private SysUserRoleMapper sysUserRoleMapper;
+    
+    @Autowired
+    private InnoProjectFundBudgetService budgetService;
     
     /**
      * 查询经费支出列表
@@ -138,6 +143,24 @@ public class InnoProjectFundExpenseController extends BaseController {
             return error("项目ID不能为空");
         }
         
+        // 如果选择了预算，检查预算剩余金额是否足够
+        if (expense.getBudgetId() != null) {
+            InnoProjectFundBudget budget = budgetService.getById(expense.getBudgetId());
+            if (budget == null) {
+                return error("预算不存在");
+            }
+            
+            // 检查预算是否已批准
+            if (!FundStatusEnum.APPROVED.name().equals(budget.getStatus())) {
+                return error("只能关联已批准的预算");
+            }
+            
+            // 检查预算剩余金额是否足够
+            if (budget.getRemainingAmount().compareTo(expense.getExpenseAmount()) < 0) {
+                return error("预算剩余金额不足，剩余" + budget.getRemainingAmount() + "元，支出" + expense.getExpenseAmount() + "元");
+            }
+        }
+        
         // 设置状态
         expense.setStatus(submit ? FundStatusEnum.SUBMITTED.name() : FundStatusEnum.DRAFT.name());
         
@@ -165,6 +188,27 @@ public class InnoProjectFundExpenseController extends BaseController {
         if (!FundStatusEnum.DRAFT.name().equals(db.getStatus()) && 
             !FundStatusEnum.REJECTED.name().equals(db.getStatus())) {
             return error("只有草稿或已拒绝状态才能修改");
+        }
+        
+        // 如果更改了预算或金额，检查预算剩余金额是否足够
+        if (expense.getBudgetId() != null && 
+            (db.getBudgetId() == null || !db.getBudgetId().equals(expense.getBudgetId()) ||
+             expense.getExpenseAmount().compareTo(db.getExpenseAmount()) != 0)) {
+            
+            InnoProjectFundBudget budget = budgetService.getById(expense.getBudgetId());
+            if (budget == null) {
+                return error("预算不存在");
+            }
+            
+            // 检查预算是否已批准
+            if (!FundStatusEnum.APPROVED.name().equals(budget.getStatus())) {
+                return error("只能关联已批准的预算");
+            }
+            
+            // 检查预算剩余金额是否足够
+            if (budget.getRemainingAmount().compareTo(expense.getExpenseAmount()) < 0) {
+                return error("预算剩余金额不足，剩余" + budget.getRemainingAmount() + "元，支出" + expense.getExpenseAmount() + "元");
+            }
         }
         
         // 如果提交，更新状态

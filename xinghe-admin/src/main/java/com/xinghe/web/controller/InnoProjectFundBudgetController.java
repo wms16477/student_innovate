@@ -20,6 +20,7 @@ import com.xinghe.web.service.SchoolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -132,6 +133,9 @@ public class InnoProjectFundBudgetController extends BaseController {
             return error("项目ID不能为空");
         }
         
+        // 确保初始剩余金额等于预算金额
+        budget.setRemainingAmount(budget.getBudgetAmount());
+        
         // 设置状态
         budget.setStatus(submit ? FundStatusEnum.SUBMITTED.name() : FundStatusEnum.DRAFT.name());
         
@@ -159,6 +163,13 @@ public class InnoProjectFundBudgetController extends BaseController {
         if (!FundStatusEnum.DRAFT.name().equals(db.getStatus()) && 
             !FundStatusEnum.REJECTED.name().equals(db.getStatus())) {
             return error("只有草稿或已拒绝状态才能修改");
+        }
+        
+        // 如果修改了预算金额，则相应调整剩余金额
+        if (budget.getBudgetAmount() != null && 
+            budget.getBudgetAmount().compareTo(db.getBudgetAmount()) != 0) {
+            BigDecimal diff = budget.getBudgetAmount().subtract(db.getBudgetAmount());
+            budget.setRemainingAmount(db.getRemainingAmount().add(diff));
         }
         
         // 如果提交，更新状态

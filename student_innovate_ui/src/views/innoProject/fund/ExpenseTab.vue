@@ -39,6 +39,7 @@
     <el-table v-loading="loading" :data="expenseList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="项目名称" align="center" prop="projectName" :show-overflow-tooltip="true" />
+      <el-table-column label="支出名称" align="center" prop="expenseName" :show-overflow-tooltip="true" />
       <el-table-column label="支出类型" align="center" prop="expenseType">
         <template slot-scope="scope">
           <dict-tag :options="expenseTypeOptions" :value="scope.row.expenseType"/>
@@ -96,12 +97,15 @@
             ></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="支出名称" prop="expenseName">
+          <el-input v-model="form.expenseName" placeholder="请输入支出名称" />
+        </el-form-item>
         <el-form-item label="预算" prop="budgetId">
           <el-select v-model="form.budgetId" placeholder="请选择预算">
             <el-option
               v-for="item in budgetOptions"
               :key="item.id"
-              :label="(item.budgetType | budgetTypeFilter) + ' - ' + item.budgetAmount + '元 ' + (item.status === 'APPROVED' ? '(已批准)' : '')"
+              :label="item.budgetName + ' - ' + (item.budgetType | budgetTypeFilter) + ' - 剩余' + item.remainingAmount + '元'"
               :value="item.id"
             ></el-option>
           </el-select>
@@ -132,6 +136,7 @@
         </el-form-item>
         <el-form-item label="票据附件" prop="fileUrl">
           <el-upload
+            class="upload-demo"
             :action="uploadFileUrl"
             :headers="headers"
             :file-list="fileList"
@@ -139,9 +144,11 @@
             :before-upload="beforeFileUpload"
             :on-remove="handleFileRemove"
             :limit="1"
+            list-type="picture-card"
+            accept=".jpg,.jpeg,.png"
           >
-            <el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png/pdf文件，且不超过10MB</div>
+            <i class="el-icon-plus"></i>
+            <div slot="tip" class="el-upload__tip">只能上传jpg/png图片文件，且不超过10MB</div>
           </el-upload>
         </el-form-item>
       </el-form>
@@ -156,6 +163,7 @@
     <el-dialog title="支出详情" :visible.sync="viewOpen" width="600px" append-to-body>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="项目名称">{{ viewForm.projectName }}</el-descriptions-item>
+        <el-descriptions-item label="支出名称">{{ viewForm.expenseName }}</el-descriptions-item>
         <el-descriptions-item label="支出类型">
           <dict-tag :options="expenseTypeOptions" :value="viewForm.expenseType"/>
         </el-descriptions-item>
@@ -322,11 +330,14 @@ export default {
         projectId: [
           { required: true, message: "项目不能为空", trigger: "blur" }
         ],
+        expenseName: [
+          { required: true, message: "支出名称不能为空", trigger: "blur" }
+        ],
         budgetId: [
-          { required: true, message: "预算不能为空", trigger: "change" }
+          { required: true, message: "预算不能为空", trigger: "blur" }
         ],
         expenseType: [
-          { required: true, message: "支出类型不能为空", trigger: "change" }
+          { required: true, message: "支出类型不能为空", trigger: "blur" }
         ],
         expenseAmount: [
           { required: true, message: "支出金额不能为空", trigger: "blur" }
@@ -450,13 +461,11 @@ export default {
     },
     /** 文件上传前检查 */
     beforeFileUpload(file) {
-      const isJPG = file.type === 'image/jpeg';
-      const isPNG = file.type === 'image/png';
-      const isPDF = file.type === 'application/pdf';
+      const isImage = file.type.indexOf('image') !== -1;
       const isLt10M = file.size / 1024 / 1024 < 10;
 
-      if (!isJPG && !isPNG && !isPDF) {
-        this.$message.error('上传文件只能是 JPG/PNG/PDF 格式!');
+      if (!isImage) {
+        this.$message.error('只能上传图片文件!');
         return false;
       }
       if (!isLt10M) {

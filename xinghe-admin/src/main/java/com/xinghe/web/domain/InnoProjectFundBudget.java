@@ -27,6 +27,11 @@ public class InnoProjectFundBudget {
     private Long projectId;
 
     /**
+     * 预算名称
+     */
+    private String budgetName;
+
+    /**
      * 预算类型(MATERIAL:材料费,TRAVEL:差旅费,MEETING:会议费,PRINT:印刷费,OTHER:其他费用)
      */
     private String budgetType;
@@ -35,6 +40,11 @@ public class InnoProjectFundBudget {
      * 预算金额
      */
     private BigDecimal budgetAmount;
+
+    /**
+     * 预算剩余金额
+     */
+    private BigDecimal remainingAmount;
 
     /**
      * 预算说明

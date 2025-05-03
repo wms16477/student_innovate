@@ -27,6 +27,11 @@ public class InnoProjectFundExpense {
     private Long projectId;
 
     /**
+     * 支出名称
+     */
+    private String expenseName;
+
+    /**
      * 预算ID
      */
     private Long budgetId;
