@@ -36,7 +36,8 @@
         <el-card shadow="hover">
           <div class="card-title">预算使用率</div>
           <div class="card-value">{{ formatPercent(overview.budgetUsageRate) }}</div>
-          <el-progress :percentage="overview.budgetUsageRate" :color="getColorByRate(overview.budgetUsageRate)"></el-progress>
+          <el-progress :percentage="overview.budgetUsageRate"
+                       :color="getColorByRate(overview.budgetUsageRate)"></el-progress>
         </el-card>
       </el-col>
     </el-row>
@@ -58,7 +59,7 @@
     </el-row>
 
     <!-- 图表分析区域 -->
-    <el-row :gutter="20" class="chart-area" v-if="selectedProjectId">
+    <el-row :gutter="20" class="chart-area" v-if="selectedProjectId && isDataLoaded">
       <!-- 预算使用情况 -->
       <el-col :span="12">
         <el-card shadow="hover" class="chart-card">
@@ -80,29 +81,29 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="20" class="chart-area" v-if="selectedProjectId">
+    <el-row :gutter="20" class="chart-area" v-if="selectedProjectId && isDataLoaded">
       <!-- 月度支出趋势 -->
-      <el-col :span="24">
-        <el-card shadow="hover" class="chart-card">
-          <div slot="header" class="clearfix">
-            <span>月度支出趋势</span>
-            <div class="year-selector">
-              <el-select v-model="selectedYear" placeholder="选择年份" size="small" @change="loadMonthlyExpenseTrend">
-                <el-option
-                  v-for="year in years"
-                  :key="year"
-                  :label="year"
-                  :value="year">
-                </el-option>
-              </el-select>
-            </div>
-          </div>
-          <div class="chart-container" ref="monthlyTrendChart"></div>
-        </el-card>
-      </el-col>
+      <!--      <el-col :span="24">-->
+      <!--        <el-card shadow="hover" class="chart-card">-->
+      <!--          <div slot="header" class="clearfix">-->
+      <!--            <span>月度支出趋势</span>-->
+      <!--            <div class="year-selector">-->
+      <!--              <el-select v-model="selectedYear" placeholder="选择年份" size="small" @change="loadMonthlyExpenseTrend">-->
+      <!--                <el-option-->
+      <!--                  v-for="year in years"-->
+      <!--                  :key="year"-->
+      <!--                  :label="year"-->
+      <!--                  :value="year">-->
+      <!--                </el-option>-->
+      <!--              </el-select>-->
+      <!--            </div>-->
+      <!--          </div>-->
+      <!--          <div class="chart-container" ref="monthlyTrendChart"></div>-->
+      <!--        </el-card>-->
+      <!--      </el-col>-->
     </el-row>
 
-    <el-row :gutter="20" class="chart-area" v-if="selectedProjectId">
+    <el-row :gutter="20" class="chart-area" v-if="selectedProjectId && isDataLoaded">
       <!-- 支出审批情况 -->
       <el-col :span="12">
         <el-card shadow="hover" class="chart-card">
@@ -132,7 +133,7 @@
 
 <script>
 import * as echarts from 'echarts'
-import { listInnoProject } from "@/api/innoProject"
+import {listInnoProject} from "@/api/innoProject"
 import {
   getFundOverview,
   getBudgetUsage,
@@ -170,13 +171,27 @@ export default {
         monthlyTrend: null,
         approvalStat: null,
         paymentStat: null
-      }
+      },
+
+      // 数据加载状态
+      isDataLoaded: false,
+
+      // 图表数据
+      chartData: {
+        budgetUsage: null,
+        expenseType: null,
+        monthlyTrend: null,
+        approvalStat: null
+      },
+
+      // 加载计数器
+      loadCounter: 0,
+      totalLoadItems: 4
     }
   },
   mounted() {
     this.loadProjectList()
     this.initYears()
-
     // 响应式处理
     window.addEventListener('resize', this.resizeCharts)
   },
@@ -189,9 +204,51 @@ export default {
     })
 
     // 移除事件监听
-    window.removeEventListener('resize', this.resizeCharts)
+    // window.removeEventListener('resize', this.resizeCharts)
+  },
+  watch: {
+    // 监控数据加载状态，当所有数据加载完成后初始化图表
+    loadCounter(newVal) {
+      if (newVal >= this.totalLoadItems) {
+        this.isDataLoaded = true
+        this.$nextTick(() => {
+          // 确保DOM已经更新
+          this.initAllCharts()
+        })
+      }
+    }
   },
   methods: {
+    // 初始化所有图表
+    initAllCharts() {
+      this.$nextTick(() => {
+        // 使用 setTimeout 确保 DOM 已完全渲染
+        setTimeout(() => {
+          if (this.chartData.budgetUsage) {
+            this.renderBudgetUsageChart(this.chartData.budgetUsage)
+          }
+
+          if (this.chartData.expenseType) {
+            this.renderExpenseTypeChart(this.chartData.expenseType)
+          }
+
+          if (this.chartData.monthlyTrend) {
+            this.renderMonthlyTrendChart(this.chartData.monthlyTrend)
+          }
+
+          if (this.chartData.approvalStat) {
+            this.renderApprovalStatChart(this.chartData.approvalStat)
+            if (this.chartData.approvalStat.paymentStatus) {
+              this.renderPaymentStatChart(this.chartData.approvalStat.paymentStatus)
+            }
+          }
+
+          // 手动触发一次 resize 以确保所有图表都能正确渲染
+          this.resizeCharts()
+        }, 300)
+      })
+    },
+
     // 初始化年份选择器
     initYears() {
       const currentYear = new Date().getFullYear()
@@ -216,6 +273,9 @@ export default {
 
     // 处理项目变更
     handleProjectChange(projectId) {
+      // 重置加载状态
+      this.isDataLoaded = false
+      this.loadCounter = 0
       this.loadFundOverview(projectId)
       this.loadBudgetUsage(projectId)
       this.loadExpenseTypeDistribution(projectId)
@@ -233,16 +293,18 @@ export default {
     // 加载预算使用情况
     loadBudgetUsage(projectId) {
       getBudgetUsage(projectId).then(response => {
-        const data = response.data || { budgetNames: [], budgetAmounts: [], usedAmounts: [], remainingAmounts: [] }
-        this.renderBudgetUsageChart(data)
+        const data = response.data || {budgetNames: [], budgetAmounts: [], usedAmounts: [], remainingAmounts: []}
+        this.chartData.budgetUsage = data
+        this.loadCounter++
       })
     },
 
     // 加载支出类型分布
     loadExpenseTypeDistribution(projectId) {
       getExpenseTypeDistribution(projectId).then(response => {
-        const data = response.data || { expenseTypes: [], expenseAmounts: [] }
-        this.renderExpenseTypeChart(data)
+        const data = response.data || {expenseTypes: [], expenseAmounts: []}
+        this.chartData.expenseType = data
+        this.loadCounter++
       })
     },
 
@@ -253,17 +315,25 @@ export default {
         projectId = this.selectedProjectId
       }
       getMonthlyExpenseTrend(projectId, year).then(response => {
-        const data = response.data || { months: [], amounts: [], year: year }
-        this.renderMonthlyTrendChart(data)
+        const data = response.data || {months: [], amounts: [], year: year}
+        this.chartData.monthlyTrend = data
+        this.loadCounter++
+
+        // 如果是通过年份选择器触发的，需要单独渲染图表
+        if (typeof projectId !== 'number' && this.isDataLoaded) {
+          this.$nextTick(() => {
+            this.renderMonthlyTrendChart(data)
+          })
+        }
       })
     },
 
     // 加载支出审批统计
     loadExpenseApprovalStat(projectId) {
       getExpenseApprovalStat(projectId).then(response => {
-        const data = response.data || { statusCounts: {}, statusAmounts: {}, paymentStatus: {} }
-        this.renderApprovalStatChart(data)
-        this.renderPaymentStatChart(data.paymentStatus)
+        const data = response.data || {statusCounts: {}, statusAmounts: {}, paymentStatus: {}}
+        this.chartData.approvalStat = data
+        this.loadCounter++
       })
     },
 
@@ -281,7 +351,7 @@ export default {
       const option = {
         tooltip: {
           trigger: 'axis',
-          axisPointer: { type: 'shadow' },
+          axisPointer: {type: 'shadow'},
           formatter: (params) => {
             const budgetName = params[0].name
             const budgetAmount = params[0].value
@@ -324,21 +394,21 @@ export default {
             name: '预算金额',
             type: 'bar',
             stack: '预算',
-            emphasis: { focus: 'series' },
+            emphasis: {focus: 'series'},
             data: data.budgetAmounts
           },
           {
             name: '已使用',
             type: 'bar',
             stack: '使用情况',
-            emphasis: { focus: 'series' },
+            emphasis: {focus: 'series'},
             data: data.usedAmounts
           },
           {
             name: '剩余预算',
             type: 'bar',
             stack: '使用情况',
-            emphasis: { focus: 'series' },
+            emphasis: {focus: 'series'},
             data: data.remainingAmounts
           }
         ]
@@ -470,8 +540,8 @@ export default {
                 x2: 0,
                 y2: 1,
                 colorStops: [
-                  { offset: 0, color: '#5470c6' },
-                  { offset: 1, color: '#fff' }
+                  {offset: 0, color: '#5470c6'},
+                  {offset: 1, color: '#fff'}
                 ]
               }
             },
@@ -481,8 +551,8 @@ export default {
             data: data.amounts[0],
             markPoint: {
               data: [
-                { type: 'max', name: '最大值' },
-                { type: 'min', name: '最小值' }
+                {type: 'max', name: '最大值'},
+                {type: 'min', name: '最小值'}
               ]
             }
           }
@@ -626,8 +696,8 @@ export default {
               show: false
             },
             data: [
-              { value: paid, name: '已支付', itemStyle: { color: '#67C23A' } },
-              { value: unpaid, name: '未支付', itemStyle: { color: '#E6A23C' } }
+              {value: paid, name: '已支付', itemStyle: {color: '#67C23A'}},
+              {value: unpaid, name: '未支付', itemStyle: {color: '#E6A23C'}}
             ]
           }
         ]
