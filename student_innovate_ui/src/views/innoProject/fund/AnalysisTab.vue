@@ -192,7 +192,57 @@ export default {
       isMounted: false,
       
       // 添加一个定时器ID，用于管理延迟初始化
-      chartInitTimer: null
+      chartInitTimer: null,
+      
+      // 字典映射
+      dictMaps: {
+        // 支出类型字典
+        expenseTypes: {
+          'PRINT': '印刷费',
+          'TRAVEL': '差旅费',
+          'MATERIAL': '材料费',
+          'DEVICE': '设备费',
+          'TEST': '测试费',
+          'CONSULTATION': '咨询费',
+          'MEETING': '会议费',
+          'OTHER': '其他'
+        },
+        // 预算类型字典
+        budgetTypes: {
+          'PRINT': '印刷费',
+          'TRAVEL': '差旅费',
+          'MATERIAL': '材料费',
+          'DEVICE': '设备费',
+          'TEST': '测试费',
+          'CONSULTATION': '咨询费',
+          'MEETING': '会议费',
+          'OTHER': '其他'
+        },
+        // 审批状态字典
+        approvalStatus: {
+          'DRAFT': '草稿',
+          'SUBMITTED': '已提交',
+          'APPROVED': '已批准',
+          'REJECTED': '已拒绝',
+          'SCHOOL_APPROVED': '学校已批准',
+          'SCHOOL_REJECTED': '学校已拒绝',
+          // 添加可能出现的其他状态
+          'PENDING': '待处理',
+          'COMPLETED': '已完成',
+          'REVIEWING': '审核中'
+        },
+        // 支付状态字典
+        paymentStatus: {
+          'PAID': '已支付',
+          'UNPAID': '未支付',
+          // 添加可能出现的其他状态
+          'PROCESSING': '处理中',
+          'REFUNDED': '已退款',
+          'CANCELLED': '已取消'
+        },
+        // 排除显示的状态（不应该在审批图表中显示的状态）
+        excludeFromApproval: ['PAID', 'UNPAID', 'PROCESSING', 'REFUNDED', 'CANCELLED']
+      }
     }
   },
   mounted() {
@@ -351,6 +401,12 @@ export default {
     loadBudgetUsage(projectId) {
       getBudgetUsage(projectId).then(response => {
         const data = response.data || {budgetNames: [], budgetAmounts: [], usedAmounts: [], remainingAmounts: []}
+        
+        // 转换预算名称为中文
+        if (data.budgetNames && data.budgetNames.length > 0) {
+          data.budgetNames = data.budgetNames.map(name => this.dictMaps.budgetTypes[name] || name)
+        }
+        
         this.chartData.budgetUsage = data
         this.loadCounter++
       })
@@ -360,6 +416,14 @@ export default {
     loadExpenseTypeDistribution(projectId) {
       getExpenseTypeDistribution(projectId).then(response => {
         const data = response.data || {expenseTypes: [], expenseAmounts: []}
+        
+        // 转换支出类型为中文
+        if (data.expenseTypes && data.expenseTypes.length > 0) {
+          // 保存原始数据，用于图表渲染时使用
+          data.originalTypes = [...data.expenseTypes]
+          data.expenseTypes = data.expenseTypes.map(type => this.dictMaps.expenseTypes[type] || type)
+        }
+        
         this.chartData.expenseType = data
         this.loadCounter++
       })
@@ -389,6 +453,39 @@ export default {
     loadExpenseApprovalStat(projectId) {
       getExpenseApprovalStat(projectId).then(response => {
         const data = response.data || {statusCounts: {}, statusAmounts: {}, paymentStatus: {}}
+        
+        // 为支付状态添加中文名称
+        if (data.paymentStatus) {
+          // 保持原有数据
+          data.paymentStatus = {
+            ...data.paymentStatus,
+            paidName: this.dictMaps.paymentStatus.PAID,
+            unpaidName: this.dictMaps.paymentStatus.UNPAID
+          }
+        }
+        
+        // 为状态码和状态名称创建映射关系
+        data.statusNameMap = {}
+        if (data.statusCounts) {
+          // 过滤掉不需要显示的状态（如PAID等支付状态不应在审批图中显示）
+          const filterOutStatus = this.dictMaps.excludeFromApproval
+          
+          // 先移除不需要的状态
+          filterOutStatus.forEach(status => {
+            if (data.statusCounts[status] !== undefined) {
+              delete data.statusCounts[status]
+            }
+            if (data.statusAmounts[status] !== undefined) {
+              delete data.statusAmounts[status]
+            }
+          })
+          
+          // 然后为剩余状态创建映射
+          Object.keys(data.statusCounts).forEach(status => {
+            data.statusNameMap[status] = this.dictMaps.approvalStatus[status] || status
+          })
+        }
+        
         this.chartData.approvalStat = data
         this.loadCounter++
       })
@@ -501,7 +598,7 @@ export default {
 
       const pieData = data.expenseTypes.map((type, index) => {
         return {
-          name: type,
+          name: type, // 已经在加载时转换过了
           value: data.expenseAmounts[index]
         }
       })
@@ -658,31 +755,46 @@ export default {
 
       this.charts.approvalStat = echarts.init(chartDom)
 
-      const statusMap = {
-        'DRAFT': '草稿',
-        'SUBMITTED': '已提交',
-        'APPROVED': '已批准',
-        'REJECTED': '已拒绝',
-        'SCHOOL_APPROVED': '学校已批准',
-        'SCHOOL_REJECTED': '学校已拒绝'
-      }
-
+      // 已知的支出审批状态
+      const knownApprovalStatus = Object.keys(this.dictMaps.approvalStatus)
+      
       const pieData = Object.entries(data.statusCounts || {})
-        .filter(([_, count]) => count > 0)
+        .filter(([status, count]) => {
+          // 只显示已知的审批状态或者其他有效的状态，排除不应显示的状态
+          return count > 0 && 
+                 !this.dictMaps.excludeFromApproval.includes(status)
+        })
         .map(([status, count]) => {
           return {
-            name: statusMap[status] || status,
-            value: count
+            name: data.statusNameMap[status] || ('未知状态:' + status),
+            value: count,
+            originalStatus: status // 保存原始状态码，用于查找对应金额
           }
         })
+
+      // 如果没有数据，显示一个空状态
+      if (pieData.length === 0) {
+        pieData.push({
+          name: '暂无数据',
+          value: 1,
+          itemStyle: {
+            color: '#909399'
+          }
+        })
+      }
 
       const option = {
         tooltip: {
           trigger: 'item',
           formatter: (params) => {
+            if (params.name === '暂无数据') {
+              return '暂无审批数据'
+            }
+
             const status = params.name
             const count = params.value
-            const amount = data.statusAmounts[Object.keys(statusMap).find(key => statusMap[key] === status)] || 0
+            const originalStatus = params.data.originalStatus
+            const amount = data.statusAmounts[originalStatus] || 0
 
             return `${status}<br/>
                     数量: ${count} 笔<br/>
@@ -751,6 +863,10 @@ export default {
       const paid = paymentStatus.paid || 0
       const unpaid = paymentStatus.unpaid || 0
       const total = Number(paid) + Number(unpaid)
+      
+      // 使用在加载时保存的中文名称
+      const paidName = paymentStatus.paidName || this.dictMaps.paymentStatus.PAID
+      const unpaidName = paymentStatus.unpaidName || this.dictMaps.paymentStatus.UNPAID
 
       const paidPercent = total > 0 ? (Number(paid) / total * 100).toFixed(2) : 0
 
@@ -788,8 +904,8 @@ export default {
               show: false
             },
             data: [
-              {value: paid, name: '已支付', itemStyle: {color: '#67C23A'}},
-              {value: unpaid, name: '未支付', itemStyle: {color: '#E6A23C'}}
+              {value: paid, name: paidName, itemStyle: {color: '#67C23A'}},
+              {value: unpaid, name: unpaidName, itemStyle: {color: '#E6A23C'}}
             ]
           }
         ]
