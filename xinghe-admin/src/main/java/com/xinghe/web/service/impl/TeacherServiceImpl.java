@@ -11,6 +11,7 @@ import com.xinghe.common.core.domain.entity.SysUser;
 import com.xinghe.common.exception.ServiceException;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
+import com.xinghe.system.mapper.SysUserMapper;
 import com.xinghe.system.service.ISysUserService;
 import com.xinghe.web.constants.Constants;
 import com.xinghe.web.domain.School;
@@ -43,6 +44,9 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
     @Autowired
     private StudentService studentService;
 
+    @Autowired
+    private SysUserMapper sysUserMapper;
+
     /**
      * 查询老师列表
      *
@@ -70,10 +74,8 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
 
     @Override
     public void addTeacher(Teacher teacher) {
-        List<SysUser> sysUsers = userService.selectUserList(new SysUser());
-        List<SysUser> collect = sysUsers.stream().filter(sysUser -> sysUser.getUserName().equals(teacher.getAccount())).collect(Collectors.toList());
-        if (!collect.isEmpty()) {
-            throw new ServiceException("该账号已被注册");
+        if (sysUserMapper.countUserCode(teacher.getAccount()) > 0) {
+            throw new ServiceException("该学号已有学生");
         }
 
         // 如果设置了学校ID，则获取学校名称
@@ -101,10 +103,10 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
         user.setRoleIds(new Long[]{101L});
         userService.insertUser(user);
     }
-    
+
     /**
      * 导入老师数据
-     * 
+     *
      * @param teacherList 老师数据列表
      * @return 结果
      */
@@ -113,12 +115,12 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
         if (StringUtils.isNull(teacherList) || teacherList.isEmpty()) {
             throw new ServiceException("导入老师数据不能为空！");
         }
-        
+
         int successNum = 0;
         int failureNum = 0;
         StringBuilder successMsg = new StringBuilder();
         StringBuilder failureMsg = new StringBuilder();
-        
+
         for (Teacher teacher : teacherList) {
             try {
                 // 验证必要字段
@@ -127,23 +129,36 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
                     failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据账号为空");
                     continue;
                 }
-                
+
                 if (StringUtils.isEmpty(teacher.getTeacherName())) {
                     failureNum++;
                     failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据老师姓名为空");
                     continue;
                 }
-                
+
                 // 根据学校名称查找学校ID
                 if (StringUtils.isNotEmpty(teacher.getSchoolName())) {
-                    School schoolParam = new School();
-                    schoolParam.setSchoolName(teacher.getSchoolName());
-                    List<School> schools = schoolService.selectList(schoolParam);
-                    if (!schools.isEmpty()) {
-                        teacher.setSchoolId(schools.get(0).getId());
+                    // 只进行完全匹配
+                    List<School> exactSchools = schoolService.lambdaQuery()
+                            .eq(School::getSchoolName, teacher.getSchoolName().trim())
+                            .list();
+
+                    if (!exactSchools.isEmpty()) {
+                        // 找到完全匹配的学校
+                        teacher.setSchoolId(exactSchools.get(0).getId());
+                        teacher.setSchoolName(exactSchools.get(0).getSchoolName());
+                    } else {
+                        // 没有找到完全匹配的学校，报错
+                        failureNum++;
+                        failureMsg.append("<br/>第 ").append(successNum + failureNum).append(" 条数据导入失败：未找到完全匹配的学校 [").append(teacher.getSchoolName()).append("]");
+                        continue;
                     }
+                } else {
+                    failureNum++;
+                    failureMsg.append("<br/>第 ").append(successNum + failureNum).append(" 条数据导入失败：学校名称为空");
+                    continue;
                 }
-                
+
                 // 添加教师
                 addTeacher(teacher);
                 successNum++;
@@ -154,14 +169,14 @@ public class TeacherServiceImpl extends ServiceImpl<TeacherMapper, Teacher> impl
                 failureMsg.append(msg).append(e.getMessage());
             }
         }
-        
+
         if (failureNum > 0) {
             failureMsg.insert(0, "很抱歉，导入失败！共 " + failureNum + " 条数据格式不正确，错误如下：");
             throw new ServiceException(failureMsg.toString());
         } else {
             successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条，数据如下：");
         }
-        
+
         return successMsg.toString();
     }
 }

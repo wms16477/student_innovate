@@ -8,6 +8,7 @@ import com.xinghe.common.core.domain.entity.SysUser;
 import com.xinghe.common.exception.ServiceException;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
+import com.xinghe.system.mapper.SysUserMapper;
 import com.xinghe.system.service.ISysUserService;
 import com.xinghe.web.constants.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,9 @@ public class SchoolServiceImpl extends ServiceImpl<SchoolMapper, School> impleme
 
     @Autowired
     private ISysUserService userService;
+
+    @Autowired
+    private SysUserMapper sysUserMapper;
 
     /**
      * 查询学校列表
@@ -53,11 +57,8 @@ public class SchoolServiceImpl extends ServiceImpl<SchoolMapper, School> impleme
     @Override
     public void addSchool(School school) {
         // 检查学校编码是否已存在
-        LambdaQueryWrapper<School> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(School::getSchoolCode, school.getSchoolCode());
-        long count = this.count(queryWrapper);
-        if (count > 0) {
-            throw new ServiceException("学校编码已存在");
+        if (sysUserMapper.countUserCode(school.getSchoolCode()) > 0) {
+            throw new ServiceException("该学号已有学生");
         }
         this.save(school);
         //添加用户
@@ -71,14 +72,14 @@ public class SchoolServiceImpl extends ServiceImpl<SchoolMapper, School> impleme
         user.setPassword(SecurityUtils.encryptPassword("123456"));
         user.setStatus("0");
         user.setPostIds(new Long[]{});
-        //角色设置成学生
+        //角色设置成学校
         user.setRoleIds(new Long[]{Constants.SCHOOL_ROLE_ID});
         userService.insertUser(user);
     }
-    
+
     /**
      * 导入学校数据
-     * 
+     *
      * @param schoolList 学校数据列表
      * @return 结果
      */
@@ -87,12 +88,12 @@ public class SchoolServiceImpl extends ServiceImpl<SchoolMapper, School> impleme
         if (StringUtils.isNull(schoolList) || schoolList.isEmpty()) {
             throw new ServiceException("导入学校数据不能为空！");
         }
-        
+
         int successNum = 0;
         int failureNum = 0;
         StringBuilder successMsg = new StringBuilder();
         StringBuilder failureMsg = new StringBuilder();
-        
+
         for (School school : schoolList) {
             try {
                 // 验证必要字段
@@ -101,13 +102,13 @@ public class SchoolServiceImpl extends ServiceImpl<SchoolMapper, School> impleme
                     failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据学校编码为空");
                     continue;
                 }
-                
+
                 if (StringUtils.isEmpty(school.getSchoolName())) {
                     failureNum++;
                     failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据学校名称为空");
                     continue;
                 }
-                
+
                 // 添加学校
                 addSchool(school);
                 successNum++;
@@ -118,14 +119,14 @@ public class SchoolServiceImpl extends ServiceImpl<SchoolMapper, School> impleme
                 failureMsg.append(msg).append(e.getMessage());
             }
         }
-        
+
         if (failureNum > 0) {
             failureMsg.insert(0, "很抱歉，导入失败！共 " + failureNum + " 条数据格式不正确，错误如下：");
             throw new ServiceException(failureMsg.toString());
         } else {
             successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条，数据如下：");
         }
-        
+
         return successMsg.toString();
     }
 }

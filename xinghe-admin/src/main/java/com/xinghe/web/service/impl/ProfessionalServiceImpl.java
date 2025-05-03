@@ -5,6 +5,7 @@ import com.xinghe.common.core.domain.entity.SysUser;
 import com.xinghe.common.exception.ServiceException;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
+import com.xinghe.system.mapper.SysUserMapper;
 import com.xinghe.system.service.ISysUserService;
 import com.xinghe.web.domain.Professional;
 import com.xinghe.web.mapper.ProfessionalMapper;
@@ -27,6 +28,9 @@ public class ProfessionalServiceImpl extends ServiceImpl<ProfessionalMapper, Pro
     @Autowired
     private ISysUserService userService;
 
+    @Autowired
+    SysUserMapper sysUserMapper;
+
     @Override
     public List<Professional> selectList(Professional professional) {
         return lambdaQuery()
@@ -39,12 +43,8 @@ public class ProfessionalServiceImpl extends ServiceImpl<ProfessionalMapper, Pro
     @Override
     public void addProfessional(Professional professional) {
         // 检查账号是否已存在
-        List<SysUser> sysUsers = userService.selectUserList(new SysUser());
-        List<SysUser> collect = sysUsers.stream()
-                .filter(sysUser -> sysUser.getUserName().equals(professional.getAccount()))
-                .collect(Collectors.toList());
-        if (!collect.isEmpty()) {
-            throw new ServiceException("该账号已存在");
+        if (sysUserMapper.countUserCode(professional.getAccount()) > 0) {
+            throw new ServiceException("该学号已有学生");
         }
 
         // 保存专家信息
@@ -61,10 +61,10 @@ public class ProfessionalServiceImpl extends ServiceImpl<ProfessionalMapper, Pro
         user.setRoleIds(new Long[]{102L});
         userService.insertUser(user);
     }
-    
+
     /**
      * 导入专家数据
-     * 
+     *
      * @param professionalList 专家数据列表
      * @return 结果
      */
@@ -73,12 +73,12 @@ public class ProfessionalServiceImpl extends ServiceImpl<ProfessionalMapper, Pro
         if (StringUtils.isNull(professionalList) || professionalList.isEmpty()) {
             throw new ServiceException("导入专家数据不能为空！");
         }
-        
+
         int successNum = 0;
         int failureNum = 0;
         StringBuilder successMsg = new StringBuilder();
         StringBuilder failureMsg = new StringBuilder();
-        
+
         for (Professional professional : professionalList) {
             try {
                 // 验证必要字段
@@ -87,13 +87,13 @@ public class ProfessionalServiceImpl extends ServiceImpl<ProfessionalMapper, Pro
                     failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据账号为空");
                     continue;
                 }
-                
+
                 if (StringUtils.isEmpty(professional.getName())) {
                     failureNum++;
                     failureMsg.append("<br/>第 ").append(failureNum).append(" 条数据专家姓名为空");
                     continue;
                 }
-                
+
                 // 添加专家
                 addProfessional(professional);
                 successNum++;
@@ -104,14 +104,14 @@ public class ProfessionalServiceImpl extends ServiceImpl<ProfessionalMapper, Pro
                 failureMsg.append(msg).append(e.getMessage());
             }
         }
-        
+
         if (failureNum > 0) {
             failureMsg.insert(0, "很抱歉，导入失败！共 " + failureNum + " 条数据格式不正确，错误如下：");
             throw new ServiceException(failureMsg.toString());
         } else {
             successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条，数据如下：");
         }
-        
+
         return successMsg.toString();
     }
 }

@@ -371,7 +371,7 @@ export default {
     },
     // 下载模板
     importTemplate() {
-      this.download('web/professional/importTemplate', {}, `专家导入模版.xlsx`)
+      this.download('professional/professional/importTemplate', {}, `专家导入模版.xlsx`)
     }
   }
 };
