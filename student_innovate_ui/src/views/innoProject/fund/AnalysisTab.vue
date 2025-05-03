@@ -186,14 +186,27 @@ export default {
 
       // 加载计数器
       loadCounter: 0,
-      totalLoadItems: 4
+      totalLoadItems: 4,
+      
+      // 添加一个标志，表示组件是否已经装载
+      isMounted: false,
+      
+      // 添加一个定时器ID，用于管理延迟初始化
+      chartInitTimer: null
     }
   },
   mounted() {
+    this.isMounted = true
     this.loadProjectList()
     this.initYears()
     // 响应式处理
     window.addEventListener('resize', this.resizeCharts)
+  },
+  activated() {
+    // keep-alive组件被激活时，确保图表正确显示
+    if (this.isDataLoaded && this.isMounted) {
+      this.resizeAndReinitCharts()
+    }
   },
   beforeDestroy() {
     // 销毁图表实例
@@ -203,8 +216,13 @@ export default {
       }
     })
 
+    // 清除定时器
+    if (this.chartInitTimer) {
+      clearTimeout(this.chartInitTimer)
+    }
+
     // 移除事件监听
-    // window.removeEventListener('resize', this.resizeCharts)
+    window.removeEventListener('resize', this.resizeCharts)
   },
   watch: {
     // 监控数据加载状态，当所有数据加载完成后初始化图表
@@ -219,11 +237,50 @@ export default {
     }
   },
   methods: {
+    // 重新调整和初始化图表
+    resizeAndReinitCharts() {
+      // 清除之前的定时器
+      if (this.chartInitTimer) {
+        clearTimeout(this.chartInitTimer)
+      }
+      
+      // 使用延迟来确保DOM已完全渲染并可见
+      this.chartInitTimer = setTimeout(() => {
+        // 重新初始化所有图表
+        if (this.chartData.budgetUsage) {
+          this.renderBudgetUsageChart(this.chartData.budgetUsage)
+        }
+        
+        if (this.chartData.expenseType) {
+          this.renderExpenseTypeChart(this.chartData.expenseType)
+        }
+        
+        if (this.chartData.monthlyTrend) {
+          this.renderMonthlyTrendChart(this.chartData.monthlyTrend)
+        }
+        
+        if (this.chartData.approvalStat) {
+          this.renderApprovalStatChart(this.chartData.approvalStat)
+          if (this.chartData.approvalStat.paymentStatus) {
+            this.renderPaymentStatChart(this.chartData.approvalStat.paymentStatus)
+          }
+        }
+        
+        // 手动触发一次 resize 以确保所有图表都能正确渲染
+        this.resizeCharts()
+      }, 300)
+    },
+    
     // 初始化所有图表
     initAllCharts() {
+      // 清除之前的定时器
+      if (this.chartInitTimer) {
+        clearTimeout(this.chartInitTimer)
+      }
+      
       this.$nextTick(() => {
         // 使用 setTimeout 确保 DOM 已完全渲染
-        setTimeout(() => {
+        this.chartInitTimer = setTimeout(() => {
           if (this.chartData.budgetUsage) {
             this.renderBudgetUsageChart(this.chartData.budgetUsage)
           }
@@ -341,6 +398,13 @@ export default {
     renderBudgetUsageChart(data) {
       const chartDom = this.$refs.budgetUsageChart
       if (!chartDom) return
+      
+      // 确保容器有尺寸
+      if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
+        console.warn('图表容器尺寸为0，延迟初始化')
+        setTimeout(() => this.renderBudgetUsageChart(data), 300)
+        return
+      }
 
       if (this.charts.budgetUsage) {
         this.charts.budgetUsage.dispose()
@@ -421,6 +485,13 @@ export default {
     renderExpenseTypeChart(data) {
       const chartDom = this.$refs.expenseTypeChart
       if (!chartDom) return
+      
+      // 确保容器有尺寸
+      if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
+        console.warn('图表容器尺寸为0，延迟初始化')
+        setTimeout(() => this.renderExpenseTypeChart(data), 300)
+        return
+      }
 
       if (this.charts.expenseType) {
         this.charts.expenseType.dispose()
@@ -488,6 +559,13 @@ export default {
     renderMonthlyTrendChart(data) {
       const chartDom = this.$refs.monthlyTrendChart
       if (!chartDom) return
+      
+      // 确保容器有尺寸
+      if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
+        console.warn('图表容器尺寸为0，延迟初始化')
+        setTimeout(() => this.renderMonthlyTrendChart(data), 300)
+        return
+      }
 
       if (this.charts.monthlyTrend) {
         this.charts.monthlyTrend.dispose()
@@ -566,6 +644,13 @@ export default {
     renderApprovalStatChart(data) {
       const chartDom = this.$refs.approvalStatChart
       if (!chartDom) return
+      
+      // 确保容器有尺寸
+      if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
+        console.warn('图表容器尺寸为0，延迟初始化')
+        setTimeout(() => this.renderApprovalStatChart(data), 300)
+        return
+      }
 
       if (this.charts.approvalStat) {
         this.charts.approvalStat.dispose()
@@ -649,6 +734,13 @@ export default {
     renderPaymentStatChart(paymentStatus) {
       const chartDom = this.$refs.paymentStatChart
       if (!chartDom) return
+      
+      // 确保容器有尺寸
+      if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
+        console.warn('图表容器尺寸为0，延迟初始化')
+        setTimeout(() => this.renderPaymentStatChart(paymentStatus), 300)
+        return
+      }
 
       if (this.charts.paymentStat) {
         this.charts.paymentStat.dispose()
