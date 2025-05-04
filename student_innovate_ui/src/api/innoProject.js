@@ -129,3 +129,21 @@ export function calculateEndScore(params) {
   })
 }
 
+// 获取导入模板
+export function importTemplate() {
+  return request({
+    url: '/web/innoProject/importTemplate',
+    method: 'post',
+    responseType: 'blob'
+  })
+}
+
+// 导入数据
+export function importData(data) {
+  return request({
+    url: '/web/innoProject/importData',
+    method: 'post',
+    data: data
+  })
+}
+

@@ -2,11 +2,19 @@ package com.xinghe.web.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xinghe.common.annotation.Log;
+import com.xinghe.common.config.RuoYiConfig;
 import com.xinghe.common.core.controller.BaseController;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xinghe.common.core.domain.AjaxResult;
 import com.xinghe.common.core.page.TableDataInfo;
+import com.xinghe.common.enums.BusinessType;
+import com.xinghe.common.exception.ServiceException;
 import com.xinghe.common.utils.SecurityUtils;
 import com.xinghe.common.utils.StringUtils;
+import com.xinghe.common.utils.file.FileUploadUtils;
+import com.xinghe.common.utils.poi.ExcelUtil;
 import com.xinghe.system.domain.SysUserRole;
 import com.xinghe.system.mapper.SysUserMapper;
 import com.xinghe.system.mapper.SysUserRoleMapper;
@@ -23,7 +31,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -455,5 +465,160 @@ public class InnoProjectController extends BaseController {
         bd = bd.setScale(2, RoundingMode.HALF_UP);
 
         return success(bd.doubleValue());
+    }
+
+    /**
+     * 获取导入模板
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        ExcelUtil<InnoProjectImport> util = new ExcelUtil<>(InnoProjectImport.class);
+        util.importTemplateExcel(response, "大创项目数据");
+    }
+
+    /**
+     * 批量导入大创项目数据
+     */
+    @Log(title = "大创项目", businessType = BusinessType.IMPORT)
+    @PostMapping("/importData")
+    public AjaxResult importData(MultipartFile file, MultipartFile submitFile) throws Exception {
+        if (file == null) {
+            return error("请上传Excel文件");
+        }
+        if (submitFile == null) {
+            return error("请上传申报材料");
+        }
+        
+        // 上传申报材料
+        String submitFileUrl = uploadFile(submitFile);
+        if (StringUtils.isEmpty(submitFileUrl)) {
+            return error("申报材料上传失败");
+        }
+
+        ExcelUtil<InnoProjectImport> util = new ExcelUtil<>(InnoProjectImport.class);
+        List<InnoProjectImport> projectImportList = util.importExcel(file.getInputStream());
+        
+        if (CollectionUtils.isEmpty(projectImportList)) {
+            return error("导入数据为空");
+        }
+        
+        int successCount = 0;
+        int failCount = 0;
+        StringBuilder successMsg = new StringBuilder();
+        StringBuilder failMsg = new StringBuilder();
+        
+        // 创建学生姓名与学号的映射
+        List<Student> studentList = studentService.list();
+        Map<String, String> studentNameToNoMap = studentList.stream()
+                .collect(Collectors.toMap(Student::getStuName, Student::getStuNo, (k1, k2) -> k1));
+                
+        // 创建教师姓名与ID的映射
+        List<Teacher> teacherList = teacherService.list();
+        Map<String, Long> teacherNameToIdMap = teacherList.stream()
+                .collect(Collectors.toMap(Teacher::getTeacherName, Teacher::getId, (k1, k2) -> k1));
+        
+        for (int i = 0; i < projectImportList.size(); i++) {
+            InnoProjectImport importItem = projectImportList.get(i);
+            try {
+                // 设置申报材料URL
+                importItem.setSubmitFileUrl(submitFileUrl);
+                
+                // 验证必填字段
+                if (StringUtils.isEmpty(importItem.getProjectName())) {
+                    throw new ServiceException("项目名称不能为空");
+                }
+                if (StringUtils.isEmpty(importItem.getProjectType())) {
+                    throw new ServiceException("项目类型不能为空");
+                }
+                if (StringUtils.isEmpty(importItem.getProjectDesc())) {
+                    throw new ServiceException("项目简介不能为空");
+                }
+                if (StringUtils.isEmpty(importItem.getMembers())) {
+                    throw new ServiceException("项目成员不能为空");
+                }
+                if (StringUtils.isEmpty(importItem.getTeacherName())) {
+                    throw new ServiceException("导师不能为空");
+                }
+                
+                // 验证项目类型是否有效
+                boolean validProjectType = Arrays.stream(ProjectType.values())
+                        .anyMatch(type -> type.getName().equals(importItem.getProjectType()));
+                if (!validProjectType) {
+                    throw new ServiceException("项目类型无效: " + importItem.getProjectType());
+                }
+                
+                // 查找导师ID
+                if (!teacherNameToIdMap.containsKey(importItem.getTeacherName())) {
+                    throw new ServiceException("找不到导师: " + importItem.getTeacherName());
+                }
+                Long teacherId = teacherNameToIdMap.get(importItem.getTeacherName());
+                
+                // 解析学生成员
+                String[] memberNames = importItem.getMembers().split("，|,");
+                List<InnoProjectMember> memberList = new ArrayList<>();
+                for (String memberName : memberNames) {
+                    String memberNameTrim = memberName.trim();
+                    if (!studentNameToNoMap.containsKey(memberNameTrim)) {
+                        throw new ServiceException("找不到学生: " + memberNameTrim);
+                    }
+                    String studentNo = studentNameToNoMap.get(memberNameTrim);
+                    
+                    InnoProjectMember member = new InnoProjectMember();
+                    member.setMemberUserCode(studentNo);
+                    member.setMemberUserName(memberNameTrim);
+                    memberList.add(member);
+                }
+                
+                // 创建项目对象
+                InnoProject project = new InnoProject();
+                project.setProjectName(importItem.getProjectName());
+                project.setProjectType(importItem.getProjectType());
+                project.setProjectDesc(importItem.getProjectDesc());
+                project.setTeacherId(teacherId);
+                project.setTeacherName(importItem.getTeacherName());
+                project.setSubmitFileUrl(importItem.getSubmitFileUrl());
+                project.setStatus(StatusEnum.DRAFT.name);
+                project.setMemberList(memberList);
+                
+                // 保存项目
+                innoProjectService.save(project);
+                
+                // 保存项目成员
+                for (InnoProjectMember member : memberList) {
+                    member.setProjectId(project.getId());
+                }
+                innoProjectMemberService.saveBatch(memberList);
+                
+                successCount++;
+                successMsg.append("<br/>第 " + (i + 1) + " 行数据导入成功: " + importItem.getProjectName());
+            } catch (Exception e) {
+                failCount++;
+                String msg = "<br/>第 " + (i + 1) + " 行数据导入失败: ";
+                failMsg.append(msg + e.getMessage());
+            }
+        }
+        
+        if (failCount > 0) {
+            failMsg.insert(0, "很抱歉，导入失败！共 " + failCount + " 条数据导入失败，错误如下：");
+        }
+        
+        successMsg.insert(0, "恭喜您，数据已导入成功！共 " + successCount + " 条");
+        
+        return AjaxResult.success(successMsg.toString() + failMsg.toString());
+    }
+    
+    /**
+     * 上传文件方法
+     */
+    private String uploadFile(MultipartFile file) {
+        try {
+            // 上传文件路径
+            String filePath = RuoYiConfig.getUploadPath();
+            // 上传并返回新文件名称
+            String fileName = FileUploadUtils.upload(filePath, file);
+            return fileName;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
