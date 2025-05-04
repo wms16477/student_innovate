@@ -1554,6 +1554,9 @@ export default {
     handleEndProjectScore(row) {
       getInnoProject(row.id).then(response => {
         const data = response.data;
+        
+        // 将完整的项目数据保存到detail对象中，以便显示中期评分信息
+        this.detail = data;
 
         // 保存中期评分信息
         this.midScoreInfo = {
