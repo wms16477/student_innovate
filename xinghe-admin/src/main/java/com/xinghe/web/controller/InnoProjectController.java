@@ -535,16 +535,16 @@ public class InnoProjectController extends BaseController {
                 String approveStudentName = studentNoToNameMap.get(importItem.getUserCode());
 
                 // 根据项目类型名称获取项目类型编码
-                String projectTypeCode = null;
-                for (ProjectType type : ProjectType.values()) {
-                    if (type.getName().equals(importItem.getProjectType())) {
-                        projectTypeCode = type.name();
-                        break;
-                    }
-                }
-                if (projectTypeCode == null) {
-                    throw new ServiceException("项目类型无效: " + importItem.getProjectType());
-                }
+                String projectTypeCode = importItem.getProjectType();
+//                for (ProjectType type : ProjectType.values()) {
+//                    if (type.getName().equals(importItem.getProjectType())) {
+//                        projectTypeCode = type.name();
+//                        break;
+//                    }
+//                }
+//                if (projectTypeCode == null) {
+//                    throw new ServiceException("项目类型无效: " + importItem.getProjectType());
+//                }
 
                 // 验证导师ID是否有效
                 if (!teacherIdToNameMap.containsKey(importItem.getTeacherCode())) {

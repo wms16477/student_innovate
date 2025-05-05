@@ -96,13 +96,13 @@
             v-if="scope.row.buttonList.indexOf('删除') !== -1"
           >删除
           </el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-money"
-            @click="handleFundManage(scope.row)"
-          >经费管理
-          </el-button>
+<!--          <el-button-->
+<!--            size="mini"-->
+<!--            type="text"-->
+<!--            icon="el-icon-money"-->
+<!--            @click="handleFundManage(scope.row)"-->
+<!--          >经费管理-->
+<!--          </el-button>-->
 <!--          <el-button-->
 <!--            size="mini"-->
 <!--            type="text"-->
@@ -855,21 +855,20 @@
 
     <!-- 导入对话框 -->
     <el-dialog :title="upload.title" :visible.sync="upload.open" width="400px" append-to-body>
-      <el-form ref="uploadForm" :model="upload.form" :rules="upload.rules" label-width="100px">
-        <el-form-item label="Excel文件" prop="excelFile">
+      <el-form ref="uploadForm" :model="upload.form" label-width="100px">
+        <el-form-item label="Excel文件">
           <el-upload
             ref="excelFileUpload"
             :limit="1"
             accept=".xlsx, .xls"
             :headers="upload.headers"
-            :action="upload.excelAction"
+            :action="baseUrl + '/web/innoProject/importData'"
             :disabled="upload.isUploading"
-            :on-progress="handleExcelFileProgress"
-            :on-success="handleExcelFileSuccess"
-            :on-error="handleExcelFileError"
-            :on-exceed="handleExcelFileExceed"
-            :on-remove="handleExcelFileRemove"
-            :auto-upload="false"
+            :on-progress="handleFileUploadProgress"
+            :on-success="handleFileUploadSuccess"
+            :on-error="handleFileUploadError"
+            :on-exceed="handleFileExceed"
+            :before-upload="beforeFileUpload"
             :show-file-list="true">
             <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
             <div slot="tip" class="el-upload__tip">请上传Excel文件，且不超过10MB</div>
@@ -877,8 +876,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitImport" :loading="upload.isUploading">确 定</el-button>
-        <el-button @click="upload.open = false">取 消</el-button>
+        <el-button @click="upload.open = false">关 闭</el-button>
       </div>
     </el-dialog>
   </div>
@@ -958,10 +956,8 @@ export default {
         ],
         teacherId: [
           {required: true, message: "导师不能为空", trigger: "change"}
-        ],
-        submitFileUrl: [
-          {required: true, message: "申报材料不能为空", trigger: "change"}
         ]
+        // 移除 submitFileUrl 的必填验证
       },
       // 项目类型选项
       projectTypeOptions: [],
@@ -1117,21 +1113,7 @@ export default {
       upload: {
         title: "批量导入项目",
         open: false,
-        form: {
-          excelFile: undefined,
-          submitFile: undefined
-        },
-        rules: {
-          excelFile: [
-            {required: true, message: "Excel文件不能为空", trigger: "change"}
-          ],
-          submitFile: [
-            {required: true, message: "申报材料不能为空", trigger: "change"}
-          ]
-        },
         isUploading: false,
-        excelAction: "",
-        submitAction: "",
         headers: {}
       }
     };
@@ -1144,8 +1126,6 @@ export default {
     this.getStudentList();
     // 初始化上传参数
     this.upload.headers = { Authorization: "Bearer " + this.$store.getters.token };
-    this.upload.excelAction = process.env.VUE_APP_BASE_API + "/common/upload";
-    this.upload.submitAction = process.env.VUE_APP_BASE_API + "/common/upload";
   },
   methods: {
     /** 查询大创项目列表 */
@@ -1679,87 +1659,67 @@ export default {
       this.upload.open = true;
       this.upload.isUploading = false;
     },
-    /** Excel文件上传中处理 */
-    handleExcelFileProgress(event, file, fileList) {
+    /** 文件上传前的钩子 */
+    beforeFileUpload(file) {
+      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                     file.type === 'application/vnd.ms-excel';
+      const isLt10M = file.size / 1024 / 1024 < 10;
+
+      if (!isExcel) {
+        this.$message.error('上传文件只能是Excel文件!');
+        return false;
+      }
+      if (!isLt10M) {
+        this.$message.error('上传文件大小不能超过10MB!');
+        return false;
+      }
+      this.upload.isUploading = true;
+      this.$message.info('开始上传文件，请稍候...');
+      return true;
+    },
+    /** 文件上传中处理 */
+    handleFileUploadProgress(event, file, fileList) {
       this.upload.isUploading = true;
     },
-    /** Excel文件上传成功处理 */
-    handleExcelFileSuccess(response, file, fileList) {
-      this.upload.form.excelFile = response;
+    /** 文件上传成功处理 */
+    handleFileUploadSuccess(response, file, fileList) {
       this.upload.isUploading = false;
-      this.$message.success("Excel文件上传成功");
+
+      if (response.code === 200) {
+        this.$modal.msgSuccess(response.msg || '导入成功');
+        this.upload.open = false;
+        this.getList();
+      } else {
+        this.$modal.msgError(response.msg || '导入失败');
+      }
+      this.$refs.excelFileUpload.clearFiles();
     },
-    /** Excel文件上传失败处理 */
-    handleExcelFileError(err) {
+    /** 文件上传失败处理 */
+    handleFileUploadError(error, file, fileList) {
       this.upload.isUploading = false;
-      this.$message.error("Excel文件上传失败，请重试");
-      console.error(err);
+
+      let errorMsg = '导入失败，请重试';
+      if (error && error.message) {
+        errorMsg = '导入失败：' + error.message;
+      } else if (error && error.response && error.response.data) {
+        errorMsg = '导入失败：' + (error.response.data.msg || error.response.statusText);
+      }
+
+      this.$modal.msgError(errorMsg);
+      console.error('文件上传失败：', error);
     },
-    /** Excel文件数量超出限制处理 */
-    handleExcelFileExceed() {
-      this.$message.warning("最多只能上传一个Excel文件");
+    /** 文件数量超出限制处理 */
+    handleFileExceed() {
+      this.$message.warning("最多只能上传一个文件");
     },
-    /** Excel文件删除处理 */
-    handleExcelFileRemove() {
-      this.upload.form.excelFile = undefined;
-    },
-    /** 申报材料上传中处理 */
-    handleSubmitFileProgress(event, file, fileList) {
-      this.upload.isUploading = true;
-    },
-    /** 申报材料上传成功处理 */
-    handleSubmitFileSuccess(response, file, fileList) {
-      this.upload.form.submitFile = response;
+    /** 导入按钮操作 */
+    handleImport() {
+      this.upload.open = true;
       this.upload.isUploading = false;
-      this.$message.success("申报材料上传成功");
-    },
-    /** 申报材料上传失败处理 */
-    handleSubmitFileError(err) {
-      this.upload.isUploading = false;
-      this.$message.error("申报材料上传失败，请重试");
-      console.error(err);
-    },
-    /** 申报材料数量超出限制处理 */
-    handleSubmitFileExceed() {
-      this.$message.warning("最多只能上传一个申报材料文件");
-    },
-    /** 申报材料删除处理 */
-    handleSubmitFileRemove() {
-      this.upload.form.submitFile = undefined;
-    },
-    /** 提交导入 */
-    submitImport() {
-      this.$refs["uploadForm"].validate(valid => {
-        if (valid) {
-          if (!this.upload.form.excelFile || !this.upload.form.submitFile) {
-            this.$message.warning("请上传Excel文件和申报材料");
-            return;
-          }
-
-          this.upload.isUploading = true;
-
-          const formData = new FormData();
-          // 添加Excel文件
-          if (this.$refs.excelFileUpload.uploadFiles.length > 0) {
-            formData.append("file", this.$refs.excelFileUpload.uploadFiles[0].raw);
-          }
-
-          // 添加申报材料
-          if (this.$refs.submitFileUpload.uploadFiles.length > 0) {
-            formData.append("submitFile", this.$refs.submitFileUpload.uploadFiles[0].raw);
-          }
-
-          importData(formData).then(response => {
-            this.$modal.msgSuccess(response.msg);
-            this.upload.open = false;
-            this.getList();
-          }).catch(() => {
-            this.$message.error("导入失败，请重试");
-          }).finally(() => {
-            this.upload.isUploading = false;
-          });
-        }
-      });
+      // 如果有上传的文件，清空
+      if (this.$refs.excelFileUpload) {
+        this.$refs.excelFileUpload.clearFiles();
+      }
     }
   }
 };
