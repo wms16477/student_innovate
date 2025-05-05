@@ -272,8 +272,7 @@ public class InnoProjectFundAnalysisServiceImpl implements InnoProjectFundAnalys
      */
     private BigDecimal getApprovedExpenseTotal(Long projectId) {
         LambdaQueryWrapper<InnoProjectFundExpense> query = new LambdaQueryWrapper<>();
-        query.eq(InnoProjectFundExpense::getProjectId, projectId)
-                .eq(InnoProjectFundExpense::getStatus, FundStatusEnum.APPROVED.name());
+        query.eq(InnoProjectFundExpense::getProjectId, projectId);
         List<InnoProjectFundExpense> expenses = expenseMapper.selectList(query);
 
         return expenses.stream()

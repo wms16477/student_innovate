@@ -69,52 +69,6 @@
           <div class="chart-container" ref="budgetUsageChart"></div>
         </el-card>
       </el-col>
-
-      <!-- 支出类型分布 -->
-      <el-col :span="12">
-        <el-card shadow="hover" class="chart-card">
-          <div slot="header">
-            <span>支出类型分布</span>
-          </div>
-          <div class="chart-container" ref="expenseTypeChart"></div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <el-row :gutter="20" class="chart-area" v-if="selectedProjectId && isDataLoaded">
-      <!-- 月度支出趋势 -->
-      <!--      <el-col :span="24">-->
-      <!--        <el-card shadow="hover" class="chart-card">-->
-      <!--          <div slot="header" class="clearfix">-->
-      <!--            <span>月度支出趋势</span>-->
-      <!--            <div class="year-selector">-->
-      <!--              <el-select v-model="selectedYear" placeholder="选择年份" size="small" @change="loadMonthlyExpenseTrend">-->
-      <!--                <el-option-->
-      <!--                  v-for="year in years"-->
-      <!--                  :key="year"-->
-      <!--                  :label="year"-->
-      <!--                  :value="year">-->
-      <!--                </el-option>-->
-      <!--              </el-select>-->
-      <!--            </div>-->
-      <!--          </div>-->
-      <!--          <div class="chart-container" ref="monthlyTrendChart"></div>-->
-      <!--        </el-card>-->
-      <!--      </el-col>-->
-    </el-row>
-
-    <el-row :gutter="20" class="chart-area" v-if="selectedProjectId && isDataLoaded">
-      <!-- 支出审批情况 -->
-      <el-col :span="12">
-        <el-card shadow="hover" class="chart-card">
-          <div slot="header">
-            <span>支出审批情况</span>
-          </div>
-          <div class="chart-container" ref="approvalStatChart"></div>
-        </el-card>
-      </el-col>
-
-      <!-- 支付情况 -->
       <el-col :span="12">
         <el-card shadow="hover" class="chart-card">
           <div slot="header">
@@ -123,7 +77,31 @@
           <div class="chart-container" ref="paymentStatChart"></div>
         </el-card>
       </el-col>
+
     </el-row>
+
+
+<!--    <el-row :gutter="20" class="chart-area" v-if="selectedProjectId && isDataLoaded">-->
+<!--      &lt;!&ndash; 支出审批情况 &ndash;&gt;-->
+<!--      <el-col :span="12">-->
+<!--        <el-card shadow="hover" class="chart-card">-->
+<!--          <div slot="header">-->
+<!--            <span>支出审批情况</span>-->
+<!--          </div>-->
+<!--          <div class="chart-container" ref="approvalStatChart"></div>-->
+<!--        </el-card>-->
+<!--      </el-col>-->
+
+<!--      &lt;!&ndash; 支付情况 &ndash;&gt;-->
+<!--      <el-col :span="12">-->
+<!--        <el-card shadow="hover" class="chart-card">-->
+<!--          <div slot="header">-->
+<!--            <span>支付情况</span>-->
+<!--          </div>-->
+<!--          <div class="chart-container" ref="paymentStatChart"></div>-->
+<!--        </el-card>-->
+<!--      </el-col>-->
+<!--    </el-row>-->
 
     <div class="no-data" v-if="!selectedProjectId">
       <el-empty description="请先选择项目"></el-empty>
@@ -187,13 +165,13 @@ export default {
       // 加载计数器
       loadCounter: 0,
       totalLoadItems: 4,
-      
+
       // 添加一个标志，表示组件是否已经装载
       isMounted: false,
-      
+
       // 添加一个定时器ID，用于管理延迟初始化
       chartInitTimer: null,
-      
+
       // 字典映射
       dictMaps: {
         // 支出类型字典
@@ -293,41 +271,41 @@ export default {
       if (this.chartInitTimer) {
         clearTimeout(this.chartInitTimer)
       }
-      
+
       // 使用延迟来确保DOM已完全渲染并可见
       this.chartInitTimer = setTimeout(() => {
         // 重新初始化所有图表
         if (this.chartData.budgetUsage) {
           this.renderBudgetUsageChart(this.chartData.budgetUsage)
         }
-        
+
         if (this.chartData.expenseType) {
           this.renderExpenseTypeChart(this.chartData.expenseType)
         }
-        
+
         if (this.chartData.monthlyTrend) {
           this.renderMonthlyTrendChart(this.chartData.monthlyTrend)
         }
-        
+
         if (this.chartData.approvalStat) {
           this.renderApprovalStatChart(this.chartData.approvalStat)
           if (this.chartData.approvalStat.paymentStatus) {
             this.renderPaymentStatChart(this.chartData.approvalStat.paymentStatus)
           }
         }
-        
+
         // 手动触发一次 resize 以确保所有图表都能正确渲染
         this.resizeCharts()
       }, 300)
     },
-    
+
     // 初始化所有图表
     initAllCharts() {
       // 清除之前的定时器
       if (this.chartInitTimer) {
         clearTimeout(this.chartInitTimer)
       }
-      
+
       this.$nextTick(() => {
         // 使用 setTimeout 确保 DOM 已完全渲染
         this.chartInitTimer = setTimeout(() => {
@@ -401,12 +379,12 @@ export default {
     loadBudgetUsage(projectId) {
       getBudgetUsage(projectId).then(response => {
         const data = response.data || {budgetNames: [], budgetAmounts: [], usedAmounts: [], remainingAmounts: []}
-        
+
         // 转换预算名称为中文
         if (data.budgetNames && data.budgetNames.length > 0) {
           data.budgetNames = data.budgetNames.map(name => this.dictMaps.budgetTypes[name] || name)
         }
-        
+
         this.chartData.budgetUsage = data
         this.loadCounter++
       })
@@ -416,14 +394,14 @@ export default {
     loadExpenseTypeDistribution(projectId) {
       getExpenseTypeDistribution(projectId).then(response => {
         const data = response.data || {expenseTypes: [], expenseAmounts: []}
-        
+
         // 转换支出类型为中文
         if (data.expenseTypes && data.expenseTypes.length > 0) {
           // 保存原始数据，用于图表渲染时使用
           data.originalTypes = [...data.expenseTypes]
           data.expenseTypes = data.expenseTypes.map(type => this.dictMaps.expenseTypes[type] || type)
         }
-        
+
         this.chartData.expenseType = data
         this.loadCounter++
       })
@@ -453,7 +431,7 @@ export default {
     loadExpenseApprovalStat(projectId) {
       getExpenseApprovalStat(projectId).then(response => {
         const data = response.data || {statusCounts: {}, statusAmounts: {}, paymentStatus: {}}
-        
+
         // 为支付状态添加中文名称
         if (data.paymentStatus) {
           // 保持原有数据
@@ -463,13 +441,13 @@ export default {
             unpaidName: this.dictMaps.paymentStatus.UNPAID
           }
         }
-        
+
         // 为状态码和状态名称创建映射关系
         data.statusNameMap = {}
         if (data.statusCounts) {
           // 过滤掉不需要显示的状态（如PAID等支付状态不应在审批图中显示）
           const filterOutStatus = this.dictMaps.excludeFromApproval
-          
+
           // 先移除不需要的状态
           filterOutStatus.forEach(status => {
             if (data.statusCounts[status] !== undefined) {
@@ -479,13 +457,13 @@ export default {
               delete data.statusAmounts[status]
             }
           })
-          
+
           // 然后为剩余状态创建映射
           Object.keys(data.statusCounts).forEach(status => {
             data.statusNameMap[status] = this.dictMaps.approvalStatus[status] || status
           })
         }
-        
+
         this.chartData.approvalStat = data
         this.loadCounter++
       })
@@ -495,7 +473,7 @@ export default {
     renderBudgetUsageChart(data) {
       const chartDom = this.$refs.budgetUsageChart
       if (!chartDom) return
-      
+
       // 确保容器有尺寸
       if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
         console.warn('图表容器尺寸为0，延迟初始化')
@@ -582,7 +560,7 @@ export default {
     renderExpenseTypeChart(data) {
       const chartDom = this.$refs.expenseTypeChart
       if (!chartDom) return
-      
+
       // 确保容器有尺寸
       if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
         console.warn('图表容器尺寸为0，延迟初始化')
@@ -656,7 +634,7 @@ export default {
     renderMonthlyTrendChart(data) {
       const chartDom = this.$refs.monthlyTrendChart
       if (!chartDom) return
-      
+
       // 确保容器有尺寸
       if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
         console.warn('图表容器尺寸为0，延迟初始化')
@@ -741,7 +719,7 @@ export default {
     renderApprovalStatChart(data) {
       const chartDom = this.$refs.approvalStatChart
       if (!chartDom) return
-      
+
       // 确保容器有尺寸
       if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
         console.warn('图表容器尺寸为0，延迟初始化')
@@ -757,11 +735,11 @@ export default {
 
       // 已知的支出审批状态
       const knownApprovalStatus = Object.keys(this.dictMaps.approvalStatus)
-      
+
       const pieData = Object.entries(data.statusCounts || {})
         .filter(([status, count]) => {
           // 只显示已知的审批状态或者其他有效的状态，排除不应显示的状态
-          return count > 0 && 
+          return count > 0 &&
                  !this.dictMaps.excludeFromApproval.includes(status)
         })
         .map(([status, count]) => {
@@ -846,7 +824,7 @@ export default {
     renderPaymentStatChart(paymentStatus) {
       const chartDom = this.$refs.paymentStatChart
       if (!chartDom) return
-      
+
       // 确保容器有尺寸
       if (chartDom.clientWidth === 0 || chartDom.clientHeight === 0) {
         console.warn('图表容器尺寸为0，延迟初始化')
@@ -863,7 +841,7 @@ export default {
       const paid = paymentStatus.paid || 0
       const unpaid = paymentStatus.unpaid || 0
       const total = Number(paid) + Number(unpaid)
-      
+
       // 使用在加载时保存的中文名称
       const paidName = paymentStatus.paidName || this.dictMaps.paymentStatus.PAID
       const unpaidName = paymentStatus.unpaidName || this.dictMaps.paymentStatus.UNPAID

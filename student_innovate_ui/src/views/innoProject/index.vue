@@ -165,7 +165,7 @@
             plain
             icon="el-icon-check"
             @click="handleSchoolApprove(scope.row, true)"
-            v-if="scope.row.status === 'APPROVED' && scope.row.schoolApproveStatus === 'WAIT_APPROVE'"
+            v-if="scope.row.status === 'WAIT_SCHOOL_APPROVE'"
           >学校审批通过
           </el-button>
           <el-button
@@ -174,7 +174,7 @@
             plain
             icon="el-icon-close"
             @click="handleSchoolApprove(scope.row, false)"
-            v-if="scope.row.status === 'APPROVED' && scope.row.schoolApproveStatus === 'WAIT_APPROVE'"
+            v-if="scope.row.status === 'WAIT_SCHOOL_APPROVE'"
           >学校审批拒绝
           </el-button>
         </template>
@@ -267,9 +267,6 @@
             <el-descriptions-item label="创建时间">{{ parseTime(detail.createTime) }}</el-descriptions-item>
             <el-descriptions-item label="审批意见" v-if="detail.approveDesc">
               {{ detail.approveDesc }}
-            </el-descriptions-item>
-            <el-descriptions-item label="学校审批状态" v-if="detail.schoolApproveStatus">
-              <dict-tag :options="schoolApproveStatusOptions" :value="detail.schoolApproveStatus"/>
             </el-descriptions-item>
             <el-descriptions-item label="学校审批意见" v-if="detail.schoolApproveDesc">
               {{ detail.schoolApproveDesc }}

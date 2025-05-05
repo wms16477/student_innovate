@@ -26,7 +26,6 @@ import com.xinghe.web.mapper.InnoProjectMapper;
 import com.xinghe.web.service.*;
 import com.xinghe.web.enums.StatusEnum;
 import com.xinghe.web.enums.ProjectType;
-import com.xinghe.web.enums.SchoolApproveStatusEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.CollectionUtils;
@@ -149,6 +148,12 @@ public class InnoProjectController extends BaseController {
                     } else if (StatusEnum.WAIT_FINAL_CHECK.name.equals(innoProject.getStatus())) {
                         innoProject.getButtonList().add("结项评分");
                     }
+                } else if (userType == 4) {
+                    //学校
+                    if (StatusEnum.WAIT_SCHOOL_APPROVE.name.equals(innoProject.getStatus())) {
+                        innoProject.getButtonList().add("通过");
+                        innoProject.getButtonList().add("拒绝");
+                    }
                 }
             }
 
@@ -262,10 +267,16 @@ public class InnoProjectController extends BaseController {
      */
     @PostMapping("/approve/{agree}")
     public AjaxResult approve(@PathVariable("agree") boolean agree, @RequestBody InnoProject dto) {
+        InnoProject project = innoProjectService.getById(dto.getId());
         if (agree) {
-            dto.setStatus(StatusEnum.APPROVED.name);
-            // 导师审批通过后，设置学校审批状态为待审批
-            dto.setSchoolApproveStatus(SchoolApproveStatusEnum.WAIT_APPROVE.name);
+            if(StatusEnum.WAIT_SCHOOL_APPROVE.name.equals(project.getStatus())){
+                // 导师审批通过后，状态改为待学校审批
+                dto.setStatus(StatusEnum.APPROVED.name);
+            }else {
+                // 导师审批通过后，状态改为待学校审批
+                dto.setStatus(StatusEnum.WAIT_SCHOOL_APPROVE.name);
+            }
+
         } else {
             dto.setStatus(StatusEnum.APPROVE_FAIL.name);
         }
@@ -279,9 +290,9 @@ public class InnoProjectController extends BaseController {
     @PostMapping("/school-approve/{agree}")
     public AjaxResult schoolApprove(@PathVariable("agree") boolean agree, @RequestBody InnoProject dto) {
         if (agree) {
-            dto.setSchoolApproveStatus(SchoolApproveStatusEnum.APPROVE_SUCCESS.name);
+            // 学校审批通过后，状态改为已立项
+            dto.setStatus(StatusEnum.APPROVED.name);
         } else {
-            dto.setSchoolApproveStatus(SchoolApproveStatusEnum.APPROVE_FAIL.name);
             // 学校审批不通过时，项目状态变为审批不通过
             dto.setStatus(StatusEnum.APPROVE_FAIL.name);
         }
