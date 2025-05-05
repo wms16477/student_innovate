@@ -1554,7 +1554,7 @@ export default {
     handleEndProjectScore(row) {
       getInnoProject(row.id).then(response => {
         const data = response.data;
-        
+
         // 将完整的项目数据保存到detail对象中，以便显示中期评分信息
         this.detail = data;
 
@@ -1630,41 +1630,41 @@ export default {
         }
       });
     },
-    /** 新增按钮操作 */
-    handleAdd() {
-      this.reset();
-      this.open = true;
-      this.title = "添加大创项目";
-    },
+    // /** 新增按钮操作 */
+    // handleAdd() {
+    //   this.reset();
+    //   this.open = true;
+    //   this.title = "添加大创项目";
+    // },
     /** 重置表单 */
-    reset() {
-      this.form = {
-        id: undefined,
-        projectName: undefined,
-        projectType: undefined,
-        projectDesc: undefined,
-        teacherId: undefined,
-        submitFileUrl: undefined,
-        memberList: []
-      };
-      this.selectedMemberCodes = [];
-      this.resetForm("form");
-    },
+    // reset() {
+    //   this.form = {
+    //     id: undefined,
+    //     projectName: undefined,
+    //     projectType: undefined,
+    //     projectDesc: undefined,
+    //     teacherId: undefined,
+    //     submitFileUrl: undefined,
+    //     memberList: []
+    //   };
+    //   this.selectedMemberCodes = [];
+    //   this.resetForm("form");
+    // },
     /** 处理成员变更 */
-    handleMemberChange(value) {
-      // 根据学生工号更新memberList
-      const memberList = [];
-      value.forEach(studentCode => {
-        const student = this.studentOptions.find(item => item.stuNo === studentCode);
-        if (student) {
-          memberList.push({
-            memberUserCode: student.stuNo,
-            memberUserName: student.stuName
-          });
-        }
-      });
-      this.form.memberList = memberList;
-    },
+    // handleMemberChange(value) {
+    //   // 根据学生工号更新memberList
+    //   const memberList = [];
+    //   value.forEach(studentCode => {
+    //     const student = this.studentOptions.find(item => item.stuNo === studentCode);
+    //     if (student) {
+    //       memberList.push({
+    //         memberUserCode: student.stuNo,
+    //         memberUserName: student.stuName
+    //       });
+    //     }
+    //   });
+    //   this.form.memberList = memberList;
+    // },
     /** 提交表单 */
     submitForm(submit = false) {
       this.$refs["form"].validate(valid => {
@@ -1684,19 +1684,6 @@ export default {
           }
         }
       });
-    },
-    /** 暂存按钮操作 */
-    handleSave() {
-      this.submitForm(false);
-    },
-    /** 提交按钮操作 */
-    handleSubmitForm() {
-      this.submitForm(true);
-    },
-    /** 取消按钮操作 */
-    cancel() {
-      this.open = false;
-      this.reset();
     },
     /** 下载模板操作 */
     handleExportTemplate() {
