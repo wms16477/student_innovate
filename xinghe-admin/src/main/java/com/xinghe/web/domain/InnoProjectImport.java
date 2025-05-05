@@ -9,6 +9,9 @@ import lombok.Data;
 @Data
 public class InnoProjectImport {
 
+    @Excel(name = "项目所属人（学号）")
+    private String userCode;
+
     /**
      * 项目名称
      */
@@ -30,14 +33,14 @@ public class InnoProjectImport {
     /**
      * 项目成员(多个成员用逗号分隔)
      */
-    @Excel(name = "项目成员(多个成员用逗号分隔)")
+    @Excel(name = "项目成员(学号，多个成员用逗号分隔)")
     private String members;
 
     /**
-     * 导师姓名
+     * 导师ID
      */
-    @Excel(name = "导师")
-    private String teacherName;
+    @Excel(name = "导师编号（账号）")
+    private String teacherCode;
 
     /**
      * 申报材料

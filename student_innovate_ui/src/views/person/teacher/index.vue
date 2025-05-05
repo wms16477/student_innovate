@@ -307,7 +307,7 @@ export default {
       upload: {
         title: "导入教师数据",
         open: false,
-        url: process.env.VUE_APP_BASE_API + "/teacher/teacher/importData",
+        url: process.env.VUE_APP_BASE_API + "/person/teacher/importData",
         headers: {Authorization: "Bearer " + getToken()},
         isUploading: false,
         updateSupport: 0

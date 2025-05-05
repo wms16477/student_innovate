@@ -74,34 +74,34 @@ export const constantRoutes = [
       }
     ]
   },
-  {
-    path: '/person',
-    component: Layout,
-    hidden: false,
-    permissions: ['system:user:list'],
-    name: 'Person',
-    meta: { title: '用户管理', icon: 'user' },
-    children: [
-      {
-        path: 'student',
-        component: () => import('@/views/person/student/index'),
-        name: 'Student',
-        meta: { title: '学生管理', icon: 'edit' }
-      },
-      {
-        path: 'teacher',
-        component: () => import('@/views/person/teacher/index'),
-        name: 'Teacher',
-        meta: { title: '教师管理', icon: 'edit' }
-      },
-      {
-        path: 'school',
-        component: () => import('@/views/person/school/index'),
-        name: 'School',
-        meta: { title: '学校管理', icon: 'edit' }
-      }
-    ]
-  },
+  // {
+  //   path: '/person',
+  //   component: Layout,
+  //   hidden: false,
+  //   permissions: ['system:user:list'],
+  //   name: 'Person',
+  //   meta: { title: '用户管理', icon: 'user' },
+  //   children: [
+  //     {
+  //       path: 'student',
+  //       component: () => import('@/views/person/student/index'),
+  //       name: 'Student',
+  //       meta: { title: '学生管理', icon: 'edit' }
+  //     },
+  //     {
+  //       path: 'teacher',
+  //       component: () => import('@/views/person/teacher/index'),
+  //       name: 'Teacher',
+  //       meta: { title: '教师管理', icon: 'edit' }
+  //     },
+  //     {
+  //       path: 'school',
+  //       component: () => import('@/views/person/school/index'),
+  //       name: 'School',
+  //       meta: { title: '学校管理', icon: 'edit' }
+  //     }
+  //   ]
+  // },
   {
     path: '/user',
     component: Layout,

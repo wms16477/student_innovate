@@ -875,25 +875,6 @@
             <div slot="tip" class="el-upload__tip">请上传Excel文件，且不超过10MB</div>
           </el-upload>
         </el-form-item>
-        <el-form-item label="申报材料" prop="submitFile">
-          <el-upload
-            ref="submitFileUpload"
-            :limit="1"
-            accept=".doc,.docx,.pdf,.zip"
-            :headers="upload.headers"
-            :action="upload.submitAction"
-            :disabled="upload.isUploading"
-            :on-progress="handleSubmitFileProgress"
-            :on-success="handleSubmitFileSuccess"
-            :on-error="handleSubmitFileError"
-            :on-exceed="handleSubmitFileExceed"
-            :on-remove="handleSubmitFileRemove"
-            :auto-upload="false"
-            :show-file-list="true">
-            <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
-            <div slot="tip" class="el-upload__tip">请上传申报材料，且不超过20MB</div>
-          </el-upload>
-        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitImport" :loading="upload.isUploading">确 定</el-button>

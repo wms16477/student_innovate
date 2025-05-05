@@ -481,49 +481,40 @@ public class InnoProjectController extends BaseController {
      */
     @Log(title = "大创项目", businessType = BusinessType.IMPORT)
     @PostMapping("/importData")
-    public AjaxResult importData(MultipartFile file, MultipartFile submitFile) throws Exception {
+    public AjaxResult importData(MultipartFile file) throws Exception {
         if (file == null) {
             return error("请上传Excel文件");
-        }
-        if (submitFile == null) {
-            return error("请上传申报材料");
-        }
-        
-        // 上传申报材料
-        String submitFileUrl = uploadFile(submitFile);
-        if (StringUtils.isEmpty(submitFileUrl)) {
-            return error("申报材料上传失败");
         }
 
         ExcelUtil<InnoProjectImport> util = new ExcelUtil<>(InnoProjectImport.class);
         List<InnoProjectImport> projectImportList = util.importExcel(file.getInputStream());
-        
+
         if (CollectionUtils.isEmpty(projectImportList)) {
             return error("导入数据为空");
         }
-        
+
         int successCount = 0;
         int failCount = 0;
         StringBuilder successMsg = new StringBuilder();
         StringBuilder failMsg = new StringBuilder();
-        
-        // 创建学生姓名与学号的映射
+
+        // 获取学生列表，创建学号到姓名的映射
         List<Student> studentList = studentService.list();
-        Map<String, String> studentNameToNoMap = studentList.stream()
-                .collect(Collectors.toMap(Student::getStuName, Student::getStuNo, (k1, k2) -> k1));
-                
-        // 创建教师姓名与ID的映射
+        Map<String, String> studentNoToNameMap = studentList.stream()
+                .collect(Collectors.toMap(Student::getStuNo, Student::getStuName, (k1, k2) -> k1));
+
+        // 获取教师列表，创建ID到姓名的映射
         List<Teacher> teacherList = teacherService.list();
-        Map<String, Long> teacherNameToIdMap = teacherList.stream()
-                .collect(Collectors.toMap(Teacher::getTeacherName, Teacher::getId, (k1, k2) -> k1));
-        
+        Map<String, Teacher> teacherIdToNameMap = teacherList.stream()
+                .collect(Collectors.toMap(Teacher::getAccount, x->x));
+
         for (int i = 0; i < projectImportList.size(); i++) {
             InnoProjectImport importItem = projectImportList.get(i);
             try {
-                // 设置申报材料URL
-                importItem.setSubmitFileUrl(submitFileUrl);
-                
                 // 验证必填字段
+                if(StringUtils.isEmpty(importItem.getUserCode())){
+                    throw new ServiceException("学号不能为空");
+                }
                 if (StringUtils.isEmpty(importItem.getProjectName())) {
                     throw new ServiceException("项目名称不能为空");
                 }
@@ -536,59 +527,68 @@ public class InnoProjectController extends BaseController {
                 if (StringUtils.isEmpty(importItem.getMembers())) {
                     throw new ServiceException("项目成员不能为空");
                 }
-                if (StringUtils.isEmpty(importItem.getTeacherName())) {
+                if (importItem.getTeacherCode() == null) {
                     throw new ServiceException("导师不能为空");
                 }
-                
-                // 验证项目类型是否有效
-                boolean validProjectType = Arrays.stream(ProjectType.values())
-                        .anyMatch(type -> type.getName().equals(importItem.getProjectType()));
-                if (!validProjectType) {
+
+                //根据学号获取姓名
+                String approveStudentName = studentNoToNameMap.get(importItem.getUserCode());
+
+                // 根据项目类型名称获取项目类型编码
+                String projectTypeCode = null;
+                for (ProjectType type : ProjectType.values()) {
+                    if (type.getName().equals(importItem.getProjectType())) {
+                        projectTypeCode = type.name();
+                        break;
+                    }
+                }
+                if (projectTypeCode == null) {
                     throw new ServiceException("项目类型无效: " + importItem.getProjectType());
                 }
-                
-                // 查找导师ID
-                if (!teacherNameToIdMap.containsKey(importItem.getTeacherName())) {
-                    throw new ServiceException("找不到导师: " + importItem.getTeacherName());
+
+                // 验证导师ID是否有效
+                if (!teacherIdToNameMap.containsKey(importItem.getTeacherCode())) {
+                    throw new ServiceException("找不到导师: " + importItem.getTeacherCode());
                 }
-                Long teacherId = teacherNameToIdMap.get(importItem.getTeacherName());
-                
+                Teacher teacher = teacherIdToNameMap.get(importItem.getTeacherCode());
+
                 // 解析学生成员
-                String[] memberNames = importItem.getMembers().split("，|,");
+                String[] memberCodes = importItem.getMembers().split("，|,");
                 List<InnoProjectMember> memberList = new ArrayList<>();
-                for (String memberName : memberNames) {
-                    String memberNameTrim = memberName.trim();
-                    if (!studentNameToNoMap.containsKey(memberNameTrim)) {
-                        throw new ServiceException("找不到学生: " + memberNameTrim);
+                for (String memberCode : memberCodes) {
+                    String memberCodeTrim = memberCode.trim();
+                    if (!studentNoToNameMap.containsKey(memberCodeTrim)) {
+                        throw new ServiceException("找不到学生学号: " + memberCodeTrim);
                     }
-                    String studentNo = studentNameToNoMap.get(memberNameTrim);
-                    
+                    String studentName = studentNoToNameMap.get(memberCodeTrim);
+
                     InnoProjectMember member = new InnoProjectMember();
-                    member.setMemberUserCode(studentNo);
-                    member.setMemberUserName(memberNameTrim);
+                    member.setMemberUserCode(memberCodeTrim);
+                    member.setMemberUserName(studentName);
                     memberList.add(member);
                 }
-                
+
                 // 创建项目对象
                 InnoProject project = new InnoProject();
                 project.setProjectName(importItem.getProjectName());
-                project.setProjectType(importItem.getProjectType());
+                project.setProjectType(projectTypeCode);
                 project.setProjectDesc(importItem.getProjectDesc());
-                project.setTeacherId(teacherId);
-                project.setTeacherName(importItem.getTeacherName());
-                project.setSubmitFileUrl(importItem.getSubmitFileUrl());
+                project.setTeacherId(teacher.getId());
+                project.setTeacherName(teacher.getTeacherName());
                 project.setStatus(StatusEnum.DRAFT.name);
+                project.setCreateBy(importItem.getUserCode());
+                project.setCreateByName(approveStudentName);
                 project.setMemberList(memberList);
-                
+
                 // 保存项目
                 innoProjectService.save(project);
-                
+
                 // 保存项目成员
                 for (InnoProjectMember member : memberList) {
                     member.setProjectId(project.getId());
                 }
                 innoProjectMemberService.saveBatch(memberList);
-                
+
                 successCount++;
                 successMsg.append("<br/>第 " + (i + 1) + " 行数据导入成功: " + importItem.getProjectName());
             } catch (Exception e) {
@@ -597,16 +597,16 @@ public class InnoProjectController extends BaseController {
                 failMsg.append(msg + e.getMessage());
             }
         }
-        
+
         if (failCount > 0) {
             failMsg.insert(0, "很抱歉，导入失败！共 " + failCount + " 条数据导入失败，错误如下：");
         }
-        
+
         successMsg.insert(0, "恭喜您，数据已导入成功！共 " + successCount + " 条");
-        
+
         return AjaxResult.success(successMsg.toString() + failMsg.toString());
     }
-    
+
     /**
      * 上传文件方法
      */
