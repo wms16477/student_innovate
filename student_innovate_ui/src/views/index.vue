@@ -1,6 +1,6 @@
 <template>
   <div class="app-container home">
-   <h1>大学生创新创业大赛管理平台</h1>
+   <h1>大学生创新创业训练计划项目管理系统</h1>
   </div>
 </template>
 

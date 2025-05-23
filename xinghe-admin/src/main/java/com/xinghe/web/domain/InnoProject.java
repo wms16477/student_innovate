@@ -2,6 +2,7 @@ package com.xinghe.web.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -96,6 +97,12 @@ public class InnoProject {
     private Integer midScoreYjff;
 
     /**
+     * 中期检查-总分
+     */
+    private BigDecimal midScoreTotal;
+
+
+    /**
      * 结项成果
      */
     private String endFileName;
@@ -130,6 +137,16 @@ public class InnoProject {
      * 结项-研究方法分
      */
     private Integer endScoreYjff;
+
+    /**
+     * 结项-总分
+     */
+    private Integer endScoreTotal;
+
+    /**
+     * 总分
+     */
+    private BigDecimal scoreTotal;
 
     /**
      * 状态

@@ -17,7 +17,7 @@ import java.util.List;
 public interface InnoProjectMapper extends BaseMapper<InnoProject> {
 
 
-    List<InnoProject> getTableList(@Param("dto") InnoProjectDTO dto, @Param("userId") Long userId, @Param("userCode") String userCode, @Param("userType") Integer userType, @Param("teacherId") Long teacherId, @Param("schoolId") Long schoolId, @Param("projectType") String projectType);
+    List<InnoProject> getTableList(@Param("dto") InnoProjectDTO dto, @Param("userId") Long userId, @Param("userCode") String userCode, @Param("userType") Integer userType, @Param("teacherId") Long teacherId, @Param("schoolId") Long schoolId, @Param("projectType") String projectType, @Param("endFlag") Integer endFlag);
 
 }
 

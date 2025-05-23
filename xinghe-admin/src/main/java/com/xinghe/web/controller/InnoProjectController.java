@@ -121,7 +121,7 @@ public class InnoProjectController extends BaseController {
             }
         }
         //按钮 查看
-        List<InnoProject> list = innoProjectMapper.getTableList(dto, userId, username, userType, teacherId, schoolId, projectType);
+        List<InnoProject> list = innoProjectMapper.getTableList(dto, userId, username, userType, teacherId, schoolId, projectType, dto.getEndFlag());
         for (InnoProject innoProject : list) {
             if (userType != null) {
                 if (userType == 1) {

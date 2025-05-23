@@ -3,33 +3,39 @@
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.xinghe.web.mapper.InnoProjectFundExpenseMapper">
-    
+
     <select id="getTableList" resultType="com.xinghe.web.domain.InnoProjectFundExpense">
-        SELECT e.*, p.project_name 
-        FROM inno_project_fund_expense e
-        LEFT JOIN inno_project p ON e.project_id = p.id
-        LEFT JOIN student s ON p.create_by = s.stu_no
-        <where>
-            <if test="dto.projectId != null">
-                AND e.project_id = #{dto.projectId}
-            </if>
-            <if test="dto.budgetId != null">
-                AND e.budget_id = #{dto.budgetId}
-            </if>
-            <if test="dto.expenseType != null and dto.expenseType != ''">
-                AND e.expense_type = #{dto.expenseType}
-            </if>
-            <if test="dto.status != null and dto.status != ''">
-                AND e.status = #{dto.status}
-            </if>
-            <if test="dto.projectName != null and dto.projectName != ''">
-                AND p.project_name like concat('%', #{dto.projectName}, '%')
-            </if>
-            <if test="dto.schoolId != null">
-                AND s.school_id = #{dto.schoolId}
-            </if>
-        </where>
-        ORDER BY e.create_time DESC
+	    SELECT e.*, p.project_name
+	    FROM inno_project_fund_expense e
+	    LEFT JOIN inno_project p ON e.project_id = p.id
+	    LEFT JOIN student s ON p.create_by = s.stu_no
+	    <where>
+		    <if test="dto.payedFlag == 1">
+			    AND e.status = '已支付'
+		    </if>
+		    <if test="dto.payedFlag == 0">
+			    AND e.status != '已支付'
+		    </if>
+		    <if test="dto.projectId != null">
+			    AND e.project_id = #{dto.projectId}
+		    </if>
+		    <if test="dto.budgetId != null">
+			    AND e.budget_id = #{dto.budgetId}
+		    </if>
+		    <if test="dto.expenseType != null and dto.expenseType != ''">
+			    AND e.expense_type = #{dto.expenseType}
+		    </if>
+		    <if test="dto.status != null and dto.status != ''">
+			    AND e.status = #{dto.status}
+		    </if>
+		    <if test="dto.projectName != null and dto.projectName != ''">
+			    AND p.project_name like concat('%', #{dto.projectName}, '%')
+		    </if>
+		    <if test="dto.schoolId != null">
+			    AND s.school_id = #{dto.schoolId}
+		    </if>
+	    </where>
+	    ORDER BY e.create_time DESC
     </select>
-    
-</mapper> 
+
+</mapper>

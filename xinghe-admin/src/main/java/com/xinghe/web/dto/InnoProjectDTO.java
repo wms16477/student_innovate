@@ -12,4 +12,9 @@ public class InnoProjectDTO extends InnoProject {
 
     private Date endTime;
 
+    /**
+     * 是否结项
+     */
+    private Integer endFlag;
+
 }

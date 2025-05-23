@@ -12,6 +12,12 @@
 			<if test="dto.projectName != null and dto.projectName != ''">
 				and project_name like concat('%',#{dto.projectName},'%')
 			</if>
+			<if test="endFlag == 1">
+				and status = '已结项'
+			</if>
+			<if test="endFlag == 0">
+				and status = '已结项'
+			</if>
 			<if test="dto.startTime != null">
 				and create_time &gt;= #{startTime}
 			</if>
@@ -32,7 +38,7 @@
 				and create_by in (select stu_no from student where school_id = #{schoolId})
 			</if>
 		</where>
-		order by id desc
+		order by score_total desc
 	</select>
 
 
