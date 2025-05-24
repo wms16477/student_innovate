@@ -45,6 +45,31 @@ public class InnoProjectFundBudget {
      * 预算剩余金额
      */
     private BigDecimal remainingAmount;
+    
+    /**
+     * 材料费金额
+     */
+    private BigDecimal materialAmount;
+    
+    /**
+     * 差旅费金额
+     */
+    private BigDecimal travelAmount;
+    
+    /**
+     * 会议费金额
+     */
+    private BigDecimal meetingAmount;
+    
+    /**
+     * 印刷费金额
+     */
+    private BigDecimal printAmount;
+    
+    /**
+     * 其他费用金额
+     */
+    private BigDecimal otherAmount;
 
     /**
      * 预算说明

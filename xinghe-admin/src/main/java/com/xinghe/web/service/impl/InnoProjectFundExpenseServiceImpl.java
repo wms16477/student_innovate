@@ -32,6 +32,108 @@ public class InnoProjectFundExpenseServiceImpl extends ServiceImpl<InnoProjectFu
     
     @Autowired
     private InnoProjectFundBudgetMapper budgetMapper;
+    
+    /**
+     * 重写save方法，计算总支出金额
+     */
+    @Override
+    public boolean save(InnoProjectFundExpense entity) {
+        // 计算总支出金额
+        BigDecimal totalAmount = calculateTotalAmount(entity);
+        entity.setExpenseAmount(totalAmount);
+        
+        // 验证预算是否足够
+        validateBudget(entity);
+        
+        return super.save(entity);
+    }
+    
+    /**
+     * 重写updateById方法，计算总支出金额
+     */
+    @Override
+    public boolean updateById(InnoProjectFundExpense entity) {
+        // 计算总支出金额
+        BigDecimal totalAmount = calculateTotalAmount(entity);
+        entity.setExpenseAmount(totalAmount);
+        
+        // 验证预算是否足够
+        validateBudget(entity);
+        
+        return super.updateById(entity);
+    }
+    
+    /**
+     * 计算总支出金额
+     */
+    private BigDecimal calculateTotalAmount(InnoProjectFundExpense expense) {
+        BigDecimal total = BigDecimal.ZERO;
+        
+        // 将null值转为0
+        BigDecimal materialAmount = expense.getMaterialAmount() != null ? expense.getMaterialAmount() : BigDecimal.ZERO;
+        BigDecimal travelAmount = expense.getTravelAmount() != null ? expense.getTravelAmount() : BigDecimal.ZERO;
+        BigDecimal meetingAmount = expense.getMeetingAmount() != null ? expense.getMeetingAmount() : BigDecimal.ZERO;
+        BigDecimal printAmount = expense.getPrintAmount() != null ? expense.getPrintAmount() : BigDecimal.ZERO;
+        BigDecimal otherAmount = expense.getOtherAmount() != null ? expense.getOtherAmount() : BigDecimal.ZERO;
+        
+        total = total.add(materialAmount)
+                    .add(travelAmount)
+                    .add(meetingAmount)
+                    .add(printAmount)
+                    .add(otherAmount);
+                    
+        return total;
+    }
+    
+    /**
+     * 验证预算是否足够
+     */
+    private void validateBudget(InnoProjectFundExpense expense) {
+        if (expense.getBudgetId() != null) {
+            InnoProjectFundBudget budget = budgetService.getById(expense.getBudgetId());
+            if (budget == null) {
+                throw new ServiceException("预算不存在");
+            }
+            
+            // 验证各类型金额是否超过预算
+            if (expense.getMaterialAmount() != null && expense.getMaterialAmount().compareTo(BigDecimal.ZERO) > 0) {
+                if (budget.getMaterialAmount() == null || expense.getMaterialAmount().compareTo(budget.getMaterialAmount()) > 0) {
+                    throw new ServiceException("材料费超出预算金额");
+                }
+            }
+            
+            if (expense.getTravelAmount() != null && expense.getTravelAmount().compareTo(BigDecimal.ZERO) > 0) {
+                if (budget.getTravelAmount() == null || expense.getTravelAmount().compareTo(budget.getTravelAmount()) > 0) {
+                    throw new ServiceException("差旅费超出预算金额");
+                }
+            }
+            
+            if (expense.getMeetingAmount() != null && expense.getMeetingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                if (budget.getMeetingAmount() == null || expense.getMeetingAmount().compareTo(budget.getMeetingAmount()) > 0) {
+                    throw new ServiceException("会议费超出预算金额");
+                }
+            }
+            
+            if (expense.getPrintAmount() != null && expense.getPrintAmount().compareTo(BigDecimal.ZERO) > 0) {
+                if (budget.getPrintAmount() == null || expense.getPrintAmount().compareTo(budget.getPrintAmount()) > 0) {
+                    throw new ServiceException("印刷费超出预算金额");
+                }
+            }
+            
+            if (expense.getOtherAmount() != null && expense.getOtherAmount().compareTo(BigDecimal.ZERO) > 0) {
+                if (budget.getOtherAmount() == null || expense.getOtherAmount().compareTo(budget.getOtherAmount()) > 0) {
+                    throw new ServiceException("其他费用超出预算金额");
+                }
+            }
+            
+            // 检查总预算金额
+            if (expense.getExpenseAmount() != null && expense.getExpenseAmount().compareTo(BigDecimal.ZERO) > 0) {
+                if (budget.getRemainingAmount() == null || expense.getExpenseAmount().compareTo(budget.getRemainingAmount()) > 0) {
+                    throw new ServiceException("支出总金额超出预算剩余金额");
+                }
+            }
+        }
+    }
 
     /**
      * 审批经费支出
@@ -153,29 +255,6 @@ public class InnoProjectFundExpenseServiceImpl extends ServiceImpl<InnoProjectFu
         
         // 设置状态
         db.setStatus(FundStatusEnum.SUBMITTED.name());
-        
-        return baseMapper.updateById(db);
-    }
-    
-    /**
-     * 标记为已支付
-     *
-     * @param id 经费支出ID
-     * @return 结果
-     */
-    @Override
-    public int markAsPaid(Long id) {
-        // 检查状态
-        InnoProjectFundExpense db = getById(id);
-        if (db == null) {
-            throw new ServiceException("经费支出不存在");
-        }
-        if (!FundStatusEnum.APPROVED.name().equals(db.getStatus())) {
-            throw new ServiceException("只有已批准的经费支出才能标记为已支付");
-        }
-        
-        // 设置状态
-        db.setStatus(FundStatusEnum.PAID.name());
         
         return baseMapper.updateById(db);
     }

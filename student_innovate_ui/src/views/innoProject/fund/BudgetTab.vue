@@ -4,11 +4,11 @@
       <el-form-item label="项目名称" prop="projectName">
         <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable size="small" @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="预算类型" prop="budgetType">
-        <el-select v-model="queryParams.budgetType" placeholder="请选择预算类型" clearable size="small">
-          <el-option v-for="dict in budgetTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
-        </el-select>
-      </el-form-item>
+<!--      <el-form-item label="预算类型" prop="budgetType">-->
+<!--        <el-select v-model="queryParams.budgetType" placeholder="请选择预算类型" clearable size="small">-->
+<!--          <el-option v-for="dict in budgetTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />-->
+<!--        </el-select>-->
+<!--      </el-form-item>-->
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable size="small">
           <el-option v-for="dict in statusOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
@@ -30,11 +30,11 @@
     <el-table v-loading="loading" :data="budgetList">
       <el-table-column label="项目名称" align="center" prop="projectName" :show-overflow-tooltip="true" />
       <el-table-column label="预算名称" align="center" prop="budgetName" :show-overflow-tooltip="true" />
-      <el-table-column label="预算类型" align="center" prop="budgetType">
-        <template slot-scope="scope">
-          <dict-tag :options="budgetTypeOptions" :value="scope.row.budgetType"/>
-        </template>
-      </el-table-column>
+<!--      <el-table-column label="预算类型" align="center" prop="budgetType">-->
+<!--        <template slot-scope="scope">-->
+<!--          <dict-tag :options="budgetTypeOptions" :value="scope.row.budgetType"/>-->
+<!--        </template>-->
+<!--      </el-table-column>-->
       <el-table-column label="预算金额" align="center" prop="budgetAmount" />
       <el-table-column label="剩余金额" align="center" prop="remainingAmount" />
       <el-table-column label="状态" align="center" prop="status">
@@ -70,8 +70,8 @@
     />
 
     <!-- 添加或修改预算对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="项目" prop="projectId">
           <el-select v-model="form.projectId" placeholder="请选择项目" :disabled="form.id !== undefined && form.id !== null">
             <el-option
@@ -85,18 +85,24 @@
         <el-form-item label="预算名称" prop="budgetName">
           <el-input v-model="form.budgetName" placeholder="请输入预算名称" />
         </el-form-item>
-        <el-form-item label="预算类型" prop="budgetType">
-          <el-select v-model="form.budgetType" placeholder="请选择预算类型">
-            <el-option
-              v-for="dict in budgetTypeOptions"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
+        <el-divider content-position="left">各类型预算金额</el-divider>
+        <el-form-item label="材料费" prop="materialAmount">
+          <el-input-number v-model="form.materialAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
         </el-form-item>
-        <el-form-item label="预算金额" prop="budgetAmount">
-          <el-input-number v-model="form.budgetAmount" :precision="2" :min="0" :step="100" />
+        <el-form-item label="差旅费" prop="travelAmount">
+          <el-input-number v-model="form.travelAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
+        </el-form-item>
+        <el-form-item label="会议费" prop="meetingAmount">
+          <el-input-number v-model="form.meetingAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
+        </el-form-item>
+        <el-form-item label="印刷费" prop="printAmount">
+          <el-input-number v-model="form.printAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
+        </el-form-item>
+        <el-form-item label="其他费用" prop="otherAmount">
+          <el-input-number v-model="form.otherAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
+        </el-form-item>
+        <el-form-item label="合计金额">
+          <el-input v-model="totalAmount" readonly :disabled="true" />
         </el-form-item>
         <el-form-item label="预算说明" prop="budgetDesc">
           <el-input v-model="form.budgetDesc" type="textarea" placeholder="请输入预算说明" />
@@ -114,9 +120,9 @@
       <el-descriptions :column="2" border>
         <el-descriptions-item label="项目名称">{{ viewForm.projectName }}</el-descriptions-item>
         <el-descriptions-item label="预算名称">{{ viewForm.budgetName }}</el-descriptions-item>
-        <el-descriptions-item label="预算类型">
-          <dict-tag :options="budgetTypeOptions" :value="viewForm.budgetType"/>
-        </el-descriptions-item>
+<!--        <el-descriptions-item label="预算类型">-->
+<!--          <dict-tag :options="budgetTypeOptions" :value="viewForm.budgetType"/>-->
+<!--        </el-descriptions-item>-->
         <el-descriptions-item label="预算金额">{{ viewForm.budgetAmount }}</el-descriptions-item>
         <el-descriptions-item label="剩余金额">{{ viewForm.remainingAmount }}</el-descriptions-item>
         <el-descriptions-item label="状态">
@@ -235,13 +241,22 @@ export default {
         budgetType: null,
         status: null
       },
+      // 合计金额
+      totalAmount: 0,
       // 表单参数
       form: {
         id: null,
         projectId: null,
+        budgetName: null,
         budgetType: null,
         budgetAmount: 0,
-        budgetDesc: null
+        materialAmount: 0,
+        travelAmount: 0,
+        meetingAmount: 0,
+        printAmount: 0,
+        otherAmount: 0,
+        budgetDesc: null,
+        status: null
       },
       // 表单校验
       rules: {
@@ -311,6 +326,16 @@ export default {
         console.error("加载项目列表失败:", error);
       });
     },
+    // 计算合计金额
+    calculateTotal() {
+      let total = 0;
+      total += parseFloat(this.form.materialAmount || 0);
+      total += parseFloat(this.form.travelAmount || 0);
+      total += parseFloat(this.form.meetingAmount || 0);
+      total += parseFloat(this.form.printAmount || 0);
+      total += parseFloat(this.form.otherAmount || 0);
+      this.totalAmount = total.toFixed(2);
+    },
     // 取消按钮
     cancel() {
       this.open = false;
@@ -321,11 +346,18 @@ export default {
       this.form = {
         id: null,
         projectId: null,
+        budgetName: null,
         budgetType: null,
         budgetAmount: 0,
-        budgetDesc: null
+        materialAmount: 0,
+        travelAmount: 0,
+        meetingAmount: 0,
+        printAmount: 0,
+        otherAmount: 0,
+        budgetDesc: null,
+        status: null
       };
-      this.resetForm("form");
+      this.totalAmount = 0;
     },
     /** 搜索按钮操作 */
     handleQuery() {
@@ -423,17 +455,20 @@ export default {
       });
     },
     /** 提交按钮 */
-    submitForm(submit) {
+    submitForm(isSubmit) {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          // 设置预算金额为合计金额
+          this.form.budgetAmount = parseFloat(this.totalAmount);
+
           if (this.form.id != null) {
-            updateFundBudget(this.form, submit).then(response => {
+            updateFundBudget(this.form, isSubmit).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
               this.getList();
             });
           } else {
-            addFundBudget(this.form, submit).then(response => {
+            addFundBudget(this.form, isSubmit).then(response => {
               this.$modal.msgSuccess("新增成功");
               this.open = false;
               this.getList();

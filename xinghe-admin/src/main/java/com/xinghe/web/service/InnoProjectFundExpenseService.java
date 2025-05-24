@@ -36,12 +36,4 @@ public interface InnoProjectFundExpenseService extends IService<InnoProjectFundE
      * @return 结果
      */
     int submitExpense(Long id);
-    
-    /**
-     * 标记为已支付
-     *
-     * @param id 经费支出ID
-     * @return 结果
-     */
-    int markAsPaid(Long id);
 } 

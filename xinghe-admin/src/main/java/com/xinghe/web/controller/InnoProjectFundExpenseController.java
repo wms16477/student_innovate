@@ -277,13 +277,4 @@ public class InnoProjectFundExpenseController extends BaseController {
         
         return toAjax(expenseService.schoolApproveExpense(isApprove, expense, school.getId()));
     }
-    
-    /**
-     * 标记为已支付
-     */
-    @Log(title = "经费支出管理", businessType = BusinessType.UPDATE)
-    @PutMapping("/markAsPaid/{id}")
-    public AjaxResult markAsPaid(@PathVariable("id") Long id) {
-        return toAjax(expenseService.markAsPaid(id));
-    }
 } 

@@ -64,12 +64,4 @@ export function approveFundExpense(isApprove, data) {
     method: 'post',
     data: data
   })
-}
-
-// 标记为已支付
-export function markAsPaidFundExpense(id) {
-  return request({
-    url: '/web/fundExpense/markAsPaid/' + id,
-    method: 'put'
-  })
 } 

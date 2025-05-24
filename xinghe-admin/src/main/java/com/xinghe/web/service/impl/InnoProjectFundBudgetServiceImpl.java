@@ -10,6 +10,7 @@ import com.xinghe.web.service.InnoProjectFundBudgetService;
 import com.xinghe.web.util.ProjectUtil;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -20,6 +21,53 @@ import java.util.Date;
 @Service
 public class InnoProjectFundBudgetServiceImpl extends ServiceImpl<InnoProjectFundBudgetMapper, InnoProjectFundBudget>
         implements InnoProjectFundBudgetService {
+
+    /**
+     * 重写save方法，计算总预算金额
+     */
+    @Override
+    public boolean save(InnoProjectFundBudget entity) {
+        // 计算总预算金额
+        BigDecimal totalAmount = calculateTotalAmount(entity);
+        entity.setBudgetAmount(totalAmount);
+        entity.setRemainingAmount(totalAmount);
+        
+        return super.save(entity);
+    }
+    
+    /**
+     * 重写updateById方法，计算总预算金额
+     */
+    @Override
+    public boolean updateById(InnoProjectFundBudget entity) {
+        // 计算总预算金额
+        BigDecimal totalAmount = calculateTotalAmount(entity);
+        entity.setBudgetAmount(totalAmount);
+        
+        return super.updateById(entity);
+    }
+    
+    /**
+     * 计算总预算金额
+     */
+    private BigDecimal calculateTotalAmount(InnoProjectFundBudget budget) {
+        BigDecimal total = BigDecimal.ZERO;
+        
+        // 将null值转为0
+        BigDecimal materialAmount = budget.getMaterialAmount() != null ? budget.getMaterialAmount() : BigDecimal.ZERO;
+        BigDecimal travelAmount = budget.getTravelAmount() != null ? budget.getTravelAmount() : BigDecimal.ZERO;
+        BigDecimal meetingAmount = budget.getMeetingAmount() != null ? budget.getMeetingAmount() : BigDecimal.ZERO;
+        BigDecimal printAmount = budget.getPrintAmount() != null ? budget.getPrintAmount() : BigDecimal.ZERO;
+        BigDecimal otherAmount = budget.getOtherAmount() != null ? budget.getOtherAmount() : BigDecimal.ZERO;
+        
+        total = total.add(materialAmount)
+                    .add(travelAmount)
+                    .add(meetingAmount)
+                    .add(printAmount)
+                    .add(otherAmount);
+                    
+        return total;
+    }
 
     /**
      * 审批经费预算

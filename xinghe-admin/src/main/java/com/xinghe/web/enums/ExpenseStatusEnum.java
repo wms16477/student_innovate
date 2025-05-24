@@ -1,9 +1,9 @@
 package com.xinghe.web.enums;
 
 /**
- * 经费状态枚举
+ * 支出状态枚举
  */
-public enum FundStatusEnum {
+public enum ExpenseStatusEnum {
     DRAFT("草稿"),
     SUBMITTED("已提交"),
     APPROVED("已批准"),
@@ -11,13 +11,13 @@ public enum FundStatusEnum {
 
     public final String name;
 
-    FundStatusEnum(String name) {
+    ExpenseStatusEnum(String name) {
         this.name = name;
     }
 
-    public static String getNameByType(String type) {
-        for (FundStatusEnum value : FundStatusEnum.values()) {
-            if (value.name().equals(type)) {
+    public static String getNameByStatus(String status) {
+        for (ExpenseStatusEnum value : ExpenseStatusEnum.values()) {
+            if (value.name().equals(status)) {
                 return value.name;
             }
         }

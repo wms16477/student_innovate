@@ -4,11 +4,11 @@
       <el-form-item label="项目名称" prop="projectName">
         <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable size="small" @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="支出类型" prop="expenseType">
-        <el-select v-model="queryParams.expenseType" placeholder="请选择支出类型" clearable size="small">
-          <el-option v-for="dict in expenseTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
-        </el-select>
-      </el-form-item>
+<!--      <el-form-item label="支出类型" prop="expenseType">-->
+<!--        <el-select v-model="queryParams.expenseType" placeholder="请选择支出类型" clearable size="small">-->
+<!--          <el-option v-for="dict in expenseTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />-->
+<!--        </el-select>-->
+<!--      </el-form-item>-->
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable size="small">
           <el-option v-for="dict in statusOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
@@ -30,11 +30,11 @@
     <el-table v-loading="loading" :data="expenseList">
       <el-table-column label="项目名称" align="center" prop="projectName" :show-overflow-tooltip="true" />
       <el-table-column label="支出名称" align="center" prop="expenseName" :show-overflow-tooltip="true" />
-      <el-table-column label="支出类型" align="center" prop="expenseType">
-        <template slot-scope="scope">
-          <dict-tag :options="expenseTypeOptions" :value="scope.row.expenseType"/>
-        </template>
-      </el-table-column>
+<!--      <el-table-column label="支出类型" align="center" prop="expenseType">-->
+<!--        <template slot-scope="scope">-->
+<!--          <dict-tag :options="expenseTypeOptions" :value="scope.row.expenseType"/>-->
+<!--        </template>-->
+<!--      </el-table-column>-->
       <el-table-column label="支出金额" align="center" prop="expenseAmount" />
       <el-table-column label="支出日期" align="center" prop="expenseDate" width="100">
         <template slot-scope="scope">
@@ -61,7 +61,6 @@
           <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleApprove(scope.row, false)">拒绝</el-button>
           <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校批准')" size="mini" type="text" icon="el-icon-check" @click="handleSchoolApprove(scope.row, true)">批准</el-button>
           <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('学校拒绝')" size="mini" type="text" icon="el-icon-close" @click="handleSchoolApprove(scope.row, false)">拒绝</el-button>
-          <el-button v-if="scope.row.buttonList && scope.row.buttonList.includes('标记已支付')" size="mini" type="text" icon="el-icon-money" @click="handleMarkAsPaid(scope.row)">标记已支付</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -75,8 +74,8 @@
     />
 
     <!-- 添加或修改支出对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+    <el-dialog :title="title" :visible.sync="open" width="650px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="项目" prop="projectId">
           <el-select v-model="form.projectId" placeholder="请选择项目" @change="handleProjectChange" :disabled="form.id !== undefined && form.id !== null">
             <el-option
@@ -100,19 +99,33 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="支出类型" prop="expenseType">
-          <el-select v-model="form.expenseType" placeholder="请选择支出类型" disabled>
-            <el-option
-              v-for="dict in expenseTypeOptions"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
+
+        <el-divider content-position="left">各类型支出金额</el-divider>
+
+        <el-form-item label="材料费" prop="materialAmount">
+          <el-input-number v-model="form.materialAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
+          <span v-if="selectedBudget.materialAmount" class="amount-limit">限额: {{ selectedBudget.materialAmount }}</span>
         </el-form-item>
-        <el-form-item label="支出金额" prop="expenseAmount">
-          <el-input-number v-model="form.expenseAmount" :precision="2" :min="0" :step="100" />
+        <el-form-item label="差旅费" prop="travelAmount">
+          <el-input-number v-model="form.travelAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
+          <span v-if="selectedBudget.travelAmount" class="amount-limit">限额: {{ selectedBudget.travelAmount }}</span>
         </el-form-item>
+        <el-form-item label="会议费" prop="meetingAmount">
+          <el-input-number v-model="form.meetingAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
+          <span v-if="selectedBudget.meetingAmount" class="amount-limit">限额: {{ selectedBudget.meetingAmount }}</span>
+        </el-form-item>
+        <el-form-item label="印刷费" prop="printAmount">
+          <el-input-number v-model="form.printAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
+          <span v-if="selectedBudget.printAmount" class="amount-limit">限额: {{ selectedBudget.printAmount }}</span>
+        </el-form-item>
+        <el-form-item label="其他费用" prop="otherAmount">
+          <el-input-number v-model="form.otherAmount" :precision="2" :min="0" :step="100" @change="calculateTotal" />
+          <span v-if="selectedBudget.otherAmount" class="amount-limit">限额: {{ selectedBudget.otherAmount }}</span>
+        </el-form-item>
+        <el-form-item label="合计金额">
+          <el-input v-model="totalAmount" readonly :disabled="true" />
+        </el-form-item>
+
         <el-form-item label="支出日期" prop="expenseDate">
           <el-date-picker
             v-model="form.expenseDate"
@@ -155,9 +168,9 @@
       <el-descriptions :column="2" border>
         <el-descriptions-item label="项目名称">{{ viewForm.projectName }}</el-descriptions-item>
         <el-descriptions-item label="支出名称">{{ viewForm.expenseName }}</el-descriptions-item>
-        <el-descriptions-item label="支出类型">
-          <dict-tag :options="expenseTypeOptions" :value="viewForm.expenseType"/>
-        </el-descriptions-item>
+<!--        <el-descriptions-item label="支出类型">-->
+<!--          <dict-tag :options="expenseTypeOptions" :value="viewForm.expenseType"/>-->
+<!--        </el-descriptions-item>-->
         <el-descriptions-item label="支出金额">{{ viewForm.expenseAmount }}</el-descriptions-item>
         <el-descriptions-item label="支出日期">{{ parseTime(viewForm.expenseDate, '{y}-{m}-{d}') }}</el-descriptions-item>
         <el-descriptions-item label="状态">
@@ -307,16 +320,29 @@ export default {
         expenseType: null,
         status: null
       },
+      // 合计金额
+      totalAmount: 0,
+
+      // 已选预算
+      selectedBudget: {},
+
       // 表单参数
       form: {
         id: null,
         projectId: null,
+        expenseName: null,
         budgetId: null,
         expenseType: null,
         expenseAmount: 0,
-        expenseDate: null,
+        materialAmount: 0,
+        travelAmount: 0,
+        meetingAmount: 0,
+        printAmount: 0,
+        otherAmount: 0,
         expenseDesc: null,
-        fileUrl: null
+        expenseDate: null,
+        fileUrl: null,
+        status: null
       },
       // 表单校验
       rules: {
@@ -410,13 +436,21 @@ export default {
       this.getBudgetOptions(val);
     },
     /** 处理预算变更 */
-    handleBudgetChange(val) {
-      if (val) {
-        const selectedBudget = this.budgetOptions.find(item => item.id === val);
-        if (selectedBudget) {
-          // 设置支出类型与预算类型一致
-          this.form.expenseType = selectedBudget.budgetType;
+    handleBudgetChange(budgetId) {
+      if (budgetId) {
+        const budget = this.budgetOptions.find(item => item.id === budgetId);
+        if (budget) {
+          this.selectedBudget = budget;
+          // 重置各类型金额
+          this.form.materialAmount = 0;
+          this.form.travelAmount = 0;
+          this.form.meetingAmount = 0;
+          this.form.printAmount = 0;
+          this.form.otherAmount = 0;
+          this.calculateTotal();
         }
+      } else {
+        this.selectedBudget = {};
       }
     },
     // 取消按钮
@@ -429,13 +463,22 @@ export default {
       this.form = {
         id: null,
         projectId: null,
+        expenseName: null,
         budgetId: null,
         expenseType: null,
         expenseAmount: 0,
-        expenseDate: null,
+        materialAmount: 0,
+        travelAmount: 0,
+        meetingAmount: 0,
+        printAmount: 0,
+        otherAmount: 0,
         expenseDesc: null,
-        fileUrl: null
+        expenseDate: null,
+        fileUrl: null,
+        status: null
       };
+      this.totalAmount = 0;
+      this.selectedBudget = {};
       this.fileList = [];
       this.resetForm("form");
     },
@@ -509,25 +552,31 @@ export default {
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const id = row.id || this.ids[0];
+      const id = row.id || this.ids;
       getFundExpense(id).then(response => {
         this.form = response.data;
-        console.log("修改支出获取到数据:", this.form);
-        console.log("fileUrl:", this.form.fileUrl);
+        this.form.materialAmount = this.form.materialAmount || 0;
+        this.form.travelAmount = this.form.travelAmount || 0;
+        this.form.meetingAmount = this.form.meetingAmount || 0;
+        this.form.printAmount = this.form.printAmount || 0;
+        this.form.otherAmount = this.form.otherAmount || 0;
+        this.calculateTotal();
 
-        // 设置文件列表显示已上传票据
         if (this.form.fileUrl) {
-          this.fileList = [{
-            name: '已上传票据',
-            url: this.form.fileUrl
-          }];
-        } else {
-          this.fileList = [];
+          this.fileList = [
+            { name: "票据文件", url: this.form.fileUrl }
+          ];
         }
-
-        this.getBudgetOptions(this.form.projectId);
         this.open = true;
         this.title = "修改支出";
+
+        // 加载预算选项
+        this.getBudgetOptions(this.form.projectId);
+        if (this.form.budgetId) {
+          setTimeout(() => {
+            this.handleBudgetChange(this.form.budgetId);
+          }, 500);
+        }
       });
     },
     /** 查看按钮操作 */
@@ -583,14 +632,15 @@ export default {
       this.isApprove = isApprove;
       this.schoolApproveOpen = true;
     },
-    /** 标记为已支付按钮操作 */
-    handleMarkAsPaid(row) {
-      this.$modal.confirm('是否确认将该支出标记为已支付？').then(function() {
-        return markAsPaidFundExpense(row.id);
-      }).then(() => {
-        this.getList();
-        this.$modal.msgSuccess("标记成功");
-      }).catch(() => {});
+    /** 计算合计金额 */
+    calculateTotal() {
+      let total = 0;
+      total += parseFloat(this.form.materialAmount || 0);
+      total += parseFloat(this.form.travelAmount || 0);
+      total += parseFloat(this.form.meetingAmount || 0);
+      total += parseFloat(this.form.printAmount || 0);
+      total += parseFloat(this.form.otherAmount || 0);
+      this.totalAmount = total.toFixed(2);
     },
     /** 提交审批 */
     submitApprove() {
@@ -617,58 +667,25 @@ export default {
       });
     },
     /** 提交按钮 */
-    submitForm(submit) {
-      console.log("提交前form状态:", JSON.stringify(this.form));
-      console.log("提交前fileList状态:", this.fileList);
-
+    submitForm(isSubmit) {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          // 确保获取到正确的fileUrl
-          if (this.fileList.length > 0 && !this.form.fileUrl) {
-            const file = this.fileList[0];
-            console.log("从fileList获取文件信息:", file);
+          // 设置支出金额为合计金额
+          this.form.expenseAmount = parseFloat(this.totalAmount);
 
-            if (file.response) {
-              this.form.fileUrl = file.response.url || file.response.data;
-              console.log("从response获取fileUrl:", this.form.fileUrl);
-            } else if (file.url) {
-              this.form.fileUrl = file.url;
-              console.log("从url获取fileUrl:", this.form.fileUrl);
-            }
+          if (this.form.id != null) {
+            updateFundExpense(this.form, isSubmit).then(response => {
+              this.$modal.msgSuccess("修改成功");
+              this.open = false;
+              this.getList();
+            });
+          } else {
+            addFundExpense(this.form, isSubmit).then(response => {
+              this.$modal.msgSuccess("新增成功");
+              this.open = false;
+              this.getList();
+            });
           }
-
-          console.log("提交前最终fileUrl:", this.form.fileUrl);
-
-          // 始终确保fileUrl字段存在并正确传递
-          const submitForm = {
-            ...this.form
-          };
-
-          // 强制打印确认文件URL是否正确传递
-          console.log("最终提交的表单数据:", JSON.stringify(submitForm));
-          console.log("最终提交的fileUrl:", submitForm.fileUrl);
-
-          this.$confirm('确认提交?', '提交确认', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }).then(() => {
-            if (this.form.id != null) {
-              updateFundExpense(submitForm, submit).then(response => {
-                this.$modal.msgSuccess("修改成功");
-                this.open = false;
-                this.getList();
-              });
-            } else {
-              addFundExpense(submitForm, submit).then(response => {
-                this.$modal.msgSuccess("新增成功");
-                this.open = false;
-                this.getList();
-              });
-            }
-          }).catch(() => {
-            this.$message.info('已取消提交');
-          });
         }
       });
     },
@@ -689,5 +706,11 @@ export default {
 <style scoped>
 .upload-demo .el-upload-list--picture-card .el-upload-list__item-actions {
   cursor: default;
+}
+
+.amount-limit {
+  margin-left: 10px;
+  color: #909399;
+  font-size: 12px;
 }
 </style>

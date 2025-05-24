@@ -45,6 +45,31 @@ public class InnoProjectFundExpense {
      * 支出金额
      */
     private BigDecimal expenseAmount;
+    
+    /**
+     * 材料费金额
+     */
+    private BigDecimal materialAmount;
+    
+    /**
+     * 差旅费金额
+     */
+    private BigDecimal travelAmount;
+    
+    /**
+     * 会议费金额
+     */
+    private BigDecimal meetingAmount;
+    
+    /**
+     * 印刷费金额
+     */
+    private BigDecimal printAmount;
+    
+    /**
+     * 其他费用金额
+     */
+    private BigDecimal otherAmount;
 
     /**
      * 支出说明
