@@ -73,6 +73,7 @@
       <el-table-column label="项目类型" align="center" prop="projectType"/>
       <el-table-column label="导师" align="center" prop="teacherName"/>
       <el-table-column label="状态" align="center" prop="status"/>
+      <el-table-column label="总分" align="center" prop="scoreTotal"/>
       <el-table-column label="申报时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -1147,6 +1148,7 @@ export default {
     getList() {
       this.loading = true;
       listInnoProject(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
+        console.log(response.rows);
         this.projectList = response.rows;
         this.total = response.total;
         this.loading = false;
@@ -1499,7 +1501,12 @@ export default {
     submitMidScore() {
       this.$refs["midScoreForm"].validate(valid => {
         if (valid) {
-          submitMidCheckScore(this.midScoreForm).then(response => {
+          // 添加中期总分字段
+          const midScoreFormWithTotal = {
+            ...this.midScoreForm,
+            midScoreTotal: this.totalScore
+          };
+          submitMidCheckScore(midScoreFormWithTotal).then(response => {
             this.$modal.msgSuccess("中期评分提交成功");
             this.midScoreOpen = false;
             this.getList();
@@ -1590,7 +1597,13 @@ export default {
     submitEndScore() {
       this.$refs["endScoreForm"].validate(valid => {
         if (valid) {
-          submitEndProjectScore(this.endScoreForm).then(response => {
+          // 添加结项总分和最终总分字段
+          const endScoreFormWithTotal = {
+            ...this.endScoreForm,
+            endScoreTotal: this.endTotalScore,
+            scoreTotal: this.finalScore
+          };
+          submitEndProjectScore(endScoreFormWithTotal).then(response => {
             this.$modal.msgSuccess("结项评分提交成功");
             this.endScoreOpen = false;
             this.getList();

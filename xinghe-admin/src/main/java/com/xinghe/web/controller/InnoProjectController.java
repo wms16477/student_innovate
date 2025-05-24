@@ -361,6 +361,7 @@ public class InnoProjectController extends BaseController {
         updateProject.setMidScoreYjjc(innoProject.getMidScoreYjjc());
         updateProject.setMidScoreNrsj(innoProject.getMidScoreNrsj());
         updateProject.setMidScoreYjff(innoProject.getMidScoreYjff());
+        updateProject.setMidScoreTotal(innoProject.getMidScoreTotal());
 
         innoProjectService.updateById(updateProject);
         return success();
@@ -450,6 +451,8 @@ public class InnoProjectController extends BaseController {
         updateProject.setEndScoreYjjc(innoProject.getEndScoreYjjc());
         updateProject.setEndScoreNrsj(innoProject.getEndScoreNrsj());
         updateProject.setEndScoreYjff(innoProject.getEndScoreYjff());
+        updateProject.setEndScoreTotal(innoProject.getEndScoreTotal());
+        updateProject.setScoreTotal(innoProject.getScoreTotal());
 
         innoProjectService.updateById(updateProject);
         return success();
