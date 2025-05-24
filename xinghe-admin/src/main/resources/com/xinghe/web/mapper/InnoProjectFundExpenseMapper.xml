@@ -11,10 +11,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	    LEFT JOIN student s ON p.create_by = s.stu_no
 	    <where>
 		    <if test="dto.payedFlag == 1">
-			    AND e.status = '已支付'
+			    AND e.status = 'APPROVED'
 		    </if>
 		    <if test="dto.payedFlag == 0">
-			    AND e.status != '已支付'
+			    AND e.status != 'APPROVED'
 		    </if>
 		    <if test="dto.projectId != null">
 			    AND e.project_id = #{dto.projectId}

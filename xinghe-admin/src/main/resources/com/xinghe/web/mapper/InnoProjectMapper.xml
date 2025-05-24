@@ -16,7 +16,7 @@
 				and status = '已结项'
 			</if>
 			<if test="endFlag == 0">
-				and status = '已结项'
+				and status != '已结项'
 			</if>
 			<if test="dto.startTime != null">
 				and create_time &gt;= #{startTime}

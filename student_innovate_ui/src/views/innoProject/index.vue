@@ -1,5 +1,11 @@
 <template>
   <div class="app-container">
+    <!-- 添加tab切换组件 -->
+    <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+      <el-tab-pane label="未结项项目" name="unfinished"></el-tab-pane>
+      <el-tab-pane label="已结项项目" name="finished"></el-tab-pane>
+    </el-tabs>
+
     <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="项目名称" prop="projectName">
         <el-input
@@ -28,7 +34,8 @@
       </el-form-item>
     </el-form>
 
-    <el-row :gutter="10" class="mb8">
+    <!-- 只有在未结项tab时显示操作按钮 -->
+    <el-row :gutter="10" class="mb8" v-if="activeTab === 'unfinished'">
       <el-col :span="1.5">
         <el-button
           type="primary"
@@ -906,6 +913,8 @@ export default {
   name: "InnoProject",
   data() {
     return {
+      // 添加激活的tab页
+      activeTab: 'unfinished',
       activeName: 'basic',
       baseUrl: process.env.VUE_APP_BASE_API,
       // 遮罩层
@@ -928,7 +937,8 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        projectName: undefined
+        projectName: undefined,
+        endFlag: 0  // 默认查询未结项项目
       },
       // 表单参数
       form: {
@@ -1125,6 +1135,14 @@ export default {
     this.upload.headers = { Authorization: "Bearer " + this.$store.getters.token };
   },
   methods: {
+    /** 处理tab切换 */
+    handleTabClick() {
+      // 切换tab时，重置pageNum
+      this.queryParams.pageNum = 1;
+      // 根据tab设置endFlag
+      this.queryParams.endFlag = this.activeTab === 'finished' ? 1 : 0;
+      this.getList();
+    },
     /** 查询大创项目列表 */
     getList() {
       this.loading = true;
@@ -1187,6 +1205,8 @@ export default {
     resetQuery() {
       this.dateRange = [];
       this.resetForm("queryForm");
+      // 保持当前tab的endFlag值
+      this.queryParams.endFlag = this.activeTab === 'finished' ? 1 : 0;
       this.handleQuery();
     },
     /** 新增按钮操作 */
@@ -1723,6 +1743,11 @@ export default {
 </script>
 
 <style scoped>
+/* 添加tab样式 */
+.el-tabs {
+  margin-bottom: 20px;
+}
+
 .score-tips {
   color: #606266;
   font-size: 12px;

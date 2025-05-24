@@ -1,14 +1,15 @@
 <template>
   <div class="app-container">
+    <!-- 添加已审批/未审批标签页 -->
+    <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+      <el-tab-pane label="未审批" name="unpayed"></el-tab-pane>
+      <el-tab-pane label="已审批" name="payed"></el-tab-pane>
+    </el-tabs>
+
     <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="项目名称" prop="projectName">
         <el-input v-model="queryParams.projectName" placeholder="请输入项目名称" clearable size="small" @keyup.enter.native="handleQuery" />
       </el-form-item>
-<!--      <el-form-item label="支出类型" prop="expenseType">-->
-<!--        <el-select v-model="queryParams.expenseType" placeholder="请选择支出类型" clearable size="small">-->
-<!--          <el-option v-for="dict in expenseTypeOptions" :key="dict.value" :label="dict.label" :value="dict.value" />-->
-<!--        </el-select>-->
-<!--      </el-form-item>-->
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable size="small">
           <el-option v-for="dict in statusOptions" :key="dict.value" :label="dict.label" :value="dict.value" />
@@ -21,7 +22,7 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5" v-if="isTeacherRole">
+      <el-col :span="1.5" v-if="isTeacherRole && activeTab === 'unpayed'">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd">新增</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
@@ -30,11 +31,6 @@
     <el-table v-loading="loading" :data="expenseList">
       <el-table-column label="项目名称" align="center" prop="projectName" :show-overflow-tooltip="true" />
       <el-table-column label="支出名称" align="center" prop="expenseName" :show-overflow-tooltip="true" />
-<!--      <el-table-column label="支出类型" align="center" prop="expenseType">-->
-<!--        <template slot-scope="scope">-->
-<!--          <dict-tag :options="expenseTypeOptions" :value="scope.row.expenseType"/>-->
-<!--        </template>-->
-<!--      </el-table-column>-->
       <el-table-column label="支出金额" align="center" prop="expenseAmount" />
       <el-table-column label="支出日期" align="center" prop="expenseDate" width="100">
         <template slot-scope="scope">
@@ -168,9 +164,6 @@
       <el-descriptions :column="2" border>
         <el-descriptions-item label="项目名称">{{ viewForm.projectName }}</el-descriptions-item>
         <el-descriptions-item label="支出名称">{{ viewForm.expenseName }}</el-descriptions-item>
-<!--        <el-descriptions-item label="支出类型">-->
-<!--          <dict-tag :options="expenseTypeOptions" :value="viewForm.expenseType"/>-->
-<!--        </el-descriptions-item>-->
         <el-descriptions-item label="支出金额">{{ viewForm.expenseAmount }}</el-descriptions-item>
         <el-descriptions-item label="支出日期">{{ parseTime(viewForm.expenseDate, '{y}-{m}-{d}') }}</el-descriptions-item>
         <el-descriptions-item label="状态">
@@ -242,6 +235,8 @@ export default {
   },
   data() {
     return {
+      // 添加标签页状态
+      activeTab: 'unpayed',
       // 是否为教师角色
       isTeacherRole: false,
       // 遮罩层
@@ -318,7 +313,8 @@ export default {
         pageSize: 10,
         projectName: null,
         expenseType: null,
-        status: null
+        status: null,
+        payedFlag: 0  // 默认查询未审批支出
       },
       // 合计金额
       totalAmount: 0,
@@ -379,6 +375,14 @@ export default {
     this.checkUserRole();
   },
   methods: {
+    /** 处理tab切换 */
+    handleTabClick() {
+      // 切换tab时，重置pageNum
+      this.queryParams.pageNum = 1;
+      // 根据tab设置payedFlag
+      this.queryParams.payedFlag = this.activeTab === 'payed' ? 1 : 0;
+      this.getList();
+    },
     /** 检查用户角色 */
     checkUserRole() {
       // 通过读取用户角色信息，判断是否为教师角色
@@ -490,6 +494,8 @@ export default {
     /** 重置按钮操作 */
     resetQuery() {
       this.resetForm("queryForm");
+      // 保持当前tab的payedFlag值
+      this.queryParams.payedFlag = this.activeTab === 'payed' ? 1 : 0;
       this.handleQuery();
     },
     /** 文件上传成功处理 */
@@ -704,6 +710,11 @@ export default {
 </script>
 
 <style scoped>
+/* 添加tab样式 */
+.el-tabs {
+  margin-bottom: 20px;
+}
+
 .upload-demo .el-upload-list--picture-card .el-upload-list__item-actions {
   cursor: default;
 }
