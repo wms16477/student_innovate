@@ -418,9 +418,11 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      exportTeacher(this.queryParams).then(response => {
-        this.download(response.msg);
-      });
+      // exportTeacher(this.queryParams).then(response => {
+      //   this.download(response.msg);
+      // });
+      this.download('/person/teacher/export', {
+      }, `教师导出.xlsx`)
     },
     // 导入相关方法
     handleImport() {

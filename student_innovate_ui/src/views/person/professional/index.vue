@@ -240,7 +240,7 @@ export default {
       upload: {
         title: "导入专家数据",
         open: false,
-        url: process.env.VUE_APP_BASE_API + "/professional/professional/importData",
+        url: process.env.VUE_APP_BASE_API + "/web/professional/importData",
         headers: { Authorization: "Bearer " + getToken() },
         isUploading: false,
         updateSupport: 0
@@ -345,9 +345,11 @@ export default {
     },
     // 导出功能
     handleExport() {
-      exportProfessional(this.queryParams).then(response => {
-        this.download(response.msg);
-      });
+      // exportProfessional(this.queryParams).then(response => {
+      //   this.download(response.msg);
+      // });
+      this.download('/web/professional/export', {
+      }, `专家导出.xlsx`)
     },
     // 导入功能
     handleImport() {
@@ -371,7 +373,7 @@ export default {
     },
     // 下载模板
     importTemplate() {
-      this.download('professional/professional/importTemplate', {}, `专家导入模版.xlsx`)
+      this.download('web/professional/importTemplate', {}, `专家导入模版.xlsx`)
     }
   }
 };

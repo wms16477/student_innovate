@@ -394,9 +394,11 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      exportStudent(this.queryParams).then(response => {
-        this.download(response.msg);
-      });
+      // exportStudent(this.queryParams).then(response => {
+      //   this.download(response);
+      // });
+      this.download('/student/student/export', {
+      }, `学生导出.xlsx`)
     },
     /** 获取学校选项 */
     getSchoolOptions() {

@@ -286,9 +286,11 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      exportSchool(this.queryParams).then(response => {
-        this.download(response.msg);
-      });
+      // exportSchool(this.queryParams).then(response => {
+      //   this.download(response.msg);
+      // });
+      this.download('/school/export', {
+      }, `学校导出.xlsx`)
     },
     handleImport() {
       this.upload.open = true;
